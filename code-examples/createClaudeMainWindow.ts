@@ -1,6 +1,5 @@
 /**
  * 维度四：macOS 桌面深度融合与窗口材质物理学
- * 逆向还原自 Claude Desktop: app.asar / index.chunk-CiiI592G.js
  * 
  * 核心特性：
  * 1. BaseWindow / BrowserWindow + WebContentsView 双层解耦架构

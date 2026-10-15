@@ -74,7 +74,7 @@
   <style>
     /* ==========================================================================
        Claude Design System (CDS) Production Design Tokens & Keyframes
-       Extracted directly from /Applications/Claude.app ion-dist production build
+       Design tokens for the CDS component showcase
        ========================================================================== */
 
     :root {
@@ -102,7 +102,7 @@
       --cds-ring-outer: 1px;
       --cds-ring-color: var(--cds-border);
 
-      /* Claude Official Elevation Shadow Hierarchy (Exact Extracted Tokens) */
+      /* CDS Elevation Shadow Hierarchy (Design Tokens) */
       --cds-shadow-color: rgba(0, 0, 0, 0.08);
       --cds-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05), 0 2px 8px 0 var(--cds-shadow-color);
       --cds-shadow-md: 0 2px 4px 0 rgba(0, 0, 0, 0.05), 0 6px 16px 0 var(--cds-shadow-color);
@@ -136,7 +136,7 @@
       --cds-segmented-track: rgba(0, 0, 0, 0.06);
       --cds-segmented-thumb: #ffffff;
 
-      /* Claude Official Radius Hierarchy (Exact Extracted Tokens) */
+      /* CDS Radius Hierarchy (Design Tokens) */
       --radius-xs: 2px;
       --radius-sm: 4px;
       --radius-md: 6px;
@@ -289,7 +289,7 @@
       font-feature-settings: "tnum" 1;
     }
 
-    /* 5. 核心关键帧动画 (真实提取) */
+    /* 5. 核心关键帧动画 */
     @keyframes _grapheme-reveal_1plog_1 {
       0%   { opacity: 0; filter: blur(6px); }
       100% { opacity: 1; filter: blur(0); }
@@ -586,7 +586,7 @@
         { name: "Clay Tint", hex: "#fbf3ef", tag: "浅底衬", desc: "徽章背景、高亮浅衬底" },
       ];
 
-      // 提取自 Claude.app 的真实圆角体系
+      // CDS 组件圆角体系
       const radiusTokens = [
         { token: "--radius-xs", px: "2px", role: "微小分割指示器", cls: "rounded-xs" },
         { token: "--radius-sm", px: "4px", role: "键盘按键、代码微章", cls: "rounded-sm" },
@@ -600,7 +600,7 @@
         { token: "--df-radius-pill", px: "999px", role: "分段滑动胶囊、状态呼吸灯、头像", cls: "rounded-full" },
       ];
 
-      // 官方 CDS 7 阶排版音阶体系
+      // CDS 7 阶排版音阶体系
       const typographyTiers = [
         { name: "caption", token: "--cds-font-size-caption", px: "10px ~ 11px", leading: "16px (1.55)", weight: "500 / 580", role: "微型标签、快捷键徽章 (Kbd)、时间戳、模型角标", specimen: "Sonnet 3.7 • 10:24 AM • ⌘K", calcPx: "11px", calcLh: "16px" },
         { name: "footnote", token: "--cds-font-size-footnote", px: "11px ~ 12px", leading: "14px (1.25)", weight: "400 / 500", role: "辅助说明、文件大小 (4.2 KB)、Token 统计、次级元信息", specimen: "design-tokens.json • 4.2 KB • 2,410 tokens", calcPx: "12px", calcLh: "14px" },
@@ -675,7 +675,7 @@
                   Claude 并非全盘使用同一种圆角，而是从 2px 到 999px 构建了严格的视觉阶梯（输入框固定 20px，用户气泡 18px，标准控件 8px）：
                 </p>
               </div>
-              <span className="text-xs font-mono text-clay shrink-0">AST-Extracted Radii</span>
+              <span className="text-xs font-mono text-clay shrink-0">Component Radii</span>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 pt-2">
@@ -739,7 +739,7 @@
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-neutral-100 dark:border-neutral-800 pb-3">
               <div>
                 <h4 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
-                  1.5 官方排版字号阶梯标尺 (7-Tier Typography Scale & Line-Heights)
+                  1.5 组件排版字号阶梯标尺 (7-Tier Typography Scale & Line-Heights)
                 </h4>
                 <p className="text-xs text-neutral-400 mt-0.5">
                   Claude 桌面端基于 <code>--cds-rem-scale: calc(16/17)</code> 紧凑缩放系数，定义了从 Caption (10px) 到 Title (20px) 的完整 7 级排版音阶与自适应行高：
@@ -914,12 +914,12 @@
             </div>
           </div>
 
-          {/* 1.8 官方边框大小阶梯与视网膜高分屏发丝细边规范 (Border Width Scale & Retina Hairline) */}
+          {/* 1.8 组件边框大小阶梯与视网膜高分屏发丝细边规范 (Border Width Scale & Retina Hairline) */}
           <div className="rounded-xl border border-neutral-200/80 dark:border-neutral-800 p-5 bg-white dark:bg-[#1a1a19] space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-neutral-100 dark:border-neutral-800 pb-3">
               <div>
                 <h4 className="text-sm font-semibold text-neutral-900 dark:text-neutral-100">
-                  1.8 官方边框大小阶梯与视网膜高分屏发丝细边规范 (Border Width & Hairline Precision)
+                  1.8 组件边框大小阶梯与视网膜高分屏发丝细边规范 (Border Width & Hairline Precision)
                 </h4>
                 <p className="text-xs text-neutral-400 mt-0.5">
                   Claude 严格避免在视网膜高分屏（Retina Display）上出现笨重的 1px 粗黑边。基于 <code>--cds-ring-hairline</code> 动态实现 0.5px 发丝细边与内阴影轮廓：
@@ -1007,7 +1007,7 @@
                   1.9 生产级四层环境光扩散阴影阶梯 (4-Tier Ambient & Elevation Shadow System)
                 </h4>
                 <p className="text-xs text-neutral-400 mt-0.5">
-                  彻底对齐 Claude 官方阴影：拒绝单一粗暴的纯黑模糊，采用<b>【近距微遮蔽 (Ambient Occlusion)】+【远距深层漫反射 (Elevation Diffusion)】</b>双层复合公式：
+                  组件阴影采用<b>【近距微遮蔽 (Ambient Occlusion)】+【远距深层漫反射 (Elevation Diffusion)】</b>双层复合公式：
                 </p>
               </div>
               <span className="text-xs font-mono text-clay shrink-0">Multi-Layer Tinted Shadows</span>
@@ -1075,7 +1075,7 @@
 
               {/* Code Snippet Box */}
               <div className="flex-1 w-full p-4 rounded-xl bg-[#141413] text-neutral-300 font-mono text-xs overflow-x-auto leading-relaxed border border-neutral-800">
-                <div className="text-[10px] text-neutral-500 uppercase mb-2">CSS 源码定义公式 (Extracted Token)</div>
+                <div className="text-[10px] text-neutral-500 uppercase mb-2">CSS 设计令牌 (Design Token)</div>
                 {activeShadowTab === "sm" && (
                   <pre className="text-neutral-300">
 {`/* 浅色模式: 5% 双层漫反射 */
@@ -1895,7 +1895,7 @@ box-shadow: inset 0 0 0 1px var(--cds-surface-1), /* 1px 隔离垫片 */
                     style={{ gridTemplateRows: isolatedThinkingOpen || isolatedThinkingActive ? "1fr" : "0fr" }}
                   >
                     <div className="min-h-0 overflow-hidden px-3.5 pb-3 pt-2 text-xs leading-relaxed text-neutral-600 dark:text-neutral-400 font-mono border-t border-neutral-200/70 dark:border-neutral-800/80 space-y-1">
-                      <div>&gt; [Phase 1] Resolving Claude AST component hierarchy tokens</div>
+                      <div>&gt; [Phase 1] Organizing component hierarchy and design tokens</div>
                       <div>&gt; [Phase 2] Computing border-radius matrix: 6px/8px/12px/18px/20px</div>
                       <div>&gt; [Phase 3] Attaching real interactive file upload listeners</div>
                       <div className="text-clay font-medium">&gt; [Phase 4] Output ready for client review</div>
@@ -2464,7 +2464,7 @@ export const irradiationCompensation = {
           {/* 7.3 四大弹簧物理预设同屏竞速 */}
           <ComponentShowcase
             title="四大物理弹簧预设同屏竞速实验室 (Spring Physics)"
-            tag="AST-Extracted Presets"
+            tag="Motion Presets"
             description="点击一键发射，观察 600/30 (Button 高频)、320/28 (Card 顺滑)、380/18 (Bouncy 超调) 与 1200/80 (Drag 极速咬合) 跑向 100% 靶心的差异。"
           >
             <div className="space-y-4">
@@ -3077,7 +3077,7 @@ export const irradiationCompensation = {
           <footer className="border-t border-neutral-200 dark:border-neutral-800 bg-white dark:bg-[#111110] py-8 text-center text-xs text-neutral-400 font-mono">
             <div>Claude Design System (CDS) • All-in-One Component Showcase</div>
             <div className="mt-1 text-[11px] text-neutral-500">
-              Extracted directly from production Claude.app • Zero external bundle dependency
+              React components • Design tokens • Interaction animations
             </div>
           </footer>
         </div>

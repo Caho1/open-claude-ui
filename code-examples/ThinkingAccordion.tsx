@@ -1,6 +1,5 @@
 /**
  * 维度六：思考过程折叠互斥锁与状态交接
- * 逆向还原自 Claude Desktop: cd5a31703-B4nKQMBN.js
  * 
  * 核心特性：
  * 1. 生成中 (isThinkingLive = true) 强制锁定展开 (open: true)

@@ -1,6 +1,5 @@
 /**
  * 维度五：全键盘盲操网格与无障碍访问
- * 逆向还原自 Claude Desktop: c16e267d0-B2-4AuUD.js
  * 
  * 核心特性：
  * 1. ArrowUp / ArrowDown / ArrowLeft / ArrowRight 漫游

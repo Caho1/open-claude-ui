@@ -1,7 +1,6 @@
 /**
  * Claude Design System (CDS) - Segmented Control & Pills
  * 
- * 逆向溯源：提取自 /Applications/Claude.app ion-dist (.df-pills[data-segmented])。
  * 核心规范：
  *   - 999px 极致胶囊圆角 (border-radius: 999px)
  *   - 2px 严格几何内边距 (padding: 2px)

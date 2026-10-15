@@ -1,6 +1,5 @@
 /**
  * 维度一：流式大文本输出与滚动视口物理学
- * 逆向还原自 Claude Desktop: ca2ef848d-Dz47ULRM.js
  * 
  * 核心特性：
  * 1. 150ms 用户输入冷却窗口 (performance.now() - lastUserInputAt > 150)

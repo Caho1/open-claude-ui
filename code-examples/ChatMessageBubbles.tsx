@@ -1,7 +1,6 @@
 /**
  * Claude Design System (CDS) - Message Bubbles (User & Assistant)
  * 
- * 逆向溯源：提取自 /Applications/Claude.app ion-dist 生产环境多轮会话视口。
  * 核心规范：
  *   - 用户气泡：严格 18px 圆角 (--cds-message-bubble-radius: 18px)，浅蓝冷灰微调底色 (--cds-bg-tint-blue)
  *   - 模型回答：极简零边框透明画布哲学，自然排版流，行宽约束 max-w-2xl ~ max-w-3xl

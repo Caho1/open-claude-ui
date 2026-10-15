@@ -1,7 +1,6 @@
 /**
  * Claude Design System (CDS) - Confirmation Modal Dialog
  * 
- * 逆向溯源：提取自 /Applications/Claude.app ion-dist 模态弹窗与 Overlays。
  * 核心规范：
  *   - 弹窗外壳：严格 16px 圆角 (rounded-2xl)
  *   - 投影：真实双环 Popover 弥散投影 (--cds-shadow-popover)

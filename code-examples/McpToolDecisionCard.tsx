@@ -4,10 +4,6 @@ import React, { useState } from 'react';
  * ==============================================================================
  * Claude Design System (CDS) - McpToolDecisionCard.tsx
  * 
- * 逆向还原自官方 Claude Desktop / Code 交互式工具调用与 MCP 决策卡片:
- * - `cc1aae219-CPC-WA-x.js` (channel_decision_card / tool_use / structured_content)
- * - `c05b96c7f-DSH7iwX5.js` (mcp_server_url / writeToolNames / onVerdict / resolved)
- * - `c6a992d55-C0zTICcS.css` (decision-card-glow, cds-shadow-card)
  * 
  * 核心工程机制:
  * 1. 严格的三态授权生命周期 (Three-State Authorization Machine):

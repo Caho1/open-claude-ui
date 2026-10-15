@@ -1,6 +1,5 @@
 /**
  * 维度六：异常容灾、模型限流与业务状态机
- * 逆向还原自 Claude Desktop: shared-50-Bmc9oUMm.js
  * 
  * 核心特性：
  * 1. 429 / 503 截断指数退避带 Jitter 抖动: min(max(base, 5000) * 2^(n-1) * (1 ± J), 600000)

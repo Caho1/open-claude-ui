@@ -4,10 +4,6 @@ import React, { useState } from 'react';
  * ==============================================================================
  * Claude Design System (CDS) - CoworkAgentCanvas.tsx
  * 
- * 逆向还原自官方 Claude Cowork 多代理协同看板与工程拓扑空间:
- * - `shared-6-zKKz0bS2.js` (channel_delegation / member_session / cowork_space)
- * - `shared-21-CGGmSsMS.js` (projectGroupings / customGroupsByScope / task_grid)
- * - `c6a992d55-C0zTICcS.css` (task-grid-fade-in / task-grid-clip-reveal)
  * 
  * 核心工程架构:
  * 1. 多智能体委派拓扑状态机 (Multi-Agent Task Delegation):
@@ -55,11 +51,11 @@ const DEFAULT_AGENTS: CoworkAgent[] = [
     completedTasksCount: 8,
   },
   {
-    id: 'agent-re',
-    role: 'Reverse Engineer',
-    name: '逆向取证专家',
+    id: 'agent-frontend',
+    role: 'Frontend Engineer',
+    name: '前端开发工程师',
     status: 'running',
-    currentTask: '提取 /Applications/Claude.app 生产混淆源码',
+    currentTask: '整理组件接口与交互动效规范',
     avatarIcon: '🔬',
     completedTasksCount: 14,
   },
@@ -87,7 +83,7 @@ const DEFAULT_ARTIFACTS: SharedArtifact[] = [
   { id: 'art-1', title: 'Claude Design System (CDS).md', type: 'doc', authorAgentId: 'agent-lead', updatedAt: '刚刚', version: 'v2.4' },
   { id: 'art-2', title: 'RichComposerWithMentions.tsx', type: 'code', authorAgentId: 'agent-ui', updatedAt: '5分钟前', version: 'v1.0' },
   { id: 'art-3', title: 'DraggableSessionList.tsx', type: 'code', authorAgentId: 'agent-ui', updatedAt: '8分钟前', version: 'v1.0' },
-  { id: 'art-4', title: 'AudioSinkWorklet.js', type: 'audio', authorAgentId: 'agent-re', updatedAt: '20分钟前', version: 'v1.2' },
+  { id: 'art-4', title: 'AudioSinkWorklet.js', type: 'audio', authorAgentId: 'agent-frontend', updatedAt: '20分钟前', version: 'v1.2' },
 ];
 
 export const CoworkAgentCanvas: React.FC = () => {

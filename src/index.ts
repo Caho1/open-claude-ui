@@ -1,6 +1,6 @@
 /**
  * Open Claude UI (open-claude-ui)
- * Clean-room reverse-engineered implementation of the Claude Design System (CDS).
+ * React components and interaction utilities for the Claude Design System (CDS).
  * High-fidelity components, physics-based motion presets, and architectural hooks.
  */
 

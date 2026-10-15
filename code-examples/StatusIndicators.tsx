@@ -1,7 +1,6 @@
 /**
  * Claude Design System (CDS) - Status Indicators & Shimmer
  * 
- * 逆向溯源：提取自 /Applications/Claude.app ion-dist 生产状态指示灯与骨架屏动效。
  * 核心动效：
  *   - 陶土明度呼吸指示灯 (dframe-clay-breathe, 2.4s 循环)
  *   - 运行中绿色脉冲扩散 (dframe-dot-pulse, 1.2s 循环)

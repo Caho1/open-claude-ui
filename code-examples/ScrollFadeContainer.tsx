@@ -4,9 +4,6 @@ import React, { useRef, useState, useEffect, useCallback } from 'react';
  * ==============================================================================
  * Claude Design System (CDS) - ScrollFadeContainer.tsx
  * 
- * 逆向还原自官方 Claude Desktop / Web 边缘平滑渐变遮罩系统:
- * - `frame-shell-chrome-BDKWDTvx.js` (cds-scroll-fade-y-active / cds-scroll-fade-top-raw)
- * - `c6a992d55-C0zTICcS.css` (7 档非线性 Alpha 渐变遮罩)
  * 
  * 核心视觉物理学:
  * 1. 官方 7 档非线性透明度遮罩 (7-Stop Non-Linear Alpha Mask):
@@ -79,7 +76,7 @@ export const ScrollFadeContainer: React.FC<ScrollFadeContainerProps> = ({
     return () => ro.disconnect();
   }, [updateScrollFades]);
 
-  // 构建反编译自 Claude 的精密 7-Stop 渐变 Mask 规则
+  // 构建 7-Stop 非线性渐变 Mask 规则
   const maskStyle = React.useMemo(() => {
     if (orientation === 'vertical') {
       return {

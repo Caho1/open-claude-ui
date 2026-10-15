@@ -4,10 +4,6 @@ import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
  * ==============================================================================
  * Claude Design System (CDS) - RichComposerWithMentions.tsx
  * 
- * 逆向还原自官方 Claude Desktop / Web 核心输入组件:
- * - `cd5a31703-B4nKQMBN.js` (isComposing / Suggestion / Mention / Popover)
- * - `cb6930dae-Q_S3-FcC.js` (leadingSlashCommand / MentionPills / FileMentions)
- * - `c6a992d55-C0zTICcS.css` (static-composer-actions, cds-shadow-popover)
  * 
  * 核心工程机制:
  * 1. 严格 CJK 输入法合成守卫 (IME Composition Guard):

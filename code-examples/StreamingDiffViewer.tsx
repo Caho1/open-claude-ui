@@ -4,10 +4,6 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
  * ==============================================================================
  * Claude Design System (CDS) - StreamingDiffViewer.tsx
  * 
- * 逆向还原自官方 Claude Epitaxy 代码差异对比与流式高亮引擎:
- * - `c19e90103-CvUj-0ZH.js` (Jh / Xh / vh / epitaxy-diff / epitaxy-codeblock)
- * - `c6a992d55-C0zTICcS.css` (--diffs-addition / --diffs-deletion / saved-check-decay)
- * - `tree-sitter-Tbdz49RR.js` (incremental parser tokens)
  * 
  * 核心工程机制:
  * 1. 表格行号约束与 tabular-nums 对齐:

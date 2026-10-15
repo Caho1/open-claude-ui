@@ -4,10 +4,6 @@ import React, { useState } from 'react';
  * ==============================================================================
  * Claude Design System (CDS) - ModelSwitcherWithTokenGauge.tsx
  * 
- * 逆向还原自官方 Claude 模型矩阵选择器与 Token 上下文仪表盘:
- * - `shared-8-4Jj8qhmU.js` (model selector & model tier descriptors)
- * - `shared-3-DVMvy2kM.js` (cache_read_input_tokens / context capacity)
- * - `c6a992d55-C0zTICcS.css` (cds-token-gauge, model-pill-active)
  * 
  * 核心工程机制:
  * 1. 官方三大模型梯队架构 (Model Tier Matrix):

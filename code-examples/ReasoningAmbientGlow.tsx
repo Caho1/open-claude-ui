@@ -4,9 +4,6 @@ import React, { useEffect, useRef } from 'react';
  * ==============================================================================
  * Claude Design System (CDS) - ReasoningAmbientGlow.tsx
  * 
- * 逆向还原自官方 Claude 动态光效与推理氛围感引擎:
- * - `c6a992d55-C0zTICcS.css` (cds-shimmer-text-shine / cds-shimmer-text-band / wl-glow / cds-dot-pulse / epitaxy-linear-sweep)
- * - `cde7c3a92-zIg_rFtU.js` (--shadow-drop-glow / --shadow-drop-ring / warm-glow / flicker)
  * 
  * 核心视觉物理学:
  * 1. 陶土暖光推理晕染 (Warm Clay Ambient Glow):
@@ -35,7 +32,7 @@ export interface ReasoningAmbientGlowProps {
  */
 export const ReasoningAmbientGlow: React.FC<ReasoningAmbientGlowProps> = ({
   active = true,
-  statusText = 'Claude 正在进行深度思考与逆向推理...',
+  statusText = 'Claude 正在思考并整理实现方案...',
   durationSeconds,
   showCanvasBackdrop = true,
   className = '',
@@ -80,7 +77,7 @@ export const ReasoningAmbientGlow: React.FC<ReasoningAmbientGlowProps> = ({
 };
 
 /**
- * 2. 官方反编译 keyframe 文本扫光组件 (ShimmerText)
+ * 2. 基于 keyframe 的文本扫光组件 (ShimmerText)
  * 对应 official `cds-shimmer-text-shine`
  */
 export const ShimmerText: React.FC<{ text: string; className?: string }> = ({

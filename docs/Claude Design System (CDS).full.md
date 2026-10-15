@@ -6,7 +6,7 @@ status: active
 domain: development
 category: ui_library
 name: Claude Design System (CDS)
-source: /Applications/Claude.app (v1.28 Production)
+source: open-claude-ui
 verified_at: 2026-10-14
 created_at: 2026-10-13
 updated_at: 2026-10-14
@@ -23,16 +23,15 @@ effect_type:
 tags:
   - knowledge/development
   - dev/ui
-  - reverse-engineering
+  - frontend-development
   - claude
   - design-system
 ---
 
 # Claude Design System (CDS) 前端 UI 与动效完整开发指导手册
 
-> **版本**：1.0 (基于 Claude Desktop `/Applications/Claude.app` 生产环境全量逆向分析)  
-> **逆向框架**：全流程依托 **[REA (Reverse Engineer Anything)](https://github.com/morluto/rea)** 完成 Vite/Rollup AST 反混淆、运行时行为追踪与 ASAR 资源解包。  
-> **定位**：供前端工程师、UI 设计师与独立开发者像素级复刻 Claude 质感与交互的完整工程指导规范。  
+> **版本**：1.0（前端组件与交互动效开发指南）<br>
+> **定位**：供前端工程师、UI 设计师与独立开发者构建一致的视觉风格与交互体验的完整工程指导规范。<br>
 > **技术栈适配**：HTML5 + Tailwind CSS v3/v4 + React/Vue + Framer Motion (或原生 CSS)
 
 ---
@@ -90,7 +89,7 @@ tags:
    - [8.5 交互防御与边缘场景守卫](#85-交互防御与边缘场景守卫)
    - [8.6 生产级组件库快速装配指南 (30 模块)](#86-生产级组件库快速装配指南-30-模块)
    - [8.7 智能体自检与质量门禁清单](#87-智能体自检与质量门禁清单)
-9. [第九篇：Claude Desktop 2.0 (v2.37337.1) 全量版本更新深度逆向分析与架构演进报告](#第九篇claude-desktop-20-v2373371-全量版本更新深度逆向分析与架构演进报告)
+9. [第九篇：桌面端界面与交互设计](#第九篇桌面端界面与交互设计)
    - [9.1 版本发布定位与核心工程边界廓清](#91-版本发布定位与核心工程边界廓清)
    - [9.2 核心界面拓扑演进与工作流重构](#92-核心界面拓扑演进与工作流重构-anthony-morris-评述与社区焦点)
    - [9.3 通用桌面交互与 Electron 运行时升级](#93-通用桌面交互与-electron-运行时升级)
@@ -151,7 +150,7 @@ graph TD
 > **技术领域与英文指代**：`Border Radius, Heights & Sizing`
 
 #### 1.3.1 圆角阶梯体系 (Border Radius Hierarchy)
-Claude 绝非全局采用单一圆角，而是有着极严格的**角色语义圆角阶梯**。在生产构建样式 `c6a992d55-C0zTICcS.css` 中提取到的完整圆角令牌矩阵如下：
+Claude 绝非全局采用单一圆角，而是有着极严格的**角色语义圆角阶梯**。组件圆角令牌矩阵如下：
 
 | 令牌名称 / 变量 | 精确像素 | 对应 Tailwind 类 | 角色语义与典型组件 |
 | :--- | :--- | :--- | :--- |
@@ -207,7 +206,7 @@ Claude 绝非全局采用单一圆角，而是有着极严格的**角色语义�
 | **2.0px 焦点与吸附高亮** | `2.0px` (Focus Ring & Glow) | `--cds-shadow-drop-ring: inset 0 0 0 2px var(--cds-clay);` | 文件拖拽悬停至输入框吸附光晕、键盘 Tab 导航可访问性聚焦高亮圈 |
 
 ```css
-/* 提取自 c6a992d55-C0zTICcS.css 发丝细边与透明度层级 */
+/* 组件样式示例 */
 :root {
   --cds-alpha-0: hsla(0, 0%, 8%, 0);
   --cds-alpha-1: hsla(0, 0%, 8%, 0.05); /* 幽灵按钮悬浮、骨架屏、禁用态 */
@@ -401,7 +400,7 @@ Claude 桌面端构建了一套专为高密度信息架构设计的 7 阶排版�
 | **`title`** | `calc(1.25rem * var(--cds-rem-scale))` | **18.82px (约 20px / 21px)** | `calc(1.5rem * scale)` (23.5px) | 1.25 | 对话顶栏标题、Project 项目主标题、工作区主导航头部 |
 
 ```css
-/* 提取自 c6a992d55-C0zTICcS.css 核心排版变量 */
+/* 组件样式示例 */
 :root {
   --cds-rem-scale: calc(16 / 17); /* 桌面端光学微调系数 ≈ 0.94117647 */
 
@@ -442,7 +441,7 @@ Claude 依托其专有 Variable Font 轴进行了精准的物理逆补偿：在�
 | **Bold (强警示/重强调)** | `font-weight: 600` / `"wght" 660` | `--cds-font-axis-wght: "wght" 660` | 保持稳固的醒目重音边界 |
 
 ```css
-/* 逆向源码提取自 c6a992d55-C0zTICcS.css */
+/* 组件样式示例 */
 /* 浅色模式基准 */
 .font-normal {
   --cds-font-axis-wght: "wght" 400;
@@ -515,7 +514,7 @@ Claude 体系强制采用专门提取的负偏置实用类：
 * **`.align-[-1px]` / `.align-[-2px]`**：用于固定高度（32px/46px）工具栏与标题栏的行内徽章。
 
 ```css
-/* 提取自 c6a992d55-C0zTICcS.css */
+/* 组件样式示例 */
 .align-\[-0\.125em\] { vertical-align: -.125em; }
 .align-\[-0\.075em\] { vertical-align: -.075em; }
 .align-\[-1px\] { vertical-align: -1px; }
@@ -704,7 +703,7 @@ Claude 顶部或设置中的滑动 Tab 采用 **999px 全圆角轨道 + 纯几�
 #### 2. 容器查询收缩规则 (@container)
 当包含分段选择器的容器（如侧边栏、移动端视口、窄抽屉）宽度缩紧时，Claude 避免文字强制折行，而是执行如下容器查询规则：
 ```css
-/* 提取自 c6a992d55-C0zTICcS.css */
+/* 组件样式示例 */
 @container (width <= 254px) {
   /* 3 项分段控制器在宽度 <= 254px 时，未激活项隐藏文字标签，只保留图标/紧凑形态 */
   .df-pills[data-segmented][data-pills="3"] .df-pill:not([data-active]) .df-pill-label {
@@ -766,7 +765,7 @@ Claude 顶部或设置中的滑动 Tab 采用 **999px 全圆角轨道 + 纯几�
 * **表面质感**：背景 `Surface 2`，1px 极细微边框，阴影 `shadow-xs`。
 * **入场物理生长动画**：
   ```css
-  /* 提取自 shared-styles-CTu5t_TM.css */
+  /* 组件样式示例 */
   @keyframes file-thumbnail-grow-in {
     0%   { opacity: 0; transform: scale(0.85); }
     100% { opacity: 1; transform: scale(1); }
@@ -944,11 +943,11 @@ export function ClaudeComposer() {
 
 ---
 
-在官方 Claude Desktop / Web 客户端中，输入框已由传统简单的 `<textarea>` 全面进化为以 ProseMirror / Tiptap 内核驱动的下一代富文本与多模态指令交互系统（源码取证自 `cd5a31703-B4nKQMBN.js` 与 `cb6930dae-Q_S3-FcC.js`）。
+在官方 Claude Desktop / Web 客户端中，输入框已由传统简单的 `<textarea>` 全面进化为以 ProseMirror / Tiptap 内核驱动的下一代富文本与多模态指令交互系统。
 
-#### 3.3.1 核心生产反编译算法取证 (`cd5a31703-B4nKQMBN.js`, `cb6930dae-Q_S3-FcC.js`)
+#### 3.3.1 核心实现示例
 
-在 Claude 生产混淆包 `cd5a31703-B4nKQMBN.js` 中，存在关键的键盘按键处理与合成守卫：
+输入框需要处理键盘事件并保护输入法合成过程：
 ```javascript
 // Claude 官方输入法合成中断拦截与 Escape/Enter 状态机
 let e = e => {
@@ -972,7 +971,7 @@ let e = e => {
 }
 ```
 
-在 `cb6930dae-Q_S3-FcC.js` 中，取证到了完整的指令与文件引用解析引擎：
+指令与文件引用解析示例：
 ```javascript
 // Slash 指令与 Mention 文件胶囊正向解析器
 function bs(e, t, n, r) {
@@ -1031,11 +1030,11 @@ function bs(e, t, n, r) {
 
 > **技术领域与英文指代**：`Model Switcher & Context Gauge`
 
-Claude 为开发者提供了直观的模型阶梯选择器以及业界最先进的 Prompt Caching 显存成本解构仪表盘（源码取证自 `shared-8-4Jj8qhmU.js` 与 `shared-3-DVMvy2kM.js`）。
+Claude 为开发者提供了直观的模型阶梯选择器以及业界最先进的 Prompt Caching 显存成本解构仪表盘。
 
-#### 3.4.1 核心生产反编译算法取证 (`shared-8-4Jj8qhmU.js`, `shared-3-DVMvy2kM.js`)
+#### 3.4.1 核心实现示例
 
-在 `shared-3-DVMvy2kM.js` 中提取出其 Token 结构与缓存读写计量器：
+以下示例展示 Token 结构与缓存读写计量器：
 ```javascript
 // 上下文窗口与 Prompt Caching 解构统计
 function calculateContextBudget(e) {
@@ -1074,11 +1073,11 @@ function calculateContextBudget(e) {
 
 > **技术领域与英文指代**：`Tool Decisions & Human-in-the-Loop`
 
-在接入 Model Context Protocol (MCP) 与本地命令行执行时，Claude 绝不静默运行具有副作用的外部指令，而是呼出具有三阶授权生命周期的决策卡片（源码取证自 `cc1aae219-CPC-WA-x.js` 与 `c05b96c7f-DSH7iwX5.js`）。
+在接入 Model Context Protocol (MCP) 与本地命令行执行时，Claude 绝不静默运行具有副作用的外部指令，而是呼出具有三阶授权生命周期的决策卡片。
 
-#### 3.5.1 核心生产反编译算法取证 (`cc1aae219-CPC-WA-x.js`, `c05b96c7f-DSH7iwX5.js`)
+#### 3.5.1 核心实现示例
 
-在 `c05b96c7f-DSH7iwX5.js` 中提取出其权限检查与决议回调接口：
+以下示例展示权限检查与决议回调接口：
 ```javascript
 // MCP 工具调用过滤与决议派发
 function Lo(e, t, n) {
@@ -1228,11 +1227,11 @@ export const springBadgeBounce = {
 
 > **技术领域与英文指代**：`Ambient Shimmer, Glow & Pulse`
 
-Claude 拥有极具辨识度的“思考与推理”视觉氛围。不同于常规粗暴的高斯模糊或旋转加载圈，Claude 运用了精密的时间常数与光学渐变模型（源码取证自 `c6a992d55-C0zTICcS.css` 与 `cde7c3a92-zIg_rFtU.js`）。
+Claude 拥有极具辨识度的“思考与推理”视觉氛围。不同于常规粗暴的高斯模糊或旋转加载圈，Claude 运用了精密的时间常数与光学渐变模型。
 
-#### 4.2.1 核心生产反编译算法取证 (`c6a992d55-C0zTICcS.css`, `cde7c3a92-zIg_rFtU.js`)
+#### 4.2.1 核心实现示例
 
-在 `c6a992d55-C0zTICcS.css` 中提取出的官方核心关键帧定义：
+以下示例展示核心关键帧定义：
 ```css
 /* 官方文本渐变光波扫描 */
 @keyframes cds-shimmer-text-shine {
@@ -1300,11 +1299,11 @@ Claude 拥有极具辨识度的“思考与推理”视觉氛围。不同于常�
 
 > **技术领域与英文指代**：`CSS Scroll Fade Masks & Edge Shading`
 
-在长聊天气泡流、横向标签页切换栏与文件列表中，Claude 摒弃了生硬的边界截断，全面应用其标志性的平滑滚动边缘羽化遮罩（源码取证自 `frame-shell-chrome-BDKWDTvx.js` 与 `c6a992d55-C0zTICcS.css`）。
+在长聊天气泡流、横向标签页切换栏与文件列表中，Claude 摒弃了生硬的边界截断，全面应用其标志性的平滑滚动边缘羽化遮罩。
 
-#### 4.3.1 核心生产反编译算法取证 (`c6a992d55-C0zTICcS.css`)
+#### 4.3.1 核心实现示例
 
-在官方混淆样式表 `c6a992d55-C0zTICcS.css` 中提取出的 7 阶非线性 Alpha 渐变遮罩规则：
+以下示例展示 7 阶非线性 Alpha 渐变遮罩规则：
 ```css
 /* 官方精密 7-Stop 非线性渐变遮罩 (7-Stop Non-Linear Alpha Mask) */
 mask-image: linear-gradient(
@@ -1354,23 +1353,16 @@ mask-image: linear-gradient(
 
 > **技术领域与英文指代**：`Voice Mode & AudioWorklet Architecture`
 
-> **取证说明与真实性溯源**：  
-> 本章节依据 REA 逆向反编译自 macOS 生产环境 `/Applications/Claude.app/Contents/Resources/ion-dist/audio/voice/`：
-> - 核心音频驱动：`audioSinkWorklet.js`（基于 `SharedArrayBuffer` 与 `Atomics` 的线程安全无锁环形缓冲区）
-> - 交互音效资源：`sfx/`（`enter_voice_mode.mp3`、`exit_voice_mode.mp3`、`disconnected.mp3`、`tool_approval_needed.mp3`）
-> - 5 大官方音色预览库：`selection/`（`glassy.mp3`、`rounded.mp3`、`mellow.mp3`、`buttery.mp3`、`airy.mp3`）
-> - 前端音频管线：`shared-8-4Jj8qhmU.js`（`AudioPlayer`、`setSinkId` 硬件路由、30% 舒缓音量规范）
-> - 实时频域可视化：`c4a1e6da6-B9dxf4-D.js`（`LiveMicActivityBars` 6 柱波形、512 FFT 频域分析、0.08 噪声门限、0.7 次幂 Gamma 压缩）。  
-> **合规说明**：本公开仓库不分发商业专有音频二进制文件；推荐使用基于原生 Web Audio API 振荡器的零延迟合成方案（见 `code-examples/ClaudeAudioPlayer.ts`）或通过 `setSfxPath` 接入自定义免版权音效。
+> **实现说明**：音效使用 Web Audio API 合成，频域可视化参考 `LiveMicActivityBars`。流式音频缓冲示例用于说明线程间的数据传递；接入应用需配置相应浏览器能力。
 
 ---
 
-#### 5.1.1 官方流式音频架构逆向解密：AudioWorklet 与 SharedArrayBuffer 环形缓冲 (`audioSinkWorklet.js`)
+#### 5.1.1 流式音频架构说明：AudioWorklet 与 SharedArrayBuffer 环形缓冲 (`audioSinkWorklet.js`)
 
 在语音大模型实时对话（如 Claude Voice / Realtime API）场景下，传统的 `AudioContext.decodeAudioData` 或单次 `AudioBufferSourceNode` 调度会因为主线程垃圾回收（GC）或长任务阻塞而产生致命的爆音、破音或断断续续。
 
-#### 1. 核心生产反编译源码取证 (`audioSinkWorklet.js`)
-Anthropic 采用现代浏览器的 `AudioWorkletProcessor` 在独立的高优先级音频渲染线程中运行，并通过 `SharedArrayBuffer` 与 `Atomics` 原子操作实现主线程与音频线程之间的**无锁零拷贝生产-消费者队列（RingBuffer）**：
+#### 1. 核心实现示例
+流式音频可以使用现代浏览器的 `AudioWorkletProcessor` 在独立的高优先级音频渲染线程中运行，并通过 `SharedArrayBuffer` 与 `Atomics` 原子操作实现主线程与音频线程之间的**无锁零拷贝生产-消费者队列（RingBuffer）**：
 
 ```javascript
 // audioSinkWorklet.js: Atomics 驱动的环形无锁缓冲区
@@ -1448,13 +1440,13 @@ registerProcessor("audio-sink-processor", AudioSinkProcessor);
 
 ---
 
-#### 5.1.2 四大官方 SFX 交互音效与 30% 舒适声学规范 (`shared-8-4Jj8qhmU.js`)
+#### 5.1.2 SFX 交互音效与 30% 舒适声学规范
 
-在桌面端与语音模式中，过度刺耳的蜂鸣提示音会破坏 Claude 温润的人文调性。Anthropic 在 `shared-8-4Jj8qhmU.js` 中确立了严格的**30% 舒缓音量原则**与硬件路由：
+在桌面端与语音模式中，过度刺耳的蜂鸣提示音会破坏 Claude 温润的人文调性。音效示例采用**30% 舒缓音量原则**与硬件路由：
 
-#### 1. 核心生产反编译代码取证
+#### 1. 核心实现示例
 ```javascript
-// shared-8-4Jj8qhmU.js: 官方音效调度器
+// 官方音效调度器
 function createSoundElement(url, volume = 0.3) {
   if (typeof window === "undefined") return null;
   let audio = new Audio(url);
@@ -1516,7 +1508,7 @@ flowchart LR
     GammaComp --> MotionInterpolate["Framer Motion 弹性高度映射 (4px - 24px)"]
 ```
 
-#### 1. 核心数学公式与生产反编译算法
+#### 1. 核心数学公式与交互算法
 ```javascript
 // c4a1e6da6-B9dxf4-D.js
 // 1. Web Audio AnalyserNode 配置
@@ -1562,24 +1554,18 @@ voice-personas/
 
 > **技术领域与英文指代**：`Lightbox, Pan/Zoom & Shared Element Transitions`
 
-> **取证说明与真实性溯源**：  
-> 本章节依据 REA 逆向反编译自 macOS 生产环境 `/Applications/Claude.app/Contents/Resources/ion-dist/assets/v1/`：  
-> - 核心画廊跑道与以光标为锚点的缩放平移算法：`c4b054ed5-BGjH-Uu6.js`  
-> - 共享元素 View Transitions 与圆角/内切无缝形变（FLIP Morph）：`cd5136de8-BDys1vAN.js`  
-> - 会话多轮附件渲染、缩略图坐标登记与画廊通道打通：`cd5a31703-B4nKQMBN.js`  
-> - 视频灯箱弹窗骨架与按键陷阱：`ce2aec0ca-CyReNPZJ.js`  
-> - 全局动画关键帧：`c6a992d55-C0zTICcS.css` (`.animate-lightbox-backdrop-in`, `.animate-lightbox-content-in`)
+> **实现说明**：媒体预览由平移缩放、共享元素转场和附件布局组成，可参考 `MediaLightboxViewer` 与 `useClaudeSharedElementTransition`。
 
 ---
 
-#### 5.2.1 核心生产反编译算法取证 (`c4b054ed5-BGjH-Uu6.js`, `cd5136de8-BDys1vAN.js`)
+#### 5.2.1 核心实现示例
 
-#### 1. 物理常数与阻尼阈值矩阵 (Extracted Physical Constants)
+#### 1. 物理常数与阻尼阈值矩阵 (Interaction Constants)
 
 在 `c4b054ed5-BGjH-Uu6.js` 头部，Anthropic 确立了一组极其严苛的物理常数：
 
 ```javascript
-// c4b054ed5-BGjH-Uu6.js: 核心物理学与阻尼常数
+// 核心物理学与阻尼常数
 var ae = 2;        // 最小最大缩放倍数 (Math.max(naturalWidth / fitWidth, 2))
 var oe = 4;        // 手势死区过滤阈值 (Math.hypot(dx, dy) < 4px 判定为手部微抖，不触发拖拽)
 var se = 0.01;     // 滚轮缩放指数因子 (Math.exp(-deltaY * 0.01))
@@ -1591,7 +1577,7 @@ var le = 2;        // 虚拟画廊跑道预加载跨度 (Math.abs(t - O) <= 2，
 
 ---
 
-#### 5.2.2 View Transitions API 共享元素无缝变形（FLIP Morphing & Object-Fit 逆向计算）
+#### 5.2.2 View Transitions API 共享元素无缝变形（FLIP Morphing & Object-Fit 几何计算）
 
 在 Claude 中点击对话气泡或文件卡片里的图片时，图片**绝不是粗暴地凭空弹窗**，而是如同原生系统级相册一般，从对话流里的缩略图**无缝平滑膨胀展开至全屏 Lightbox**；关闭时又能精准原路飞回缩略图。
 
@@ -1615,7 +1601,7 @@ sequenceDiagram
     VT-->>LB: 变形动画完成，清除 view-transition-name
 ```
 
-#### 核心生产源码取证 (`cd5136de8-BDys1vAN.js`)
+#### 核心实现示例
 
 ```javascript
 // 1. 动态提取生效圆角 (向上穿透 5 层 DOM 捕获真实裁剪半边距)
@@ -1679,7 +1665,7 @@ c = \frac{S_{\text{target}}}{S_{\text{current}}} \\
 其中允许平移的最大物理边界 $\text{maxTx}, \text{maxTy}$ 根据视口与图像尺寸动态解算：
 $$\text{maxTx} = \max\left(0, \frac{\text{fitWidth} \cdot S - \text{viewportWidth}}{2}\right) \cdot \min\left(1, \max\left(0, \frac{S - 1.05}{0.95}\right)\right)$$
 
-#### 核心生产源码取证 (`c4b054ed5-BGjH-Uu6.js`)
+#### 核心实现示例
 
 ```javascript
 // 核心锚点平移缩放方程
@@ -1750,7 +1736,7 @@ function handleWheel(e) {
 
 完整生产级实现已独立打包存放在工程代码库中，支持即拷即用：
 1. **组件本体**：[`code-examples/MediaLightboxViewer.tsx`](code-examples/MediaLightboxViewer.tsx) —— 包含完整的以光标为锚点的双击缩放、指针拖拽锁定、滚轮指数缩放、75vw 跑道平移、键盘箭头导航与无障碍焦点保护。
-2. **变形转场 Hook**：[`code-examples/useClaudeSharedElementTransition.ts`](code-examples/useClaudeSharedElementTransition.ts) —— 包含基于原生 `startViewTransition` 的缩略图圆角与 `object-fit: contain` 内切剪裁百分比逆向计算。
+2. **变形转场 Hook**：[`code-examples/useClaudeSharedElementTransition.ts`](code-examples/useClaudeSharedElementTransition.ts) —— 包含基于原生 `startViewTransition` 的缩略图圆角与 `object-fit: contain` 内切剪裁百分比几何计算。
 
 ---
 
@@ -1758,11 +1744,11 @@ function handleWheel(e) {
 
 > **技术领域与英文指代**：`Artifacts Split-Pane Resizer & Docking Physics`
 
-在 Artifacts 产物展示、代码编辑与长文档审查场景中，Claude 拥有精密的可拖拽左右双栏分割与折叠交互（源码取证自 `shared-22-DYCF-SVs.js` 与 `c909d93e7-BsSzOQcm.js`）。
+在 Artifacts 产物展示、代码编辑与长文档审查场景中，Claude 拥有精密的可拖拽左右双栏分割与折叠交互。
 
-#### 5.3.1 核心生产反编译算法取证 (`shared-22-DYCF-SVs.js`, `c909d93e7-BsSzOQcm.js`)
+#### 5.3.1 核心实现示例
 
-在 `shared-22-DYCF-SVs.js` 中，提取出了拖拽生命周期与分栏比例算法：
+以下示例展示拖拽生命周期与分栏比例算法：
 ```javascript
 // 拖拽激活与光标指针跟随
 w = e => {
@@ -1822,10 +1808,10 @@ C = e => {
 
 Claude 拥有强大的动态渲染（React/SVG/Mermaid/HTML）能力，其底层运行在代号为 **Epitaxy** 的隔离容器中。
 
-#### 1. 核心生产反编译代码取证 (`c58115fda-BKnbLmi3.js` / `cd5a31703-B4nKQMBN.js`)
+#### 1. 核心实现示例
 
 ```javascript
-// c58115fda-BKnbLmi3.js: Epitaxy 权限隔离与通信门禁
+// Epitaxy 权限隔离与通信门禁
 var EPITAXY_IFRAME_SANDBOX = [
   "allow-scripts",
   "allow-same-origin",
@@ -1861,7 +1847,7 @@ window.addEventListener("message", function(event) {
   }
 });
 
-// 12 项 Virtual Package 自愈重定向表 (cd5a31703-B4nKQMBN.js)
+// 12 项 Virtual Package 自愈重定向表
 function resolveVirtualModule(importName) {
   var packageAliases = {
     "lucide-react": "@ant/epitaxy-lucide-shim",
@@ -1933,11 +1919,11 @@ export const EpitaxyIframeBridge: React.FC<EpitaxyIframeBridgeProps> = ({
 
 > **技术领域与英文指代**：`Diff Viewer, Syntax Highlighter & CodeBlock`
 
-在生成和修改代码文件时，Claude 会在 Artifacts 面板与会话气泡内呼出其专属的代码差异比对引擎（源码取证自 `c19e90103-CvUj-0ZH.js` 与 `c6a992d55-C0zTICcS.css`）。
+在生成和修改代码文件时，Claude 会在 Artifacts 面板与会话气泡内呼出其专属的代码差异比对引擎。
 
-#### 5.5.1 核心生产反编译算法取证 (`c19e90103-CvUj-0ZH.js`, `tree-sitter-Tbdz49RR.js`)
+#### 5.5.1 核心实现示例
 
-在 `c19e90103-CvUj-0ZH.js` 中提取出其流式高亮调度器 `Jh` 与 Shadow DOM 挂载函数 `Xh`：
+以下示例展示流式高亮调度器 `Jh` 与 Shadow DOM 挂载函数 `Xh`：
 ```javascript
 // Shadow DOM 隔离与双栏 Grid 锁定挂载
 function Xh(e, t, n, r, i) {
@@ -2012,7 +1998,7 @@ Claude 的代码高亮块具有独立而优雅的头部设计与状态机动效�
 * **复制反馈 2.5s 状态机 (`saved-check-decay`)**：
   点击复制代码后，复制图标瞬时切换为绿色勾选图标并展示 "Copied"；经过 `2.5s` 静默展示期后，通过 CSS keyframes 自动淡隐恢复为默认复制状态：
   ```css
-  /* 提取自 c6a992d55-C0zTICcS.css */
+  /* 组件样式示例 */
   @keyframes saved-check-decay {
     0%   { opacity: 1; transform: scale(1); }
     70%  { opacity: 1; transform: scale(1); }
@@ -2037,10 +2023,10 @@ Claude 的代码高亮块具有独立而优雅的头部设计与状态机动效�
 
 在桌面端，Claude 摒弃了单窗口加载的简陋做法，采用 **Host BrowserWindow + Transparent WebContentsView** 双层解耦。
 
-#### 1. 核心生产反编译代码取证 (`app.asar` / `mainWindow.js` / `index.chunk-CiiI592G.js`)
+#### 1. 核心实现示例
 
 ```javascript
-// index.chunk-CiiI592G.js: 主窗口与透明内容视图构建
+// 主窗口与透明内容视图构建
 var TRAFFIC_LIGHT_DIAMETER = 12; // fBn: macOS 红绿灯按钮直径 12px
 var TRAFFIC_LIGHT_BASELINE = 16.5; // gBn: 33 / 2, 标准 45px 顶栏物理中心线
 
@@ -2084,7 +2070,7 @@ hostWindow.on("leave-full-screen", updateRadius);
 ```
 
 ```javascript
-// shared-19-DmuztgN-.js: Web 端安全区动态计算
+// Web 端安全区动态计算
 var TRAFFIC_LIGHT_SPACER_WIDTH = 74; // ew = 74px: 红绿灯物理占位宽
 
 function computeTitlebarInsets(isMac, isFullscreen, isDesktop, incognito) {
@@ -2098,7 +2084,7 @@ function computeTitlebarInsets(isMac, isFullscreen, isDesktop, incognito) {
 ```
 
 ```css
-/* 纯 CSS 桌面端环境探测器 (c6a992d55-C0zTICcS.css) */
+/* 纯 CSS 桌面端环境探测器  */
 @supports ((-webkit-mask-clip: text)) and (-webkit-app-region: drag) {
   /* 仅在 Chromium / Electron 桌面宿主中生效 */
   .cds-desktop-drag-strip {
@@ -2120,11 +2106,11 @@ function computeTitlebarInsets(isMac, isFullscreen, isDesktop, incognito) {
 
 > **技术领域与英文指代**：`Sidebar Drag-and-Drop & Pinning Physics`
 
-Claude Desktop 的侧边栏采用高度模块化的多层级会话组织系统（源码取证自 `shared-21-CGGmSsMS.js` 与 `shared-22-DYCF-SVs.js`），支持会话图钉置顶、拖拽重排与跨区域拓扑分组。
+Claude Desktop 的侧边栏采用高度模块化的多层级会话组织系统，支持会话图钉置顶、拖拽重排与跨区域拓扑分组。
 
-#### 6.2.1 核心生产反编译算法取证 (`shared-21-CGGmSsMS.js`, `shared-22-DYCF-SVs.js`)
+#### 6.2.1 核心实现示例
 
-在 `shared-21-CGGmSsMS.js` 中，会话项被封装为带有重排操作接口的 `pinReorder` 实体：
+会话项可以封装为带有重排操作接口的 `pinReorder` 实体：
 ```javascript
 function mV(e, t) {
   return [
@@ -2136,7 +2122,7 @@ function mV(e, t) {
 }
 ```
 
-在 `shared-22-DYCF-SVs.js` 中，侧边栏状态机声明了完整的持久化字段集合与拖拽标记：
+侧边栏状态机示例包含持久化字段集合与拖拽标记：
 ```javascript
 var rb = [
   "pinnedOrder",
@@ -2183,11 +2169,11 @@ a.toggleAttribute("data-pin-dragging", zt);
 
 > **技术领域与英文指代**：`Cowork Space & Agent Delegation Topology`
 
-在最新的 Claude Desktop / Code 客户端中，支持团队或自动化流水线以“Cowork 协作空间”形式组织多个智能体（源码取证自 `shared-6-zKKz0bS2.js` 与 `shared-21-CGGmSsMS.js`）。
+在最新的 Claude Desktop / Code 客户端中，支持团队或自动化流水线以“Cowork 协作空间”形式组织多个智能体。
 
-#### 6.3.1 核心生产反编译算法取证 (`shared-6-zKKz0bS2.js`, `shared-21-CGGmSsMS.js`)
+#### 6.3.1 核心实现示例
 
-在 `shared-6-zKKz0bS2.js` 中提取出其多代理会话通道与委派标识：
+以下示例展示多代理会话通道与委派标识：
 ```javascript
 // 协同会话类型与通道委派动作
 case "channel_delegation":
@@ -2198,7 +2184,7 @@ case "channel_remote_control_session":
 
 #### 6.3.2 多智能体任务委派状态机与共享工件网格资产池
 - **委派拓扑生命周期**：
-  任务从主架构师 (Lead Architect) 派发至特定领域子智能体（如逆向专家、UI 开发工程师、QA 验收员），状态机包含：
+  任务从主架构师 (Lead Architect) 派发至特定领域子智能体（如前端工程师、UI 设计师、QA 验收员），状态机包含：
   `idle` → `running`（陶土波浪脉冲）→ `waiting_review`（等待人工确认）→ `completed`；
 - **共享工件库网格 (Shared Artifacts Pool)**：
   每个智能体生成的产物（文档、架构图、组件代码、音频脚本）自动同步至项目统一工件池，卡片支持类型过滤与一键预览对比。
@@ -2217,12 +2203,12 @@ case "channel_remote_control_session":
 
 在长文本或代码流式输出时，最影响体验的是“**滚动抖动与视口抢夺**”：如果用户正在向上翻看历史消息，AI 每吐出一个 Token 就强行将视口拉到底部，会导致严重的操作对抗感。
 
-#### 1. 核心生产反编译算法取证 (`ca2ef848d-Dz47ULRM.js`)
+#### 1. 核心实现示例
 
 Anthropic 在 `ca2ef848d-Dz47ULRM.js` 中确立了 **150ms 冷却时间戳 + 用户滚轮打断 + 35vh 底部缓冲垫 + 6px 硬件加速模糊消解**：
 
 ```javascript
-// ca2ef848d-Dz47ULRM.js: 生产环境滚动图钉判定算法
+// 生产环境滚动图钉判定算法
 var COOL_DOWN_MS = 150;
 var lastUserInputAt = 0;
 var programmaticScroll = false;
@@ -2266,7 +2252,7 @@ function onTokenChunkAppended(containerEl) {
   padding-bottom: var(--chat-extra-space);
 }
 
-/* 新 Token 到达时的 6px GPU 模糊消解动画（c6a992d55-C0zTICcS.css） */
+/* 新 Token 到达时的 6px GPU 模糊消解动画 */
 @keyframes _grapheme-reveal_1plog_1 {
   0% {
     opacity: 0.2;
@@ -2430,7 +2416,6 @@ graph TD
 }
 ```
 
-
 ---
 
 ---
@@ -2438,9 +2423,9 @@ graph TD
 #### 6.5.4 极端窄视口与三档容器查询响应栏
 在 Artifacts 侧边栏开启、多任务分栏或移动端窄屏时，传统基于全屏 `@media` 的响应式断点彻底失效。
 
-#### 1. 核心生产反编译代码取证 (`c6a992d55-C0zTICcS.css`)
+#### 1. 核心实现示例
 
-在 `c6a992d55-C0zTICcS.css` 中提取出 281 条 `@container` 规则与 27 个命名容器：
+以下示例展示 281 条 `@container` 规则与 27 个命名容器：
 
 ```css
 /* 1. 容器声明：为主消息流与操作栏建立独立容器上下文 */
@@ -2529,10 +2514,10 @@ export const ContainerResponsiveBar: React.FC<{ children?: React.ReactNode }> = 
 
 针对高频键盘盲操，Claude 建立了基于 **Roving TabIndex** 的漫游焦点网格与全量无障碍通道。
 
-#### 1. 核心生产反编译算法取证 (`c16e267d0-B2-4AuUD.js`)
+#### 1. 核心实现示例
 
 ```javascript
-// c16e267d0-B2-4AuUD.js: 漫游网格键位映射与 RTL 镜像翻转
+// 漫游网格键位映射与 RTL 镜像翻转
 var KEY_INTENT_MAP = {
   ArrowLeft:  "prev",
   ArrowUp:    "prev",
@@ -2669,10 +2654,10 @@ export function useClaudeRovingFocus(itemCount: number, options: RovingFocusOpti
 
 在面临千万人高并发与复杂网络时，Claude 构建了多级防御与自愈机制。
 
-#### 1. 核心生产反编译算法取证 (`shared-50-Bmc9oUMm.js` / `cd5a31703-B4nKQMBN.js`)
+#### 1. 核心实现示例
 
 ```javascript
-// shared-50-Bmc9oUMm.js: 429/503 指数退避与常数矩阵
+// 429/503 指数退避与常数矩阵
 var MIN_RETRY_DELAY = 5000;   // OR = 5000ms: 基准重试下限 5s
 var MAX_RETRY_DELAY = 600000; // DR = 600000ms: 封顶重试上限 10min
 
@@ -2700,7 +2685,7 @@ function createErrorResilienceMachine(errorEvent, currentAttempts = 0) {
 ```
 
 ```javascript
-// cd5a31703-B4nKQMBN.js: Thinking 思考过程折叠互斥锁算法
+// Thinking 思考过程折叠互斥锁算法
 var ThinkingAccordion = function({ text, expansionKey }) {
   var isThinkingLive = useModelThinkingStreamState(); // 模型是否正处于思考流式输出阶段
   var [userExpanded, setUserExpanded] = usePersistentToggle(expansionKey);
@@ -2829,7 +2814,7 @@ export function useRateLimitBackoff(onAutoRetry: () => void) {
 
 ### 7.1 开箱即用的 Tailwind 配置与基础 CSS 代码
 
-若要在现有的前端项目中直接还原 Claude 质感，只需在 `tailwind.config.js` 与全局 CSS 中增加以下扩展：
+若要在现有的前端项目中应用 CDS 视觉风格，只需在 `tailwind.config.js` 与全局 CSS 中增加以下扩展：
 
 #### 7.1.1 `tailwind.config.js` 配置
 
@@ -2956,7 +2941,7 @@ module.exports = {
 
 > **技术领域与英文指代**：`全量 30 个生产级独立代码文件`
 
-为便于工程团队直接解耦复用，所有经过 REA 深度逆向反编译提炼的组件与动效逻辑，均已拆分为独立的生产级代码文件存放在 `code-examples/` 目录下，并提供了经过严格光学调校的系统字体回退栈与 Web Audio API 纯代码合成音效。
+为便于工程团队直接解耦复用，组件与动效逻辑均已拆分为独立的生产级代码文件存放在 `code-examples/` 目录下，并提供了经过严格光学调校的系统字体回退栈与 Web Audio API 纯代码合成音效。
 
 #### 7.2.1 基础 UI 组件与动效代码文件 (11 个模块)
 
@@ -2978,26 +2963,26 @@ module.exports = {
 
 #### 7.2.2 深度架构与工程物理学代码文件 (21 个模块)
 
-| 文件路径 | 模块名 | 逆向来源与工程机制 |
+| 文件路径 | 模块名 | 组件能力与交互机制 |
 | :--- | :--- | :--- |
-| `code-examples/ArtifactsSplitPaneResizer.tsx` | **双栏弹性分割与折叠引擎** | `shared-22-DYCF-SVs.js` / `c909d93e7-BsSzOQcm.js`：Iframe 事件防吞噬护盾、4px 移动死区、双击 50/50 居中吸附、边缘折叠门限与 min/max 约束钳制。 |
-| `code-examples/McpToolDecisionCard.tsx` | **MCP 交互式工具调用决策卡片** | `cc1aae219-CPC-WA-x.js` / `c05b96c7f-DSH7iwX5.js`：三态授权生命周期 (`pending_approval` → `running` → `success` / `error`)、三阶决议动作阵列与 Payload 审查。 |
-| `code-examples/ScrollFadeContainer.tsx` | **滚动边缘平滑渐变遮罩系统** | `frame-shell-chrome-BDKWDTvx.js` / `c6a992d55-C0zTICcS.css`：7 档非线性 Alpha 渐变遮罩、动态滚动位置传感器与双轴羽化消隐。 |
-| `code-examples/ModelSwitcherWithTokenGauge.tsx` | **模型矩阵选择器与 Token 仪表盘** | `shared-8-4Jj8qhmU.js` / `shared-3-DVMvy2kM.js`：三大模型梯队架构、Thinking 思考开关、Prompt Caching 显存成本解构与环形 SVG 仪表盘。 |
-| `code-examples/CoworkAgentCanvas.tsx` | **多智能体协同看板与拓扑空间** | `shared-6-zKKz0bS2.js` / `shared-21-CGGmSsMS.js`：多 Agent 任务委派状态机、团队共享 Artifacts 工件网格资产池与 BroadcastChannel 事件同步。 |
-| `code-examples/RichComposerWithMentions.tsx` | **新一代富文本与指令输入框** | `cd5a31703-B4nKQMBN.js` / `cb6930dae-Q_S3-FcC.js`：CJK 输入法合成守卫 (`isComposing || keyCode === 229`)、`/` 指令与 `@` 上下文双触发符、自适应高度伸缩与 Token 预测。 |
-| `code-examples/DraggableSessionList.tsx` | **侧边栏会话拖放与固定物理** | `shared-21-CGGmSsMS.js` / `shared-22-DYCF-SVs.js`：`pinnedOrder` 乐观拓扑重排、4px 指针移动死区、微倾斜幽灵投影与对撞占位线。 |
-| `code-examples/ReasoningAmbientGlow.tsx` | **动态光效与推理氛围感组件** | `c6a992d55-C0zTICcS.css` / `cde7c3a92-zIg_rFtU.js`：`cds-shimmer-text-shine` 非对称贝塞尔曲线、`wl-glow` 暖光漫反射、三点相位跳跃与 Canvas 焦散光场。 |
-| `code-examples/StreamingDiffViewer.tsx` | **代码差异对比与流式高亮引擎** | `c19e90103-CvUj-0ZH.js` / `tree-sitter-Tbdz49RR.js`：表格行号对齐与 `tabular-nums` 约束、增量流式追加管道、统一/分屏双模式切换与 2.5s 复制衰减状态机。 |
-| `code-examples/MediaLightboxViewer.tsx` | **多模态媒体查看器与画廊** | `c4b054ed5-BGjH-Uu6.js`：75vw 跑道滑动位移、以光标为锚点的仿射平移缩放、4px 拖拽死区、Ctrl 滚轮指数缩放与按键陷阱。 |
-| `code-examples/useClaudeSharedElementTransition.ts` | **View Transitions 共享元素变形** | `cd5136de8-BDys1vAN.js`：基于 `startViewTransition("chat-image-preview")`、缩略图动态圆角检测与 `object-fit: contain` 内切百分比剪裁。 |
-| `code-examples/useClaudeScrollPinning.ts` | **流式滚动视口图钉 Hook** | `ca2ef848d-Dz47ULRM.js`：150ms 冷却时间戳防抢夺、40px 底部容差图钉锁定、35vh 弹性缓冲与 GPU 字符模糊消解。 |
-| `code-examples/ContainerResponsiveBar.tsx` | **自适应容器查询响应栏** | `c6a992d55-C0zTICcS.css`：基于 `@container` 的 4 阶流体压缩梯队 (>=576px / <480px / <384px / <320px)，彻底杜绝单字垂直折断。 |
-| `code-examples/EpitaxyIframeBridge.tsx` | **Artifacts 预览沙箱桥接器** | `index.chunk-CiiI592G.js`：基于严格 Origin 白名单校验与通道隔离的 postMessage RPC 协议，实现双向安全通信与高度自适应。 |
+| `code-examples/ArtifactsSplitPaneResizer.tsx` | **双栏弹性分割与折叠引擎** | Iframe 事件防吞噬护盾、4px 移动死区、双击 50/50 居中吸附、边缘折叠门限与 min/max 约束钳制。 |
+| `code-examples/McpToolDecisionCard.tsx` | **MCP 交互式工具调用决策卡片** | 三态授权生命周期 (`pending_approval` → `running` → `success` / `error`)、三阶决议动作阵列与 Payload 审查。 |
+| `code-examples/ScrollFadeContainer.tsx` | **滚动边缘平滑渐变遮罩系统** | 7 档非线性 Alpha 渐变遮罩、动态滚动位置传感器与双轴羽化消隐。 |
+| `code-examples/ModelSwitcherWithTokenGauge.tsx` | **模型矩阵选择器与 Token 仪表盘** | 三大模型梯队架构、Thinking 思考开关、Prompt Caching 显存成本解构与环形 SVG 仪表盘。 |
+| `code-examples/CoworkAgentCanvas.tsx` | **多智能体协同看板与拓扑空间** | 多 Agent 任务委派状态机、团队共享 Artifacts 工件网格资产池与 BroadcastChannel 事件同步。 |
+| `code-examples/RichComposerWithMentions.tsx` | **新一代富文本与指令输入框** | CJK 输入法合成守卫 (`isComposing || keyCode === 229`)、`/` 指令与 `@` 上下文双触发符、自适应高度伸缩与 Token 预测。 |
+| `code-examples/DraggableSessionList.tsx` | **侧边栏会话拖放与固定物理** | `pinnedOrder` 乐观拓扑重排、4px 指针移动死区、微倾斜幽灵投影与对撞占位线。 |
+| `code-examples/ReasoningAmbientGlow.tsx` | **动态光效与推理氛围感组件** | `cds-shimmer-text-shine` 非对称贝塞尔曲线、`wl-glow` 暖光漫反射、三点相位跳跃与 Canvas 焦散光场。 |
+| `code-examples/StreamingDiffViewer.tsx` | **代码差异对比与流式高亮引擎** | 表格行号对齐与 `tabular-nums` 约束、增量流式追加管道、统一/分屏双模式切换与 2.5s 复制衰减状态机。 |
+| `code-examples/MediaLightboxViewer.tsx` | **多模态媒体查看器与画廊** | 75vw 跑道滑动位移、以光标为锚点的仿射平移缩放、4px 拖拽死区、Ctrl 滚轮指数缩放与按键陷阱。 |
+| `code-examples/useClaudeSharedElementTransition.ts` | **View Transitions 共享元素变形** | 基于 `startViewTransition("chat-image-preview")`、缩略图动态圆角检测与 `object-fit: contain` 内切百分比剪裁。 |
+| `code-examples/useClaudeScrollPinning.ts` | **流式滚动视口图钉 Hook** | 150ms 冷却时间戳防抢夺、40px 底部容差图钉锁定、35vh 弹性缓冲与 GPU 字符模糊消解。 |
+| `code-examples/ContainerResponsiveBar.tsx` | **自适应容器查询响应栏** | 基于 `@container` 的 4 阶流体压缩梯队 (>=576px / <480px / <384px / <320px)，彻底杜绝单字垂直折断。 |
+| `code-examples/EpitaxyIframeBridge.tsx` | **Artifacts 预览沙箱桥接器** | 基于严格 Origin 白名单校验与通道隔离的 postMessage RPC 协议，实现双向安全通信与高度自适应。 |
 | `code-examples/createClaudeMainWindow.ts` | **Electron 宿主主窗口创建工厂** | `mainWindow.js` / 主进程：`hiddenInset` 标题栏、macOS Vibrancy (`under-window`) 毛玻璃材质融合、默认尺寸 1200×800、最小尺寸 600×400 与状态持久化。 |
 | `code-examples/ClaudeDesktopHeader.tsx` | **macOS 沉浸式标题栏组件** | macOS 交通灯 74px 逆缩放补偿避让槽 (`-webkit-app-region: drag`)、45px 全局拖拽带与 `.draggable-none` 交互隔离。 |
 | `code-examples/useClaudeRovingFocus.ts` | **全键盘无障碍焦点漫游 Hook** | W3C WAI-ARIA 规范：方向键 (ArrowUp/Down/Left/Right) 二维与一维网格漫游导航、Home/End 边界快速跳跃、动态 tabindex 维护。 |
-| `code-examples/useRateLimitBackoff.ts` | **指数退避重试与熔断状态机** | `shared-50-Bmc9oUMm.js`：截断指数退避 (`t = min(t_max, t_base * 2^a) * (1 ± J)`)、全抖动注入与自动熔断恢复。 |
+| `code-examples/useRateLimitBackoff.ts` | **指数退避重试与熔断状态机** | 截断指数退避 (`t = min(t_max, t_base * 2^a) * (1 ± J)`)、全抖动注入与自动熔断恢复。 |
 | `code-examples/ThinkingAccordion.tsx` | **思考过程状态机组件** | Framer Motion 贝塞尔曲线高度弹性展开收缩、思考中单颗陶土色呼吸脉冲与引用复制状态机。 |
 | `code-examples/ClaudeAudioPlayer.ts` | **低延迟流式音频播放核心** | 原生 Web Audio API 振荡器无损合成、`AudioContext` 状态监听、30% 舒缓音量标准与平滑增益淡入淡出防爆音。 |
 | `code-examples/LiveMicActivityBars.tsx` | **6 频段非线性麦克风波形柱** | 6 柱波形、`Math.pow(energy, 0.7)` 非线性 Gamma 能量压缩、8% 噪声门限过滤与 Framer Motion 动态阻尼弹性映射。 |
@@ -3139,68 +3124,39 @@ Agent 在完成任何前端代码修改或产物提交前，**必须逐项自检
 
 ---
 
-## 第九篇：Claude Desktop 2.0 (v2.37337.1) 全量版本更新深度逆向分析与架构演进报告
+## 第九篇：桌面端界面与交互设计
 
-> **目标应用载体**：Anthropic 官方生产包 macOS `/Applications/Claude.app`  
-> **二进制元数据**：`@ant/desktop v2.37337.1`（Build: `2026-10-13T22:16:06Z`，开发者签名：`Developer ID Application: Anthropic PBC (Q6L2SF6YDW)`）  
-> **逆向工具栈**：**REA (Reverse Engineer Anything) v6.5.0** 全流程执行 Fuse 熔丝扫描、Mach-O 代码签名提取、AST 抽象语法树解构与 Electron ASAR 运行时逆向审计。
+本篇围绕组件库中的窗口布局、会话导航、输入交互与协作看板，说明桌面端前端的组合方式。组件提供界面与交互基础；模型调用、数据持久化和跨窗口业务同步由接入应用实现。
 
-### 9.1 版本发布定位与核心工程边界廓清
+### 9.1 会话导航与侧边栏
 
-在本次 2026-10-15 发布的 Claude 桌面端全量更新中，软件版本跃升至 **v2.37337.1**。
+使用 `DraggableSessionList` 展示会话标题、更新时间与置顶状态。为每个会话提供稳定的标识，拖拽时保留清晰的落点提示，并通过回调保存新的排序结果。
 
-通过 REA 提取 `/Applications/Claude.app/Contents/Resources/app.asar/package.json` 及 Electron 熔丝与代码签名，我们首先厘清本次发布的关键环境边界：
-- 桌面端内嵌版本：本次桌面端安装包捆绑集成的 Claude Code CLI 运行时严格保持在 **v2.1.295**（对应 SDK `0.3.295`）；
-- 独立 CLI 发布区分：社区同日讨论的 Claude Code CLI `v2.1.299` / `v2.1.300`（包含终端 `idle compaction` 空闲压缩、`/effort` 思考算力滑块、`mod` 扩展的 `virtualText` 虚拟文本注入等）为**命令行独立工具链的单独发布**，桌面端尚未升级该底层 CLI，切勿将终端独立特性误记为桌面端更新。
+### 9.2 模型选择与用量展示
 
-### 9.2 核心界面拓扑演进与工作流重构
+使用 `ModelSwitcherWithTokenGauge` 展示模型选择、思考模式和 Token 用量。界面中的用量数据应由接入应用提供；数据缺失或正在加载时，应显示明确的状态。
 
-#### 1. 模型选择器用量指标化与上下文移入新会话抽屉
-- 模型选择器旁由单纯的 Token/计费展示，升级为动态**用量（Usage）**监控器；
-- 上下文选择器被从聊天主界面剥离，移入“新会话初始化抽屉（New Session Drawer）”，仅允许在会话初始化阶段预设。
+### 9.3 窗口布局与桌面适配
 
-#### 2. Worktree 宿主化：收拢至“保存的本地环境”
-- 彻底摒弃旧版“项目选择器上的单一 Worktree 开关”；
-- 全面收拢进 `LocalSessionEnvironment` / `LocalSessionPresets`，作为持久化“本地保存环境”（Saved Local Environments）的配置项（支持 `.worktreeinclude`, `.claude/worktrees`, `.mcp.json`, `CLAUDE.local.md` 隔离注入）。
+`ClaudeDesktopHeader` 提供桌面标题栏布局，`createClaudeMainWindow` 提供 Electron 窗口配置示例。macOS 交通灯、拖拽区域和窗口材质需要在对应平台验证；普通浏览器页面可以直接使用内容区域组件。
 
-#### 3. 侧边栏四态分组与文件夹强行并入 Default 迁移逆向
-- 分组模式大幅精简为严格的 4 种：`None / Status / Date / Environment`；
-- 传统“按文件夹分组”被物理剔除，会话改由物理起源环境分流：`这台电脑 (This Computer) / Cloud / SSH / Slack`；
-- 原有的单会话文件夹在升级瞬间被无提示静默并入统一的 `Default` 作用域，且官方未提供回退开关。
+使用 `ArtifactsSplitPaneResizer` 组合会话区与内容预览区，保留分栏拖动、双击复位和键盘操作。更多窗口布局细节见[第六篇](06-系统级桌面架构与协作拓扑.md)。
 
-#### 4. “Pin as chapter” 界面泄漏的真实面目解密
-- 逆向取证发现该功能源于内部多智能体协作与长程任务切分工具 `mcp__ccd_session__mark_chapter`；
-- 用于在长程复杂任务中将一系列执行节点打标为“章节”（Chapter），UI 误将其暴露为“Pin as chapter”，官方已确认系漏出的内部 Bug 正紧急修补。
+### 9.4 消息输入与失败反馈
 
-### 9.3 通用桌面交互与 Electron 运行时升级
+`ChatComposer` 和 `RichComposerWithMentions` 提供输入框及指令交互示例。接入时保留 CJK 输入法合成守卫，区分发送中、发送失败与可重试状态。网络重试可参考 `useRateLimitBackoff`，消息存储由业务层负责。
 
-1. **多窗口弹射架构 (Open in New Window / Popout)**：引入 `PopoutWindow` 状态机服务，允许将对话流独立弹射为独立窗口并排摆放，支持跨窗口独立搜索与控制；
-2. **后台 Computer Use 焦点防抢占与键盘输入保护**：自动化操作菜单在后台触发时毫秒级自动关闭，彻底根除打字时键盘输入被吞噬的焦点劫持恶疾；
-3. **发送失败消息的本地持久化账本与防丢重试**：消息发送失败后 IndexedDB 持久化保留，页面刷新或重启后提供原位快速重试；
-4. **Windows 路径空格转义与 PAC 动态热重载**：修复含空格路径下 npm/npx 启动失败问题，PAC 代理热重载无需重启应用；
-5. **Windows 代码签名证书轮换**：发布者证书续签更新，策略钉死旧证书指纹的企业管理员需手动添加新指纹。
+### 9.5 协作看板与共享内容
 
-### 9.4 Claude Code 桌面引擎与底座缺陷大清洗
+`CoworkAgentCanvas` 用于展示任务角色、执行状态和共享产物。默认数据用于演示界面；实际的任务调度、权限检查和内容加载需要由接入应用提供。
 
-1. **文件面板编辑器自动保存**：右侧代码面板引入 800ms 防抖自动保存机制，并支持随时关闭；
-2. **Windows OpenSSH 路径硬锁定**：物理锁死 `C:\Windows\System32\OpenSSH\ssh.exe`，禁止模糊检索 PATH 下可能存在的恶意脚本；
-3. **十大缺陷综合修复**：解决大仓库并发 Worktree 死锁、超大 Prompt 截断容灾、工具前置文本丢失、Mac 休眠断连同步、5 小时用量恢复后台自唤醒、Windows 崩溃伪报、Linux SSH Worktree 目录越界及 Haiku Auto 模式灰化修复。
+### 9.6 开发验证
 
-### 9.5 Cowork 协同看板与离线资产化底座
+在仓库根目录执行：
 
-1. **三大核心渲染库本地随包捆绑**：随包内置 `Chart.js@4.5.0`、`Grid.js@5.0.2`、`Mermaid@11.17.2`，断网与受限内网环境秒开渲染；
-2. **本机虚拟机禁用时平滑切流云端**：本地虚拟化关闭时，Cowork 协同任务自动切流至云端执行；
-3. **定时任务二次编辑与冷启动首字防丢**：Cron 任务执行后开放编辑，应用重载首字暂存入缓冲。
+```bash
+npm run typecheck
+npm run build
+```
 
-### 9.6 企业托管配置 Breaking Changes 升级指南
-
-1. **键名破坏性升级**：
-   - `isDxtEnabled` → `isDesktopExtensionEnabled`
-   - `isDxtSignatureRequired` → `isDesktopExtensionSignatureRequired`
-   - `isDxtDirectoryEnabled` → `isDesktopExtensionDirectoryEnabled`
-   - `enduserAttribution` → `endUserAttribution`
-   - `trustBootstrapLocalExec` → `trustBootstrapDelivery`
-   - `inferenceGatewayHeaders` → `inferenceCustomHeaders`
-2. **“未托管状态”防范与 OAuth 重登**：旧策略键名完全移除兼容代码，未更新键名将被静默视为未托管；所有 OAuth MCP 连接器在升级后需重新授权登录一次。
-
-
+通过 `docs/claude-components-storybook.html` 查看组件示例，检查浅色与深色主题、窄屏布局、键盘操作和输入状态。该展示页会加载外部脚本与字体，需要可用的网络连接。

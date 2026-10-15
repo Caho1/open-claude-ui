@@ -1,7 +1,6 @@
 /**
  * Claude Design System (CDS) - Shared Element View Transition Hook
  * 
- * 逆向溯源：反编译自 /Applications/Claude.app ion-dist (cd5136de8-BDys1vAN.js)。
  * 核心规范：
  *   - 规范名称：view-transition-name: chat-image-preview !important
  *   - 动态计算源缩略图圆角 (--vt-image-preview-source-radius)

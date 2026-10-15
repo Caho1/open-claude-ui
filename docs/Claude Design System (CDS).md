@@ -6,7 +6,7 @@ status: active
 domain: development
 category: ui_library
 name: Claude Design System (CDS)
-source: /Applications/Claude.app (v1.28 Production)
+source: open-claude-ui
 verified_at: 2026-10-14
 created_at: 2026-10-13
 updated_at: 2026-10-14
@@ -23,16 +23,15 @@ effect_type:
 tags:
   - knowledge/development
   - dev/ui
-  - reverse-engineering
+  - frontend-development
   - claude
   - design-system
 ---
 
 # Claude Design System (CDS) 前端 UI 与动效完整开发指导手册
 
-> **版本**：1.0 (基于 Claude Desktop `/Applications/Claude.app` 生产环境全量逆向分析)  
-> **逆向框架**：全流程依托 **[REA (Reverse Engineer Anything)](https://github.com/morluto/rea)** 完成 Vite/Rollup AST 反混淆、运行时行为追踪与 ASAR 资源解包。  
-> **定位**：供前端工程师、UI 设计师与独立开发者像素级复刻 Claude 质感与交互的完整工程指导规范。  
+> **版本**：1.0（前端组件与交互动效开发指南）<br>
+> **定位**：供前端工程师、UI 设计师与独立开发者构建一致的视觉风格与交互体验的完整工程指导规范。<br>
 > **技术栈适配**：HTML5 + Tailwind CSS v3/v4 + React/Vue + Framer Motion (或原生 CSS)  
 > 
 > 💡 **阅读提示**：为了提升阅读体验与检索效率，本手册已按领域拆分为 **7 个独立分卷 Markdown 文档**。如需单文件离线全局搜索，可查看 [完整单文件版 (Full Monolithic Manual)](Claude%20Design%20System%20(CDS).full.md)。
@@ -69,7 +68,7 @@ tags:
 * [4.3 滚动边缘平滑渐变遮罩系统](04-动效物理学、着色器与环境光影.md#43-滚动边缘平滑渐变遮罩系统)：7 档渐隐非线性透明度手写遮罩、动态滚动位置传感器（触顶/触底动态归零）。
 
 ### 🎨 [第五篇：视听多媒体与产物交互物理学 (Audiovisual, Lightbox & Artifacts Experience)](05-视听多媒体与产物交互物理学.md)
-* [5.1 语音模式与 Web Audio 物理声学系统](05-视听多媒体与产物交互物理学.md#51-语音模式与-web-audio-物理声学系统)：原生 Web Audio 振荡器无损合成音效、30% 舒缓音量标准、6 频段非线性 Gamma 波形柱（附官方 AudioWorklet 架构逆向解密）。
+* [5.1 语音模式与 Web Audio 物理声学系统](05-视听多媒体与产物交互物理学.md#51-语音模式与-web-audio-物理声学系统)：原生 Web Audio 振荡器无损合成音效、30% 舒缓音量标准、6 频段非线性 Gamma 波形柱（附 AudioWorklet 架构说明）。
 * [5.2 多模态媒体查看器与画廊转场物理学](05-视听多媒体与产物交互物理学.md#52-多模态媒体查看器与画廊转场物理学)：View Transitions 共享元素变形、以光标为锚点的无级 Pan/Zoom 仿射方程、75vw 跑道视口。
 * [5.3 双栏弹性分割与折叠物理学](05-视听多媒体与产物交互物理学.md#53-双栏弹性分割与折叠物理学)：Iframe 事件防吞噬护盾、4px 移动死区、双击 50/50 吸附、边缘折叠门限与约束钳制。
 * [5.4 工件预览沙箱与隔离通信架构](05-视听多媒体与产物交互物理学.md#54-工件预览沙箱与隔离通信架构)：Epitaxy 隔离容器、7 大专有 MIME 分发、用户手势门禁与虚拟包重定向。
@@ -98,13 +97,13 @@ tags:
 * [8.6 生产级组件库快速装配指南 (30 模块)](08-AI-Agent-前端-UI-与动效开发指南.md#86-生产级组件库快速装配指南-30-模块)：全量 30 个生产模块索引与快速复用。
 * [8.7 智能体自检与质量门禁清单](08-AI-Agent-前端-UI-与动效开发指南.md#87-智能体自检与质量门禁清单)：Agent 代码交付自检表与 `typecheck` / `build` 命令门禁。
 
-### 🚀 [第九篇：Claude Desktop 2.0 (v2.37337.1) 全量版本更新深度逆向分析与架构演进报告](09-Claude-Desktop-2.0-全量版本更新深度逆向分析.md)
-* [9.1 版本发布定位与核心工程边界廓清](09-Claude-Desktop-2.0-全量版本更新深度逆向分析.md#91-版本发布定位与核心工程边界廓清)：v2.37337.1 二进制元数据、熔丝审计与 CLI 2.1.295 捆绑边界。
-* [9.2 核心界面拓扑演进与工作流重构](09-Claude-Desktop-2.0-全量版本更新深度逆向分析.md#92-核心界面拓扑演进与工作流重构-anthony-morris-评述与社区焦点)：模型用量感知、Worktree 本地环境收拢、侧边栏四态分组与“Pin as chapter”内部泄漏解析。
-* [9.3 通用桌面交互与 Electron 运行时升级](09-Claude-Desktop-2.0-全量版本更新深度逆向分析.md#93-通用桌面交互与-electron-运行时升级)：Popout 多窗口弹射、Computer Use 防抢占、发送失败重试持久化、Windows 空格转义与新签名证书。
-* [9.4 Claude Code 桌面引擎与底座缺陷大清洗](09-Claude-Desktop-2.0-全量版本更新深度逆向分析.md#94-claude-code-桌面引擎与底座缺陷大清洗-bug-sweeps)：文件面板自动保存、Windows OpenSSH 硬收敛与十大并发/隔离 Bug 修复。
-* [9.5 Cowork 协同看板与离线资产化底座](09-Claude-Desktop-2.0-全量版本更新深度逆向分析.md#95-cowork-协同看板与离线资产化底座)：Chart.js/Grid.js/Mermaid 随包捆绑离线化、虚拟机禁用云端回退、定时任务二次编辑。
-* [9.6 企业托管配置 Breaking Changes 升级指南](09-Claude-Desktop-2.0-全量版本更新深度逆向分析.md#96-企业托管配置-breaking-changes-升级指南-it-管理员必读)：isDesktopExtension* 破坏性键名迁移表与 OAuth 重新认证。
+### 🖥️ [第九篇：桌面端界面与交互设计](09-桌面端界面与交互设计.md)
+* [9.1 会话导航与侧边栏](09-桌面端界面与交互设计.md#91-会话导航与侧边栏)：会话列表、置顶状态与拖拽排序。
+* [9.2 模型选择与用量展示](09-桌面端界面与交互设计.md#92-模型选择与用量展示)：模型切换、思考模式与 Token 指标。
+* [9.3 窗口布局与桌面适配](09-桌面端界面与交互设计.md#93-窗口布局与桌面适配)：标题栏、Electron 窗口与内容分栏。
+* [9.4 消息输入与失败反馈](09-桌面端界面与交互设计.md#94-消息输入与失败反馈)：输入法守卫、发送状态与重试。
+* [9.5 协作看板与共享内容](09-桌面端界面与交互设计.md#95-协作看板与共享内容)：任务角色、状态与共享产物展示。
+* [9.6 开发验证](09-桌面端界面与交互设计.md#96-开发验证)：类型检查、构建与组件展示页检查。
 
 ---
 

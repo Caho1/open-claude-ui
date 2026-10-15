@@ -1,7 +1,6 @@
 /**
  * Claude Design System (CDS) - Chat Composer Terminal
  * 
- * 逆向溯源：提取自 /Applications/Claude.app ion-dist 生产环境输入终端实现。
  * 核心规范：
  *   - 20px 圆角 (--cds-radius-composer: 20px)
  *   - 三态双环动态弥散投影 (--cds-shadow-composer, :hover, :focus-within)

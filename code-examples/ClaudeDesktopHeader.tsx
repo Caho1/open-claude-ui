@@ -1,6 +1,5 @@
 /**
  * 维度四：macOS 桌面深度融合与 Web 自适应顶栏
- * 逆向还原自 Claude Desktop: shared-19-DmuztgN-.js / shared-21-CGGmSsMS.js
  * 
  * 核心特性：
  * 1. 74px 红绿灯物理避让占位槽 (ew = 74)

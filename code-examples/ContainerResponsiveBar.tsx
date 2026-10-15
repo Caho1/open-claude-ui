@@ -1,6 +1,5 @@
 /**
  * 维度二：多容器自适应查询与极端弹性排版
- * 逆向还原自 Claude Desktop: c6a992d55-C0zTICcS.css
  * 
  * 核心特性：
  * 1. @container 命名容器定义

@@ -4,10 +4,6 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
  * ==============================================================================
  * Claude Design System (CDS) - ArtifactsSplitPaneResizer.tsx
  * 
- * 逆向还原自官方 Claude Desktop / Web 核心双栏弹性分割与折叠引擎:
- * - `shared-22-DYCF-SVs.js` (data-pane-dragging / --df-pane-row / qM dead-zone)
- * - `c909d93e7-BsSzOQcm.js` (split ratio clamps & double-click snap)
- * - `c6a992d55-C0zTICcS.css` (df-split-handle, dframe-pane-shield)
  * 
  * 核心工程物理学:
  * 1. 连续指针动力学与事件屏蔽护盾 (Pointer Stream & Iframe Shield):

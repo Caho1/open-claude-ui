@@ -1,7 +1,6 @@
 /**
  * Claude Design System (CDS) - Button System
  * 
- * 逆向溯源：提取自 /Applications/Claude.app ion-dist 生产按钮阶梯与边界防臃肿规范。
  * 核心准则：
  *   - 严格遵循“单闭合边框原则 (The 1-Border Rule)”：卡片内部的 Secondary 按钮严禁带边框，默认采用 Surface-2 浅底填充。
  *   - 尺寸阶梯：XS (24px, 6px圆角)、SM (28px, 8px圆角)、MD (32px, 8px圆角)、LG (40px, 12px圆角)。

@@ -4,10 +4,6 @@ import React, { useState, useRef, useCallback } from 'react';
  * ==============================================================================
  * Claude Design System (CDS) - DraggableSessionList.tsx
  * 
- * 逆向还原自官方 Claude Desktop 侧边栏会话拖放与固定物理引擎:
- * - `shared-21-CGGmSsMS.js` (pinReorder / Gce / Wce / onMoveUp / onMoveDown)
- * - `shared-22-DYCF-SVs.js` (data-pin-dragging / data-session-dragging / pinnedOrder)
- * - `c6a992d55-C0zTICcS.css` (df-sidebar-row, dframe-drag-ghost)
  * 
  * 核心工程机制:
  * 1. 乐观拓扑重排状态机 (Optimistic Topological Reordering):
@@ -33,7 +29,7 @@ export interface SidebarSession {
 }
 
 const INITIAL_SESSIONS: SidebarSession[] = [
-  { id: 'sess-1', title: 'Web Audio 物理声学引擎逆向', updatedAt: '10 分钟前', isPinned: true },
+  { id: 'sess-1', title: 'Web Audio 音频交互开发', updatedAt: '10 分钟前', isPinned: true },
   { id: 'sess-2', title: 'Claude Lightbox 转场动力学分析', updatedAt: '2 小时前', isPinned: true },
   { id: 'sess-3', title: '新一代富文本 Composer 架构设计', updatedAt: '昨天', isPinned: true },
   { id: 'sess-4', title: 'Electron macOS 交通灯自适应实现', updatedAt: '2 天前', isPinned: false },

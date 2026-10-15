@@ -1,7 +1,6 @@
 /**
  * Claude Design System (CDS) - File Attachment Tile & Chip
  * 
- * 逆向溯源：提取自 /Applications/Claude.app ion-dist (.cds-attachment 及附件预览磁贴)。
  * 核心规范：
  *   - 面板圆角：10px (--cds-panel-radius: 10px) 或 12px (rounded-xl)
  *   - 磁贴尺寸：磁贴模式 w-32 h-24 (128px × 96px) 或紧凑胶囊模式

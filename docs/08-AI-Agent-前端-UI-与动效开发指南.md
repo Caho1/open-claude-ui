@@ -1,13 +1,13 @@
 ---
 title: "第八篇：AI Agent 前端 UI 与动效开发指南 (AI Agent Frontend UI & Motion Guidelines)"
-category: reverse-engineering
+category: ui-library
 domain: development/ui_library
 version: "1.0"
 status: stable
 tags:
   - knowledge/development
   - dev/ui
-  - reverse-engineering
+  - frontend-development
   - claude
   - design-system
   - agent-guidelines
