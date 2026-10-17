@@ -139,6 +139,7 @@ export const ScrollFadeContainer: React.FC<ScrollFadeContainerProps> = ({
     <div
       ref={containerRef}
       onScroll={updateScrollFades}
+      data-cds-scroll-fade={orientation}
       className={`relative overflow-auto transition-[mask-image] duration-150 ${className}`}
       style={
         {

@@ -12,7 +12,10 @@
       "default": "./dist/src/index.js"
     },
     "./css": "./code-examples/cds-theme.css",
+    "./tokens.css": "./code-examples/cds-theme.css",
     "./tokens": "./code-examples/cds-theme.css",
+    "./pure.css": "./code-examples/cds-pure.css",
+    "./pure": "./code-examples/cds-pure.css",
     "./tailwind": "./code-examples/tailwind.config.js"
   },
   "files": [

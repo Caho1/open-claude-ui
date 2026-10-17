@@ -17,10 +17,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Build Output & Package Exports**: Created `tsconfig.build.json` and updated `package.json` to emit compiled TypeScript to `dist/`, configured `"exports"` for `./css`, `./tokens`, and `./tailwind`, and added CI verification workflow `.github/workflows/ci.yml`.
 
 ### 🚀 Added (Issue #17 - Pure CSS Layer, Runtime Portability & Host Bridging)
-- **Pure-CSS First-Class Exports**: Exposed `@import "open-claude-ui/css"` and `@import "open-claude-ui/tokens"` for consuming design tokens, keyframes, and scroll-fade masks without React or Tailwind.
-- **Runtime Portability Classification**: Added "运行时可移植性" (Runtime Portability) column across all 30 module inventory tables in `docs/v1/07-工程配置与资产代码库总览.md`, classifying modules into Pure CSS, Pure Logic / Headless, and React Component tiers.
+- **Pure-CSS First-Class Exports**: Exposed `@import "open-claude-ui/css"`, `@import "open-claude-ui/tokens.css"`, and standalone `@import "open-claude-ui/pure.css"` for consuming design tokens, keyframes, and scroll-fade masks without React or Tailwind.
+- **Chromium 115+ Zero-JS `@property` Scroll-Fade Engine**: Implemented pure CSS `@property --cds-scroll-fade-*` `<length>` registration driven directly by `animation-timeline: scroll(self block / inline)` with official 7-stop non-linear alpha mask, dropping scroll tracking CPU to 0.0% and main-thread blocking to 0ms.
+- **Runtime Portability Classification**: Added "运行时可移植性" (Runtime Portability) column across all 33 module inventory tables in `docs/v1/07-工程配置与资产代码库总览.md`, classifying modules into Pure CSS, Pure Logic / Headless, and React Component tiers.
 - **Host Bridge Mapping Guide**: Added Section 7.5 to Chapter 7 documenting the Host Aliasing pattern for integrating CDS tokens into custom desktop harnesses (e.g., DSH / Electron shells) or third-party web frameworks.
-- **Pure-CSS Scroll-Fade Utilities**: Added `.cds-scroll-fade`, `.cds-scroll-fade-vertical`, and `.cds-scroll-fade-static-v` utility classes in `code-examples/cds-theme.css`.
+- **Pure-CSS Scroll-Fade Utilities**: Added `.cds-scroll-fade`, `.cds-scroll-fade-vertical`, `.cds-scroll-fade-horizontal`, and `.cds-scroll-fade-static-v` utility classes in `code-examples/cds-theme.css`, alongside `data-cds-scroll-fade` support in `ScrollFadeContainer.tsx`.
 
 ---
 

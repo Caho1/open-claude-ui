@@ -1,0 +1,16 @@
+/**
+ * ==============================================================================
+ * Claude Design System (CDS) - cds-pure.css
+ * 
+ * Standalone Pure-CSS Distribution Layer (Zero-React / Zero-JS Runtime)
+ * Direct import for non-React desktop harnesses (e.g. DSH, Electron shells, vanilla HTML)
+ * 
+ * Includes:
+ * 1. All 183 Design Tokens (35-tier grayscale/orange ramps, surfaces, radii, shadows)
+ * 2. Chromium 115+ Native CSS Scroll-Driven zero-JS fade masks ([data-cds-scroll-fade])
+ * 3. Pure-CSS animation utilities (breathing dots, skeleton sweeps, shimmer text)
+ * 4. Concentric border radius and hairline retina compensations
+ * ==============================================================================
+ */
+
+@import "./cds-theme.css";

@@ -809,7 +809,125 @@
 
 /* 纯 CSS 滚动消隐回退 (无 scroll-driven 浏览器) */
 .cds-scroll-fade-static-v {
-  -webkit-mask-image: linear-gradient(to bottom, transparent, black var(--cds-scroll-fade-size), black calc(100% - var(--cds-scroll-fade-size)), transparent);
-  mask-image: linear-gradient(to bottom, transparent, black var(--cds-scroll-fade-size), black calc(100% - var(--cds-scroll-fade-size)), transparent);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, black var(--cds-scroll-fade-size, 28px), black calc(100% - var(--cds-scroll-fade-size, 28px)), transparent);
+  mask-image: linear-gradient(to bottom, transparent, black var(--cds-scroll-fade-size, 28px), black calc(100% - var(--cds-scroll-fade-size, 28px)), transparent);
 }
+
+/* ==========================================================================
+   7. Chromium 115+ / Electron 44+ 纯 CSS @property 滚动插值引擎 (Zero-JS Scroll-Fade Engine)
+   基于 CSS @property 与 animation-timeline: scroll(self block / inline)
+   ========================================================================== */
+@property --cds-scroll-fade-top {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+@property --cds-scroll-fade-bottom {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+@property --cds-scroll-fade-left {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+@property --cds-scroll-fade-right {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
+@keyframes cds-scroll-fade-top-in {
+  from { --cds-scroll-fade-top: 0px; }
+  to { --cds-scroll-fade-top: var(--cds-scroll-fade-size, 28px); }
+}
+@keyframes cds-scroll-fade-bottom-out {
+  from { --cds-scroll-fade-bottom: var(--cds-scroll-fade-size, 28px); }
+  to { --cds-scroll-fade-bottom: 0px; }
+}
+@keyframes cds-scroll-fade-left-in {
+  from { --cds-scroll-fade-left: 0px; }
+  to { --cds-scroll-fade-left: var(--cds-scroll-fade-size, 28px); }
+}
+@keyframes cds-scroll-fade-right-out {
+  from { --cds-scroll-fade-right: var(--cds-scroll-fade-size, 28px); }
+  to { --cds-scroll-fade-right: 0px; }
+}
+
+[data-cds-scroll-fade],
+.cds-scroll-fade {
+  --cds-scroll-fade-size: 28px;
+  overflow: auto;
+  position: relative;
+}
+
+@supports (animation-timeline: scroll(self block)) {
+  [data-cds-scroll-fade="vertical"],
+  [data-cds-scroll-fade="both"],
+  .cds-scroll-fade,
+  .cds-scroll-fade-vertical,
+  .cds-scroll-fade-v {
+    animation-timeline: scroll(self block), scroll(self block);
+    animation-name: cds-scroll-fade-top-in, cds-scroll-fade-bottom-out;
+    animation-range: 0 48px, calc(100% - 48px) 100%;
+    animation-fill-mode: both;
+    animation-timing-function: linear;
+    mask-image: linear-gradient(to bottom,
+      transparent,
+      rgba(0, 0, 0, 0.05) calc(var(--cds-scroll-fade-top) * 0.15),
+      rgba(0, 0, 0, 0.15) calc(var(--cds-scroll-fade-top) * 0.3),
+      rgba(0, 0, 0, 0.30) calc(var(--cds-scroll-fade-top) * 0.45),
+      rgba(0, 0, 0, 0.50) calc(var(--cds-scroll-fade-top) * 0.6),
+      rgba(0, 0, 0, 0.70) calc(var(--cds-scroll-fade-top) * 0.75),
+      rgba(0, 0, 0, 0.85) calc(var(--cds-scroll-fade-top) * 0.87),
+      #000 var(--cds-scroll-fade-top),
+      #000 calc(100% - var(--cds-scroll-fade-bottom)),
+      rgba(0, 0, 0, 0.85) calc(100% - var(--cds-scroll-fade-bottom) * 0.87),
+      rgba(0, 0, 0, 0.70) calc(100% - var(--cds-scroll-fade-bottom) * 0.75),
+      rgba(0, 0, 0, 0.50) calc(100% - var(--cds-scroll-fade-bottom) * 0.6),
+      rgba(0, 0, 0, 0.30) calc(100% - var(--cds-scroll-fade-bottom) * 0.45),
+      rgba(0, 0, 0, 0.15) calc(100% - var(--cds-scroll-fade-bottom) * 0.3),
+      rgba(0, 0, 0, 0.05) calc(100% - var(--cds-scroll-fade-bottom) * 0.15),
+      transparent);
+    -webkit-mask-image: linear-gradient(to bottom,
+      transparent,
+      rgba(0, 0, 0, 0.05) calc(var(--cds-scroll-fade-top) * 0.15),
+      rgba(0, 0, 0, 0.15) calc(var(--cds-scroll-fade-top) * 0.3),
+      rgba(0, 0, 0, 0.30) calc(var(--cds-scroll-fade-top) * 0.45),
+      rgba(0, 0, 0, 0.50) calc(var(--cds-scroll-fade-top) * 0.6),
+      rgba(0, 0, 0, 0.70) calc(var(--cds-scroll-fade-top) * 0.75),
+      rgba(0, 0, 0, 0.85) calc(var(--cds-scroll-fade-top) * 0.87),
+      #000 var(--cds-scroll-fade-top),
+      #000 calc(100% - var(--cds-scroll-fade-bottom)),
+      rgba(0, 0, 0, 0.85) calc(100% - var(--cds-scroll-fade-bottom) * 0.87),
+      rgba(0, 0, 0, 0.70) calc(100% - var(--cds-scroll-fade-bottom) * 0.75),
+      rgba(0, 0, 0, 0.50) calc(100% - var(--cds-scroll-fade-bottom) * 0.6),
+      rgba(0, 0, 0, 0.30) calc(100% - var(--cds-scroll-fade-bottom) * 0.45),
+      rgba(0, 0, 0, 0.15) calc(100% - var(--cds-scroll-fade-bottom) * 0.3),
+      rgba(0, 0, 0, 0.05) calc(100% - var(--cds-scroll-fade-bottom) * 0.15),
+      transparent);
+  }
+
+  [data-cds-scroll-fade="horizontal"],
+  .cds-scroll-fade-horizontal,
+  .cds-scroll-fade-h {
+    animation-timeline: scroll(self inline), scroll(self inline);
+    animation-name: cds-scroll-fade-left-in, cds-scroll-fade-right-out;
+    animation-range: 0 48px, calc(100% - 48px) 100%;
+    animation-fill-mode: both;
+    animation-timing-function: linear;
+    mask-image: linear-gradient(to right,
+      transparent,
+      #000 var(--cds-scroll-fade-left),
+      #000 calc(100% - var(--cds-scroll-fade-right)),
+      transparent);
+    -webkit-mask-image: linear-gradient(to right,
+      transparent,
+      #000 var(--cds-scroll-fade-left),
+      #000 calc(100% - var(--cds-scroll-fade-right)),
+      transparent);
+  }
+}
+
 
