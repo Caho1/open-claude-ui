@@ -3256,6 +3256,19 @@ grep -c "@custom-variant"  MainWindowPage-BjVtjJFx.css   # 0
 
 本章前六节均基于字节静态分析。补充项（preload 路径、utility process）无法静态解析，改用 Claude 自带的 **Enable Main Process Debugger** 菜单项取得运行时事实。
 
+### 6.7.0 运行时环境与取证通道概述
+
+```
+electron 版本 : 44.9.3
+node 版本     : v24.22.0
+app.getAppPath()       : /Applications/Claude.app/Contents/Resources/app.asar
+userData 目录          : /Users/jiahao/Library/Application Support/Claude
+```
+
+`app.getAppPath()` 直接指向 asar，说明 `OnlyLoadAppFromAsar` fuse 为 Enabled（与 6.7.1 的 fuse 清单一致）。
+
+---
+
 ### 6.7.1 取证通道
 
 Claude 的 `EnableNodeCliInspectArguments` fuse 为 **Disabled**，因此 `--inspect` 启动参数无效：
@@ -3406,18 +3419,99 @@ globalThis.__FORK_HITS__               // → null（本次会话内零调用）
 
 > **不确定部分**：本次会话未触发应用层 utility process。若某个功能（如 `heavy-work-worker`、`pty-host`、`file-index-worker`）被使用时是否会 fork，本文**未验证**。这三个 worker 脚本在 asar 中存在（见 1.1.3 的 `pty-host`、`file-index-worker`、`heavy-work-worker` 目录），但属于 `node:worker_threads` 还是 `utilityProcess` 未确定。
 
-### 6.7.5 运行时环境事实
+### 6.7.5 运行时实测的双模完整值表（权威参考）
+
+通过主进程 debugger 读取 main_window 渲染进程的 `getComputedStyle`，强制切换 `data-mode` 后取值。**这是本文件所有色彩结论的最终依据**，比静态 CSS 更权威（静态值在 `@layer` 与作用域竞争下的实际解析结果以运行时为准）。
+
+**浅色（data-mode=light）**
+
+| Token | 声明值 | 解析值 |
+| :--- | :--- | :--- |
+| `--cds-text-primary` | `var(--cds-neutral-900)` | `#0b0b0b` |
+| `--cds-text-secondary` | `var(--cds-neutral-600)` | `#52514e` |
+| `--cds-text-muted` | `var(--cds-neutral-400)` | `#898781` |
+| `--cds-text-accent` | `var(--cds-role-accent-600)` | `#184f95` |
+| `--cds-border-accent` | `var(--cds-role-accent-250)` | `#86b6ef` |
+| `--cds-clay-emphasized` | `#c6613f` | `rgb(198,97,63)` |
+| `--cds-fill-brand` | `var(--cds-clay-emphasized)` | `#c6613f` |
+| `--cds-fill-brand-hover` | `var(--cds-clay)` | `#d97757` |
+| `--cds-alpha-1..4` | `hsl(from #0b0b0b …/5,10,20,35%)` | srgb 0.043 / 0.05·0.1·0.2·0.35 |
+| `--cds-skeleton-base` | 同 alpha-1 | `#0b0b0b / 5%` |
+| `--cds-shadow-color` | `hsl(from gray-900 / 8%)` | `#0b0b0b / 8%` |
+| `--cds-shadow-popover` | — | `0 8px 24px #0000001f, 0 2px 6px #00000014` |
+| `--cds-focus-shadow` | — | `inset …#f9f9f7, 0 0 0 1px #2a78d6, 0 0 6px 1px #cde2fb` |
+| `--cds-fill-secondary` | — | `rgba(255,255,255,0.1)`（**白 10%**） |
+| `--cds-page-bg` | `#f9f9f7` | surface-0 |
+
+**暗色（data-mode=dark）**
+
+| Token | 解析值 | 与浅色关系 |
+| :--- | :--- | :--- |
+| `--cds-text-primary` | `#f0efec` | neutral-900 → gray-50 |
+| `--cds-text-secondary` | `#c3c2b7` | neutral-600 → gray-200 |
+| `--cds-text-muted` | **`#898781`** | **不变**（neutral-400 两侧同 gray-400） |
+| `--cds-text-accent` | `#6da7ec` | blue 变亮 |
+| `--cds-border-accent` | `#0d366b` | blue 变深 |
+| `--cds-clay-emphasized` | `#c6613f` | **双模同值** |
+| `--cds-fill-brand` / `hover` | `#c6613f` / `#d97757` | **双模同值** |
+| `--cds-alpha-1..4` | 白色 `1 1 1 / 0.05·0.1·0.2·0.35` | 黑→白翻转，百分比与浅色一致 |
+| `--cds-skeleton-base` | **白 7.5%** | base=sheen，加深而非提亮 |
+| `--cds-shadow-color` | `rgba(0,0,0,0.24)` | 独立暗色值 |
+| `--cds-shadow-popover` | `0 8px 24px #00000052, 0 2px 6px #0003` | 更重投影 |
+| `--cds-focus-shadow` | `inset …#0b0b0b, 0 0 0 1px #2a78d6, glow hsl(from #184f95/60%)` | ring 底色跟随 page-bg |
+| `--cds-neutral-900` | `#ffffff` | gray-0 |
+
+**尺寸实测（data-density=comfortable）**
+
+| Token | 声明 | 解析 |
+| :--- | :--- | :--- |
+| `--cds-radius` | `calc(.5rem×scale)` | **8px** |
+| `--cds-radius-composer` | `calc(.875rem×scale)` | **14px** |
+| `--cds-h-control` | `calc(2rem×scale)` | **32px** |
+| `--cds-h-control-nested` | `calc(1.375rem×scale)` | **22px** |
+| `--cds-gap-xl` | `calc(2.5rem×scale)` | **40px** |
+| `--cds-icon` | `calc(1.25rem×scale)` | **20px** |
+| `--cds-radius--xs / sm / lg` | `.375/.4375/.625rem` | **6 / 7 / 10px** |
+| `--cds-dur-fast/snap/base/slow` | 60ms/120ms/200ms/450ms | 与静态一致 |
+| `--cds-ease-out/snap/overshoot` | 三条 cubic-bezier | 与静态一致 |
+
+`--cds-rem-scale` 实测为**空字符串**（未定义），全部走 fallback 1——与 6.6.1 的静态结论一致。
+
+实测环境：`data-density="comfortable"`、`data-mode="system"`（跟随浅色）、Electron 44.9.3。
+
+### 6.7.6 修复验证（open-claude-ui）
+
+上述值表已作为修复目标落实在 `fix/cds-token-ground-truth-alignment` 分支。修复后用 headless Chrome 对 `cds-theme.css` 重测，9 项关键解析值与 Claude 真实渲染**全部一致**。
+
+**修复同时扩大了与官方 token 的对齐面**：交集从 131 项增至 **154 项**（+23）。新增的对齐项包括：
 
 ```
-electron 版本 : 44.9.3
-node 版本     : v24.22.0
-app.getAppPath()       : /Applications/Claude.app/Contents/Resources/app.asar
-userData 目录          : /Users/jiahao/Library/Application Support/Claude
+neutral-0/50/100/…/900（12 项，主题翻转链）
+gray-10…gray-900 中此前缺失的档位（23 项）
+blue-100/250/600、bg-accent、role-accent-250/600（6 项，accent 角色链）
+pad-xs/sm/md/lg/xl（5 项，间距 token）
 ```
 
-`app.getAppPath()` 直接指向 asar，说明 `OnlyLoadAppFromAsar` fuse 为 Enabled（与 6.7.1 的 fuse 清单一致）。
+```
+textPrimary    rgb(11, 11, 11)        ✅
+textSecondary  rgb(82, 81, 78)        ✅
+textMuted      rgb(137, 135, 129)     ✅
+textAccent     rgb(24, 79, 149)       ✅
+borderAccent   rgb(134, 182, 239)     ✅
+clayEmphasized rgb(198, 97, 63)       ✅
+fillBrand      rgb(198, 97, 63)       ✅
+fillBrandHover rgb(217, 119, 87)      ✅
+focusShadow    inset …#2a78d6, #cde2fb ✅
+```
 
----
+结构修复同样实测通过：
+
+| 项 | 修复前 | 修复后 |
+| :--- | :--- | :--- |
+| `.cds-skeleton-sweep` 独立类元素 | `position:absolute`，x=-245（移出视口） | `position:relative`，x=25 |
+| `rounded-full` 头像骨架 | 被压成 4px | 9999px 保留 |
+| RTL 扫光方向 | normal（左→右） | reverse（右→左） |
+| `data-hold=none` 揭示完成态 | 动画无限循环 | 压至 .01ms 且隐藏扫光带 |
 
 ## 6.8 对前序章节结论的修正
 
