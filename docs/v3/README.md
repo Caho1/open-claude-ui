@@ -113,13 +113,24 @@ semantic analysis of <file> was not started
   - 4.7 圆角与密度系统
 - [第五章：open-claude-ui 差异审计](05-open-claude-ui差异审计.md)
   - 5.1 已对齐项（35 阶 gray/orange 全表）
-  - 5.2 必须修正项（`clay-emphasized`、`gray-870`）
-  - 5.3 缺失项（23 个 keyframes、22 个 data-cds、7 个 @property）
+  - 5.2 必须修正项（`clay-emphasized`、骨架屏暗色）
+  - 5.3 缺失项（44 个 keyframes / 27 个 data-cds / 7 个 @property）
   - 5.4 Issue #25 分支的取值裁定
-- [第六章：总结与后续工作](06-总结与后续工作.md)
-  - 6.1 本次取证的确定性边界
-  - 6.2 待办与不可完成项
-  - 6.3 对 REA 的工具反馈
+  - 5.5 修复优先级总表
+- [第六章：全量 CSS 扫描与官方规范比对](06-全量CSS扫描与官方规范比对.md)
+  - 6.1 扫描范围（17 个 CSS / 9 个唯一）
+  - 6.2 44 个缺失 keyframes 全部在主样式表中
+  - 6.3 `window-shared.css` 揭示 CDS 的真实分发路径
+  - 6.4 提取到官方 CDS 规范文档（58,354 字符）
+  - 6.5 `--cds-*` 与官方 token 的 131 项比对（90 等价 / 4 单位 / 37 真实差异）
+  - 6.6 对前序章节结论的修正
+  - 6.7 更新后的差异优先级
+- [第七章：总结与后续工作](07-总结与后续工作.md)
+  - 7.1 本次取证的确定性边界
+  - 7.2 已完成的结论清单
+  - 7.3 明确的未知项
+  - 7.4 建议的后续工作
+  - 7.5 本文的可复现性声明
 
 ---
 
@@ -140,5 +151,7 @@ grep -o "@keyframes [a-zA-Z0-9_-]*" MainWindowPage-BjVtjJFx.css | sort -u | wc -
 grep -o "\[data-cds=[A-Za-z-]*\]" MainWindowPage-BjVtjJFx.css | sort -u | wc -l     # 45
 grep -o "@property --cds-[a-zA-Z0-9_-]*" MainWindowPage-BjVtjJFx.css | sort -u | wc -l  # 24
 ```
+
+
 
 > 💡 **单文件检索**：如需离线全局搜索第三版全文，参见 [第三版单文件完整版](Claude-Desktop-3.0-全量分析.full.md)。
