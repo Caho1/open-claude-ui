@@ -794,10 +794,177 @@ grep -c "@custom-variant"  MainWindowPage-BjVtjJFx.css   # 0
 
 ---
 
-## 6.7 对前序章节结论的修正
+## 6.7 运行时实证（Main Process Debugger）
+
+本章前六节均基于字节静态分析。补充项（preload 路径、utility process）无法静态解析，改用 Claude 自带的 **Enable Main Process Debugger** 菜单项取得运行时事实。
+
+### 6.7.1 取证通道
+
+Claude 的 `EnableNodeCliInspectArguments` fuse 为 **Disabled**，因此 `--inspect` 启动参数无效：
+
+```bash
+npx @electron/fuses read --app /Applications/Claude.app
+#   EnableNodeCliInspectArguments is Disabled
+```
+
+但应用层提供了绕过该 fuse 的菜单项。从 `index.chunk-jPKPzV-P.js` 提取的实现：
+
+```js
+var v7r = () => ({
+  label: "Enable Main Process Debugger",
+  type: "checkbox",
+  checked: aX(),
+  click: e => { aX() ? b7r() : y7r(), e.checked = aX() }
+});
+
+function aX() { return ce.url() !== undefined }   // ce = node:inspector
+
+async function y7r() {
+  if (LK(() => true)) try {
+    aX() && b7r();
+    ce.open();                                     // 无参 → 默认端口 9229
+    await S7r();
+  } catch (e) { N.debug("Debugger: Failed to enable main process debugger (node inspector)", e) }
+}
+
+async function S7r() {
+  process.platform === "darwin"
+    ? await xp("/usr/bin/open", ["-a", "Google Chrome", "chrome://inspect"])
+    : ...
+}
+```
+
+**关键**：`ce.open()` 不传端口，Node inspector 默认监听 **9229**，且只绑 `127.0.0.1`。
+
+打开后：
+
+```bash
+curl -s http://127.0.0.1:9229/json/list
+# [ { "description": "node.js instance", "webSocketDebuggerUrl": "ws://127.0.0.1:9229/…", "url": "file://" } ]
+```
+
+只有一个 target（类型 `node`），即 Electron **主进程**。
+
+### 6.7.2 preload 的实际路径（已解决）
+
+静态分析只能找到 `registerPreloadScript({type:"frame", filePath: t})` 这个调用形态，`t` 是压缩后的变量。运行时通过 Electron 内部方法 `webContents._getPreloadScript()` 取得真实值：
+
+```js
+BrowserWindow.getAllWindows().map(w => ({
+  id: w.id,
+  url: w.webContents.getURL(),
+  preload: w.webContents._getPreloadScript()
+}))
+```
+
+**实测结果**：
+
+| 窗口 | URL | preload 路径 |
+| :--- | :--- | :--- |
+| id=1 | `.vite/renderer/main_window/index.html` | **`.vite/build/mainWindow.js`** |
+| id=2 | `about:blank` | **`.vite/build/mainView.js`** |
+
+`_getPreloadScript()` 的完整返回：
+
+```json
+{ "filePath": "/Applications/Claude.app/Contents/Resources/app.asar/.vite/build/mainWindow.js",
+  "id": "", "type": "frame" }
+```
+
+**这解决了一个此前的重大误解**：
+
+- 第 2 章曾说「preload 入口 0 个，路径由 `registerPreloadScript` 运行时拼接，静态不可解」
+- 事实是：**preload 就是 `.vite/build/` 下的窗口脚本**（`mainWindow.js` / `mainView.js` / 以及同目录的 `aboutWindow.js`、`quickWindow.js`、`buddy.js`、`findInPage.js`）
+- 这些文件在第 2 章已经分析过（`mainWindow.js` 88,843 字节、`ipcRenderer` 出现 22 次等），只是当时不知道它们同时是 preload
+
+**为什么静态看不出**：`session.registerPreloadScript` 的 `filePath` 是运行时变量，且 asar 内**没有任何 preload 命名文件**（运行时确认：`app.getAppPath()` 下递归搜索 `preload` 命中 0 个）。
+
+### 6.7.3 preload 注册的实际 API 是 session 级
+
+运行时确认：
+
+```
+app.registerPreloadScript            → undefined
+session.defaultSession.registerPreloadScript → function
+session.defaultSession.getPreloadScripts()    → []
+session.defaultSession.getPreloads()          → []
+```
+
+**关键**：`getPreloadScripts()` 返回空数组，但窗口确实有 preload。说明这些窗口的 preload **不是通过 `session.registerPreloadScript` 注册的**，而是走 `webPreferences.preload` 直接传给 BrowserWindow 构造器。
+
+交叉验证：`webContents.getLastWebPreferences()` 的返回里**没有 `preload` 键**：
+
+```json
+{"allowRunningInsecureContent":false,"contextIsolation":true,"javascript":true,
+ "nodeIntegration":false,"sandbox":true,"webSecurity":true,...}
+```
+
+Electron 在 `sandbox:true` 时不把 `preload` 回显到 `getLastWebPreferences`，但 `_getPreloadScript()` 仍能取到。
+
+**安全配置实测**：`sandbox: true` + `contextIsolation: true` + `nodeIntegration: false`。这与「渲染进程只能通过 12 个 `exposeInMainWorld` 桥接 API 访问主进程」的设计一致。
+
+### 6.7.4 utility process：实测 3 个，全部是 Chromium 内置
+
+`app.getAppMetrics()` 实测：
+
+```
+{"Browser":1,"GPU":1,"Utility":3,"Tab":2}
+
+utility serviceNames:
+  network.mojom.NetworkService
+  audio.mojom.AudioService
+  video_capture.mojom.VideoCaptureService
+```
+
+对照 `ps` 的进程命令行：
+
+```
+--type=utility --utility-sub-type=network.mojom.NetworkService
+--type=utility --utility-sub-type=audio.mojom.AudioService
+--type=utility --utility-sub-type=video_capture.mojom.VideoCaptureService
+```
+
+**三个 Utility 全部是 Chromium 自带的，没有一个是 Claude 应用层 fork 的。**
+
+对 `utilityProcess.fork` 挂运行时钩子后，未捕获到任何调用：
+
+```js
+utilityProcess.fork = new Proxy(...)   // 钩子已安装
+globalThis.__FORK_HITS__               // → null（本次会话内零调用）
+```
+
+**结合静态证据**：`index.pre.js` 中的 `utilityProcess` 3 处出现全部是对 `fork` 的 Proxy 包装（注入 Sentry 的 `MessageChannelMain` 桥），无实际调用点。
+
+**因此对 REA 的 `utility_processes = 1` 给出裁定**：
+
+| 来源 | 值 | 口径 |
+| :--- | ---: | :--- |
+| REA `summary.utility_processes` | **1** | 静态推断（无法对应到实际进程） |
+| REA `resolved_utility_entrypoints` | 0 | 入口未知 |
+| 本文静态 | 0 个 fork 调用点 | 只有 Proxy 包装 |
+| **本文运行时** | **3 个 Utility** | 全部是 Chromium 内置，非应用层 |
+
+**结论**：REA 的 `1` 与实测的 `3` 都不是「Claude 应用层 utility process 的数量」。运行时证据表明**应用层当前没有 fork 任何 utility process**；`3` 是 Chromium 的内部服务。
+
+> **不确定部分**：本次会话未触发应用层 utility process。若某个功能（如 `heavy-work-worker`、`pty-host`、`file-index-worker`）被使用时是否会 fork，本文**未验证**。这三个 worker 脚本在 asar 中存在（见 1.1.3 的 `pty-host`、`file-index-worker`、`heavy-work-worker` 目录），但属于 `node:worker_threads` 还是 `utilityProcess` 未确定。
+
+### 6.7.5 运行时环境事实
+
+```
+electron 版本 : 44.9.3
+node 版本     : v24.22.0
+app.getAppPath()       : /Applications/Claude.app/Contents/Resources/app.asar
+userData 目录          : /Users/jiahao/Library/Application Support/Claude
+```
+
+`app.getAppPath()` 直接指向 asar，说明 `OnlyLoadAppFromAsar` fuse 为 Enabled（与 6.7.1 的 fuse 清单一致）。
+
+---
+
+## 6.8 对前序章节结论的修正
 
 
-### 6.6.1 修正：`--cds-h-control-nested` 24px 是错的
+### 6.8.1 修正：`--cds-h-control-nested` 24px 是错的
 
 **[第五章 5.2](05-open-claude-ui差异审计.md) 未列出此项。** 本次确认：
 
@@ -809,7 +976,7 @@ grep -c "@custom-variant"  MainWindowPage-BjVtjJFx.css   # 0
 
 **v2 文档在这个值上是正确的**，我们的实现错了。这修正了 [第三章](03-架构重构与对比分析.md) 中对 v2 的整体否定——v2 的取值并非全错。
 
-### 6.6.2 修正：`--cds-gap-xl` 应为 40px
+### 6.8.2 修正：`--cds-gap-xl` 应为 40px
 
 | 来源 | 值 |
 | :--- | :--- |
@@ -818,7 +985,7 @@ grep -c "@custom-variant"  MainWindowPage-BjVtjJFx.css   # 0
 
 [第五章 5.2.1](05-open-claude-ui差异审计.md) 曾记录此项（v2 说 40px，我们 24px），本次确认**官方是 40px**。
 
-### 6.6.3 新增：`--radius-composer` 应为 14px 且带缩放
+### 6.8.3 新增：`--radius-composer` 应为 14px 且带缩放
 
 | 来源 | 值 |
 | :--- | :--- |
@@ -828,13 +995,13 @@ grep -c "@custom-variant"  MainWindowPage-BjVtjJFx.css   # 0
 
 **我们的 20px 是 v1 时代的遗留值**，v2 文档说降为 12px/14px 是对的。
 
-### 6.6.4 新增：alpha / text / accent / shadow 四类系统性问题
+### 6.8.4 新增：alpha / text / accent / shadow 四类系统性问题
 
 这四类在 [第五章](05-open-claude-ui差异审计.md) 中均未涉及，因为当时只对比了主样式表的 `--cds-*`，没有官方 vanilla 作为参照。
 
 ---
 
-## 6.8 更新后的差异优先级
+## 6.9 更新后的差异优先级
 
 在 [5.5 修复优先级总表](05-open-claude-ui差异审计.md) 基础上，新增以下项（按优先级排序）：
 

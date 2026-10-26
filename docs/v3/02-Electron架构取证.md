@@ -248,7 +248,20 @@ function ty(e,t){
 
 唯一的磁盘文件在 `ion-dist/`（Claude 的另一个分发目录），不在 ASAR 内，且名为 `preload-helper`，是 Vite 的 preload 辅助函数而非应用 preload 入口。
 
-**结论**：`preload_entrypoints = 0` **成立**，且原因是结构性的——preload 路径在运行时从 `registerPreloadScript` 的参数得到，打包后不做静态保留。
+**结论**：`preload_entrypoints = 0` 在**静态层面成立**（asar 内无 preload 命名文件），但**不代表没有 preload**。
+
+> **⚠️ 本节已被 [6.7.2](06-全量CSS扫描与官方规范比对.md) 的运行时证据修正。**
+>
+> 运行时实测（`webContents._getPreloadScript()`）：
+>
+> | 窗口 | preload 路径 |
+> | :--- | :--- |
+> | `main_window` | **`.vite/build/mainWindow.js`** |
+> | `about:blank` | **`.vite/build/mainView.js`** |
+>
+> **preload 就是 `.vite/build/` 下的窗口脚本**。这些文件本章 2.1 / 2.2 已经分析过，只是当时不知道它们同时承担 preload 角色。
+>
+> 因此正确表述是：**preload 存在，只是不叫 preload 这个名字**。REA 的 `preload_entrypoints = 0` 反映的是「没有文件名为 preload 的入口」，不是「没有 preload 机制」。
 
 ---
 
