@@ -68,9 +68,13 @@ if (missingTokens.length) {
 const cdsKeyframes = [...new Set([...css.matchAll(/@keyframes\s+(cds-[a-zA-Z0-9_-]+)/g)].map((m) => m[1]))];
 const orphanedKeyframes = [];
 
+// 先剥离注释再判断消费：注释里提到的关键帧名不算消费
+// （复现：`/* TODO: cds-xxx 待接入 */` 曾被误判为已消费）
+const cssNoComments = css.replace(/\/\*[\s\S]*?\*\//g, '');
+
 for (const kf of cdsKeyframes) {
   // 移除关键帧自身定义后，查找是否有对该动画名的消费规则
-  const withoutDef = css.replace(new RegExp(`@keyframes\\s+${kf}[^{]*\\{[^}]*(?:\\{[^}]*\\}[^}]*)*\\}`, 'g'), '');
+  const withoutDef = cssNoComments.replace(new RegExp(`@keyframes\\s+${kf}[^{]*\\{[^}]*(?:\\{[^}]*\\}[^}]*)*\\}`, 'g'), '');
   const isConsumed = new RegExp(`\\b${kf}\\b`).test(withoutDef);
   if (!isConsumed) {
     orphanedKeyframes.push(kf);

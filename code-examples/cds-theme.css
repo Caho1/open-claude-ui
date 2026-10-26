@@ -104,19 +104,40 @@
   --cds-border-strong: var(--cds-alpha-3);
   --cds-ring-hairline: 1px;
 
+  /* 4.5 主题阶梯 (Theme Ramps) —— neutral-N 在暗色下翻转为 gray-(900-N)
+     REA v6.8.0 + 运行时实证：官方 --neutral-N 机制，用于「与页面形成对比」的
+     文本/边框/填充；需要固定像素值时直接引用 --cds-gray-*。
+     light: neutral-0=gray-0(#fff) … neutral-900=gray-900(#0b0b0b)
+     dark : 完全倒转，neutral-900=gray-0(#fff) */
+  --cds-neutral-0: var(--cds-gray-0);
+  --cds-neutral-50: var(--cds-gray-50);
+  --cds-neutral-100: var(--cds-gray-100);
+  --cds-neutral-200: var(--cds-gray-200);
+  --cds-neutral-300: var(--cds-gray-300);
+  --cds-neutral-400: var(--cds-gray-400);
+  --cds-neutral-500: var(--cds-gray-500);
+  --cds-neutral-600: var(--cds-gray-600);
+  --cds-neutral-700: var(--cds-gray-700);
+  --cds-neutral-800: var(--cds-gray-800);
+  --cds-neutral-850: var(--cds-gray-850);
+  --cds-neutral-900: var(--cds-gray-900);
+
   /* 5. 双环浮动气泡架构 (Dual-Ring Architecture - 浅色模式) */
   --cds-ring-inner: 0px;
   --cds-ring-outer: 1px;
   --cds-ring-color: var(--cds-border);
 
-  /* 6. 阴影系统 (Elevation Shadows) */
-  --cds-shadow-color: rgba(0, 0, 0, 0.08);
-  --cds-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05), 0 2px 8px 0 var(--cds-shadow-color);
-  --cds-shadow-md: 0 2px 4px 0 rgba(0, 0, 0, 0.05), 0 6px 16px 0 var(--cds-shadow-color);
-  --cds-shadow-lg: 0 4px 8px 0 rgba(0, 0, 0, 0.06), 0 12px 28px -2px var(--cds-shadow-color);
-  --cds-shadow-popover: inset 0 0 0 var(--cds-ring-inner) var(--cds-ring-color), 
-                        0 0 0 var(--cds-ring-outer) var(--cds-ring-color), 
-                        0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.08);
+  /* 6. 阴影系统 (Elevation Shadows)
+     运行时实证 (3.6556.2)：shadow-* 的偏移层用 hsl(from gray-900 …) 而非固定 rgba，
+     因此暗色下自然跟随。shadow-popover 官方为纯双层投影，不含 inset ring。 */
+  --cds-shadow-color: hsl(from var(--cds-gray-900) h s l / 8%);
+  --cds-shadow-sm: 0 1px 2px 0 hsl(from var(--cds-gray-900) h s l / 6%),
+                   0 2px 8px 0 var(--cds-shadow-color);
+  --cds-shadow-md: 0 2px 4px 0 hsl(from var(--cds-gray-900) h s l / 7%),
+                   0 6px 16px 0 var(--cds-shadow-color);
+  --cds-shadow-lg: 0 4px 8px 0 hsl(from var(--cds-gray-900) h s l / 8%),
+                   0 12px 28px -2px var(--cds-shadow-color);
+  --cds-shadow-popover: 0 8px 24px rgb(0 0 0 / 0.12), 0 2px 6px rgb(0 0 0 / 0.08);
 
   --cds-panel-shadow: 0 0 0 1px var(--cds-border), var(--cds-shadow-sm);
   --cds-panel-shadow-hover: 0 0 0 1px var(--cds-border-strong), 0 4px 16px -2px rgba(0, 0, 0, 0.09);
@@ -130,16 +151,20 @@
   --cds-focus-shadow: inset 0 0 0 1px var(--cds-surface-1), 0 0 0 1.5px var(--cds-clay), 0 0 6px 1px rgba(217, 119, 87, 0.25);
   --cds-shadow-drop-glow: inset 0 0 24px -2px rgba(217, 119, 87, 0.20), inset 0 0 0 2px var(--cds-clay);
 
-  /* 9. 交互填充与文本色阶 */
+  /* 9. 交互填充与文本色阶
+     REA v6.8.0 + 运行时实证 (Claude Desktop 3.6556.2, Electron 44.9.3)：
+     官方链为 neutral-N，它在暗色下翻转为 gray-(900-N)。
+     light: text-primary=#0b0b0b(gray-900) / secondary=#52514e(gray-600) / muted=#898781(gray-400)
+     dark : text-primary=#f0efec(gray-50)  / secondary=#c3c2b7(gray-200) / muted=#898781(gray-400 不变) */
   --cds-fill-ghost-hover: var(--cds-alpha-1);
   --cds-fill-ghost-selected: var(--cds-alpha-2);
   --cds-fill-secondary: var(--cds-alpha-2);
   --cds-fill-secondary-hover: rgba(21, 21, 21, 0.14);
 
-  --cds-text-primary: #151515;
-  --cds-text-secondary: #525252;
-  --cds-text-muted: #8a8a8a;
-  --cds-bg-tint-blue: #f0f4f8;
+  --cds-text-primary: var(--cds-neutral-900);      /* #0b0b0b */
+  --cds-text-secondary: var(--cds-neutral-600);    /* #52514e */
+  --cds-text-muted: var(--cds-neutral-400);        /* #898781，暗色下同为 gray-400 */
+  --cds-bg-tint-blue: rgb(from var(--cds-blue-100, #cde2fb) calc((r - 163.8) / .35) calc((g - 163.8) / .35) calc((b - 163.15) / .35) / 35%);
   --cds-segmented-track: rgba(0, 0, 0, 0.06);
   --cds-segmented-thumb: #ffffff;
 
@@ -152,7 +177,8 @@
   --radius-xl: .75rem;   /* 12px */
   --radius-2xl: 1rem;    /* 16px */
   --radius-3xl: 1.5rem;  /* 24px */
-  --cds-radius-composer: 20px;
+  --cds-radius: calc(.5rem * var(--cds-rem-scale, 1));  /* 8px 基础圆角，官方实证 */
+  --cds-radius-composer: calc(.75rem * var(--cds-rem-scale, 1));  /* 12px；comfortable 14px，见密度块 */
   --df-radius-pill: 999px;
   --radius: var(--cds-radius, 8px);
   --radius-card: calc(var(--cds-radius, 8px) + calc(.25rem * var(--cds-rem-scale, 1)));
@@ -165,8 +191,20 @@
   --cds-bg-neutral-hover: var(--cds-alpha-2);
 
   /* 强调填充别名链 (REA 取证: .cds-root 作用域, Claude 2.42304.2)
-     --cds-fill-accent → --cds-role-accent-fill → --cds-role-accent-450 → --cds-blue-450 */
+     --cds-fill-accent → --cds-role-accent-fill → --cds-role-accent-450 → --cds-blue-450
+
+     accent 角色完整色阶 (REA v6.8.0 + 运行时实证 3.6556.2)：
+     accent 是独立于 brand(clay) 的蓝色角色。运行时实测：
+       --border-accent = role-accent-250 = blue-250 = #86b6ef (light)
+       --text-accent   = role-accent-600 = blue-600 = #184f95 (light)
+       --fill-accent   = role-accent-450 = blue-450 = #2a78d6
+       dark: border-accent→#0d366b, text-accent→#6da7ec */
+  --cds-blue-100: #cde2fb;
+  --cds-blue-250: #86b6ef;
   --cds-blue-450: #2a78d6;
+  --cds-blue-600: #184f95;
+  --cds-role-accent-250: var(--cds-blue-250);
+  --cds-role-accent-600: var(--cds-blue-600);
   --cds-role-accent-450: var(--cds-blue-450);
   --cds-role-accent-fill: var(--cds-role-accent-450);
   --cds-fill-accent: var(--cds-role-accent-fill);
@@ -241,12 +279,24 @@
   --cds-bg-hover: var(--cds-fill-ghost-hover);
   --cds-bg-selected: var(--cds-fill-ghost-selected);
   --cds-border-subtle: var(--cds-alpha-2);
-  --cds-border-accent: var(--cds-clay);
-  --cds-fill-brand: var(--brand);
-  --cds-fill-brand-hover: var(--cds-clay-hover);
+
+  /* 8. 角色系统 (Purpose Roles) —— 组件只消费此层
+     运行时实证 (3.6556.2, Electron 44.9.3)：
+       border-accent: light #86b6ef (blue-250) / dark #0d366b
+       text-accent:   light #184f95 (blue-600) / dark #6da7ec
+       fill-brand:    #c6613f 双模同值（= clay-emphasized）
+       fill-brand-hover: #d97757 双模同值（= clay；官方 hover 向上变浅）
+       focus-shadow: 0 0 0 1px #2a78d6 (blue) + bg-accent glow，非 clay */
+  --cds-border-accent: var(--cds-role-accent-250);
+  --cds-fill-brand: var(--cds-clay-emphasized);       /* #c6613f */
+  --cds-fill-brand-hover: var(--cds-clay);            /* #d97757 */
   --cds-fill-brand-subtle: var(--cds-clay-light);
   --cds-fill-danger: #ef4444;
-  --cds-text-accent: var(--cds-clay);
+  --cds-text-accent: var(--cds-role-accent-600);      /* #184f95 蓝，非 clay */
+  --cds-bg-accent: var(--cds-blue-100);               /* focus glow 的颜色源，运行时实证 #cde2fb */
+  --cds-focus-shadow: inset 0 0 0 1px var(--cds-page-bg),
+                      0 0 0 1px var(--cds-fill-accent),
+                      0 0 6px 1px var(--cds-bg-accent);
 
   /* 15. 语义化向后兼容别名与跨宿主通用别名 (Backward-Compatibility & Host Aliases) */
   --cds-bg-surface-0: var(--cds-surface-0);
@@ -264,24 +314,57 @@
   --cds-radius-code: 12px;
   --cds-radius-btn-md: 8px;
   --cds-radius-btn-xs: 6px;
-  --cds-radius: 8px;
   --cds-page-bg: var(--cds-surface-0);
-  --cds-clay-emphasized: var(--cds-clay-hover);
-  --cds-keycap-radius: var(--radius-xs, 2px);
-  --cds-checkbox-radius: var(--radius-xs, 2px);
+  --cds-clay-emphasized: #c6613f;   /* 运行时实证：双模同值，非 clay-hover 派生 */
+  --cds-keycap-radius: var(--radius-sm, 4px);   /* 运行时+官方 vanilla：4px，非 radius-xs 2px */
+  --cds-checkbox-radius: 5px;                  /* 官方 vanilla：5px */
   --cds-anim-ease: var(--cds-ease-swift);
-  --cds-gap-xl: 1.5rem;
-  --cds-icon: 1.25rem;
-  --cds-h-control--xs: 24px;
-  --cds-h-control--sm: 28px;
-  --cds-h-control: 32px;
-  --cds-h-control--lg: 40px;
-  --cds-h-control-nested: 24px;
 
-  /* 16. 骨架屏与扫光动效变量 (Skeleton & Shimmer Motion Tokens - REA 取证) */
+  /* 17. 尺寸与密度 (Density Tokens) —— 全部乘 --cds-rem-scale（官方 vanilla 实证）
+     桌面端该变量未被赋值，恒走 fallback 1，因此数值与现值一致；
+     但写死 px 会使宿主设置 --cds-rem-scale 时密度系统失效。
+     compact 为默认；[data-density=comfortable] 覆盖（见暗色块后的密度块） */
+  --cds-gap-xl: calc(2.5rem * var(--cds-rem-scale, 1));       /* 40px，官方实证 */
+  --cds-icon: calc(1.25rem * var(--cds-rem-scale, 1));        /* 20px */
+  --cds-h-control--xs: calc(1.5rem * var(--cds-rem-scale, 1));   /* 24px */
+  --cds-h-control--sm: calc(1.75rem * var(--cds-rem-scale, 1));  /* 28px */
+  --cds-h-control: calc(2rem * var(--cds-rem-scale, 1));         /* 32px */
+  --cds-h-control--lg: calc(2.5rem * var(--cds-rem-scale, 1));   /* 40px */
+  --cds-h-control-nested: calc(1.375rem * var(--cds-rem-scale, 1)); /* 22px，官方实证 */
+  --cds-pad-xs: calc(.375rem * var(--cds-rem-scale, 1));
+  --cds-pad-sm: calc(.5rem * var(--cds-rem-scale, 1));
+  --cds-pad-md: calc(.75rem * var(--cds-rem-scale, 1));
+  --cds-pad-lg: calc(1rem * var(--cds-rem-scale, 1));
+  --cds-pad-xl: calc(1.5rem * var(--cds-rem-scale, 1));
+
+  /* 18. 密度双模 (Density Modes) —— 官方 vanilla 实证：
+     compact 为默认（无显式块）；comfortable 覆盖尺寸 token */
+  &[data-density=comfortable],
+  [data-density=comfortable] & {
+    --cds-radius--xs: calc(.375rem * var(--cds-rem-scale, 1));   /* 6px */
+    --cds-radius--sm: calc(.4375rem * var(--cds-rem-scale, 1));  /* 7px */
+    --cds-radius--lg: calc(.625rem * var(--cds-rem-scale, 1));   /* 10px */
+    --cds-radius-composer: calc(.875rem * var(--cds-rem-scale, 1)); /* 14px */
+    --cds-h-control--xs: calc(1.5rem * var(--cds-rem-scale, 1));
+    --cds-h-control--sm: calc(1.75rem * var(--cds-rem-scale, 1));
+    --cds-h-control--lg: calc(2.5rem * var(--cds-rem-scale, 1));
+    --cds-h-control-nested--xs: calc(1.125rem * var(--cds-rem-scale, 1));
+    --cds-h-control-nested--sm: calc(1.25rem * var(--cds-rem-scale, 1));
+    --cds-h-control-nested--lg: calc(1.75rem * var(--cds-rem-scale, 1));
+    --cds-icon--xs: calc(1rem * var(--cds-rem-scale, 1));
+    --cds-icon--sm: calc(1rem * var(--cds-rem-scale, 1));
+    --cds-icon--lg: calc(1.5rem * var(--cds-rem-scale, 1));
+  }
+
+  /* 19. 骨架屏与扫光动效变量 (Skeleton & Shimmer Motion Tokens) */
   --cds-skel-i: 0;
-  --cds-skeleton-base: rgba(0, 0, 0, 0.05);
-  --cds-skeleton-sheen: rgba(255, 255, 255, 0.25);
+  --cds-skeleton-base: var(--cds-alpha-1);   /* hsl(from neutral-900 / 5%) */
+  --cds-skeleton-sheen: var(--cds-alpha-1);  /* 与 base 同值，运行时实证 */
+
+  /* 20. 吸边 (Sticky Edge) 默认值 —— 官方 @property 注册项的运行时初值 */
+  --cds-sticky-edge-active: 0;
+  --cds-sticky-edge-start: 0px;
+  --cds-sticky-edge-end: 0px;
 }
 
 /* 高分屏视网膜物理发丝细线补偿 */
@@ -319,9 +402,26 @@
 
   --cds-alpha-0: hsla(0, 0%, 100%, 0);
   --cds-alpha-1: hsla(0, 0%, 100%, 0.05);
-  --cds-alpha-2: hsla(0, 0%, 100%, 0.09);
-  --cds-alpha-3: hsla(0, 0%, 100%, 0.18);
-  --cds-alpha-4: hsla(0, 0%, 100%, 0.30);
+  --cds-alpha-2: hsla(0, 0%, 100%, 0.10);
+  --cds-alpha-3: hsla(0, 0%, 100%, 0.20);
+  --cds-alpha-4: hsla(0, 0%, 100%, 0.35);
+
+  /* 主题阶梯暗色翻转 (Theme Ramp Inversion)
+     运行时实证 (3.6556.2)：neutral-N 在暗色下 = gray-(900-N)，因此
+     neutral-900 → gray-0(#fff)、neutral-600 → gray-300(#a5a49a)。
+     这是 --cds-text-* 与 --cds-alpha-* 自动翻转的基础。 */
+  --cds-neutral-0: var(--cds-gray-900);
+  --cds-neutral-50: var(--cds-gray-850);
+  --cds-neutral-100: var(--cds-gray-800);
+  --cds-neutral-200: var(--cds-gray-700);
+  --cds-neutral-300: var(--cds-gray-600);
+  --cds-neutral-400: var(--cds-gray-400);   /* 实证：暗色下仍为 gray-400 #898781 */
+  --cds-neutral-500: var(--cds-gray-400);
+  --cds-neutral-600: var(--cds-gray-200);   /* 实证：#c3c2b7 */
+  --cds-neutral-700: var(--cds-gray-100);
+  --cds-neutral-800: var(--cds-gray-50);
+  --cds-neutral-850: var(--cds-gray-50);    /* 实证：#f0efec */
+  --cds-neutral-900: var(--cds-gray-0);
 
 
   /* 会话气泡背景在暗色下的取值。
@@ -341,12 +441,14 @@
   --cds-ring-outer: 0px;
   --cds-ring-color: rgba(255, 255, 255, 0.10);
 
-  --cds-shadow-color: rgba(0, 0, 0, 0.40);
-  --cds-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4), 0 2px 8px 0 var(--cds-shadow-color);
-  --cds-shadow-md: 0 2px 4px 0 rgba(0, 0, 0, 0.4), 0 6px 16px 0 var(--cds-shadow-color);
-  --cds-shadow-lg: 0 4px 8px 0 rgba(0, 0, 0, 0.5), 0 16px 36px -2px var(--cds-shadow-color);
-  --cds-shadow-popover: inset 0 0 0 1px rgba(255, 255, 255, 0.10), 
-                        0 8px 28px rgba(0, 0, 0, 0.65), 0 2px 8px rgba(0, 0, 0, 0.45);
+  --cds-shadow-color: rgba(0, 0, 0, 0.24);
+  --cds-shadow-sm: 0 1px 2px 0 hsl(from var(--cds-gray-900) h s l / 8%),
+                   0 2px 8px 0 var(--cds-shadow-color);
+  --cds-shadow-md: 0 2px 4px 0 hsl(from var(--cds-gray-900) h s l / 7%),
+                   0 6px 16px 0 var(--cds-shadow-color);
+  --cds-shadow-lg: 0 4px 8px 0 hsl(from var(--cds-gray-900) h s l / 8%),
+                   0 12px 28px -2px var(--cds-shadow-color);
+  --cds-shadow-popover: 0 8px 24px rgb(0 0 0 / 0.32), 0 2px 6px rgb(0 0 0 / 0.20);
 
   --cds-panel-shadow: 0 0 0 1px var(--cds-border), var(--cds-shadow-sm);
   --cds-panel-shadow-hover: 0 0 0 1px var(--cds-border-strong), 0 6px 20px rgba(0, 0, 0, 0.6);
@@ -355,17 +457,19 @@
   --cds-shadow-composer-hover: 0 4px 24px rgba(0, 0, 0, 0.55), inset 0 0 0 1px var(--cds-border-strong);
   --cds-shadow-composer-focus: 0 4px 24px rgba(0, 0, 0, 0.65), inset 0 0 0 1px rgba(255, 255, 255, 0.22), 0 0 0 1px rgba(255, 255, 255, 0.22);
 
-  --cds-focus-shadow: inset 0 0 0 1px var(--cds-surface-1), 0 0 0 1.5px var(--cds-clay), 0 0 8px 2px rgba(217, 119, 87, 0.35);
-  --cds-shadow-drop-glow: inset 0 0 24px -2px rgba(217, 119, 87, 0.30), inset 0 0 0 2px var(--cds-clay);
+  --cds-focus-shadow: inset 0 0 0 1px var(--cds-page-bg),
+                      0 0 0 1px var(--cds-fill-accent),
+                      0 0 6px 1px hsl(from var(--cds-blue-600) h s l / 60%);
+  --cds-shadow-drop-glow: inset 0 0 24px -2px hsl(from var(--cds-fill-accent) h s l / 20%);
 
   --cds-fill-ghost-hover: var(--cds-alpha-1);
   --cds-fill-ghost-selected: var(--cds-alpha-2);
   --cds-fill-secondary: var(--cds-alpha-2);
   --cds-fill-secondary-hover: rgba(255, 255, 255, 0.14);
 
-  --cds-text-primary: #f5f5f5;
-  --cds-text-secondary: #a3a3a3;
-  --cds-text-muted: #666666;
+  --cds-text-primary: var(--cds-neutral-900);      /* dark → gray-50 #f0efec */
+  --cds-text-secondary: var(--cds-neutral-600);    /* dark → gray-200 #c3c2b7 */
+  --cds-text-muted: var(--cds-neutral-400);        /* dark 仍为 gray-400 #898781 */
   --cds-bg-tint-blue: rgba(255, 255, 255, 0.06);
   --cds-segmented-track: rgba(255, 255, 255, 0.08);
   --cds-segmented-thumb: #2c2c2a;
@@ -378,15 +482,17 @@
   --cds-bg-hover: var(--cds-fill-ghost-hover);
   --cds-bg-selected: var(--cds-fill-ghost-selected);
   --cds-border-subtle: var(--cds-alpha-2);
-  --cds-border-accent: var(--cds-clay);
-  --cds-fill-brand: var(--brand);
-  --cds-fill-brand-hover: var(--cds-clay-hover);
-  --cds-fill-brand-subtle: rgba(217, 119, 87, 0.15);
-  --cds-fill-danger: #f87171;
-  --cds-text-accent: var(--cds-clay);
+  /* 角色系统暗色重载 —— 运行时实证：
+     border-accent: dark #0d366b (blue-800)
+     text-accent:   dark #6da7ec (blue-350)
+     fill-brand / fill-brand-hover 双模同值不重载 */
+  --cds-border-accent: #0d366b;
+  --cds-text-accent: #6da7ec;
 
-  --cds-skeleton-base: rgba(255, 255, 255, 0.06);
-  --cds-skeleton-sheen: rgba(255, 255, 255, 0.08);
+  /* 骨架屏暗色 —— 运行时实证：base 与 sheen 同值，
+     hsl(from neutral-900 / 7.5%) → 白色 7.5%（加深而非提亮） */
+  --cds-skeleton-base: hsl(from var(--cds-neutral-900) h s l / 7.5%);
+  --cds-skeleton-sheen: hsl(from var(--cds-neutral-900) h s l / 7.5%);
 }
 
 /* ==========================================================================
@@ -478,6 +584,12 @@
 @keyframes cds-skeleton-breathe {
   0%, 100% { opacity: 1; }
   50%      { opacity: 0.6; }
+}
+
+/* 占位揭示淡入 (官方实证：.15s ease-out，配 data-hold=delayed) */
+@keyframes cds-placeholder-reveal {
+  0%   { opacity: 0; }
+  100% { opacity: 1; }
 }
 
 /* 9. 陶土呼吸指示灯 (REA 取证：3s ease-in-out) */
@@ -609,21 +721,82 @@
    骨架屏系统 (CDS Skeleton & Dual-Mode Motion - REA 取证)
    ========================================================================== */
 
+/* 圆角默认值零特异性，不覆盖 Tailwind 的 rounded-* 工具类
+   （运行时实证：官方头像骨架用 rounded-full，此前直接写会把它压成 4px） */
+:where(.cds-skeleton) {
+  border-radius: 4px;
+}
 .cds-skeleton {
   position: relative;
   overflow: hidden;
-  background-color: var(--cds-skeleton-base, rgba(0, 0, 0, 0.05));
-  border-radius: var(--radius-sm, 4px);
+  background-color: var(--cds-skeleton-base);
 }
 
-/* 密集列表同步呼吸模式: 整体透明度 1.0 -> 0.6 -> 1.0 周期 2.0s */
+/* 官方双层结构 (REA v6.8.0 + 运行时实证 3.6556.2)：
+   [data-cds=SkeletonGroup]  ← 组容器：data-motion / data-hold
+     └ [data-cds=Skeleton]   ← 骨架块：--cds-skel-i 级联索引
+          └ .cds-skel-sweep-band ← 扫光光带（真实元素，非 ::after）
+   对齐层（本仓库自定义封装）仍支持 .cds-skeleton 类，但不再将
+   .cds-skeleton-sweep 写入与伪元素同一规则 —— 该独立类曾使元素自身
+   变为 position:absolute + translate(-100%) 而移出视口（issue #25 实测缺陷）。 */
+.cds-skel-sweep-clip {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+/* 双模呼吸 (Dual-Mode Breathe) —— 官方实证：wave 与 lockstep 都用
+   cds-skeleton-breathe（透明度呼吸），扫光由独立光带承担，与 motion 无关。
+   wave 挂每个骨架块，带级联；lockstep 挂组容器，同步。 */
 .cds-skeleton[data-motion="lockstep"],
-[data-motion="lockstep"] .cds-skeleton {
-  animation: cds-skeleton-breathe 2s ease-in-out infinite;
+[data-motion="lockstep"] .cds-skeleton,
+[data-motion="lockstep"][data-cds="SkeletonGroup"] {
+  animation: cds-skeleton-breathe 2s ease-in-out var(--cds-skel-reveal-end, 0s) infinite;
+}
+.cds-skeleton[data-motion="wave"],
+[data-motion="wave"] .cds-skeleton,
+[data-motion="wave"][data-cds="SkeletonGroup"] [data-cds="Skeleton"] {
+  animation: cds-skeleton-breathe 2s ease-in-out
+             calc(var(--cds-skel-reveal-end, 0s) + var(--cds-skel-i, 0) * 90ms) infinite;
 }
 
-/* 大卡片波浪扫光模式: 105° 倾斜扫光光带，支持 --cds-skel-i 级联延时 */
-.cds-skeleton-sweep,
+/* data-hold 三态揭示时序 (官方实证) ——
+   缺省：reveal-end = placeholder-reveal-delay(.5s) + .15s - elapsed
+   none：立即
+   delayed：额外叠加 cds-placeholder-reveal 淡入动画
+   揭示完成后（data-hold + data-motion 同时存在）动画压至 .01ms 且隐藏扫光带 */
+[data-cds="SkeletonGroup"][data-hold] {
+  --cds-skel-elapsed: 0s;
+  --cds-skel-i: 0;
+  --cds-skel-settled: 0s;
+  --cds-skel-reveal-end: calc(var(--placeholder-reveal-delay, .5s) + .15s - var(--cds-skel-elapsed));
+}
+[data-cds="SkeletonGroup"][data-hold="none"] {
+  --cds-skel-reveal-end: calc(0s - var(--cds-skel-elapsed));
+}
+[data-cds="SkeletonGroup"][data-hold="delayed"] {
+  animation: cds-placeholder-reveal .15s ease-out
+             calc(var(--placeholder-reveal-delay, .5s) - var(--cds-skel-elapsed) - var(--cds-skel-settled))
+             backwards;
+}
+[data-cds="SkeletonGroup"][data-hold][data-motion],
+[data-cds="SkeletonGroup"][data-hold][data-motion] [data-cds="Skeleton"],
+[data-hold][data-motion] .cds-skeleton,
+[data-hold][data-motion].cds-skeleton {
+  animation-duration: .01ms;
+  animation-iteration-count: 1;
+}
+[data-cds="SkeletonGroup"][data-hold][data-motion] .cds-skel-sweep-band,
+[data-hold][data-motion] .cds-skel-sweep-band,
+[data-hold][data-motion] .cds-skeleton::after {
+  display: none;
+}
+
+/* 扫光光带：独立元素，与 data-motion 无关；
+   animation-delay 用 --cds-skel-reveal-end（揭示终点）而非仅级联索引 */
+.cds-skel-sweep-band,
+.cds-skeleton-sweep::after,
 .cds-skeleton[data-motion="wave"]::after,
 .cds-skeleton:not([data-motion])::after {
   content: "";
@@ -633,33 +806,60 @@
   background: linear-gradient(
     105deg,
     transparent 35%,
-    var(--cds-skeleton-sheen, rgba(255, 255, 255, 0.25)) 50%,
+    var(--cds-skeleton-sheen) 50%,
     transparent 65%
   );
-  animation: cds-skeleton-sweep 2s linear infinite;
-  animation-delay: calc(var(--cds-skel-i, 0) * 90ms);
+  animation: cds-skeleton-sweep 2s linear var(--cds-skel-reveal-end, 0s) infinite backwards;
   pointer-events: none;
 }
 
-/* RTL 镜像角度适配: 105° -> 255° */
-:dir(rtl) .cds-skeleton-sweep,
-[dir="rtl"] .cds-skeleton-sweep,
-:dir(rtl) .cds-skeleton[data-motion="wave"]::after,
+/* RTL 镜像适配：官方用 :lang() 精确语言列表 + animation-direction:reverse。
+   仅翻转渐变角度不翻转动画方向时，扫光仍从左向右（issue #25 实测缺陷）。 */
+:dir(rtl) .cds-skel-sweep-band,
+[dir="rtl"] .cds-skel-sweep-band,
+[dir="rtl"] .cds-skeleton-sweep::after,
 [dir="rtl"] .cds-skeleton[data-motion="wave"]::after,
-:dir(rtl) .cds-skeleton:not([data-motion])::after,
-[dir="rtl"] .cds-skeleton:not([data-motion])::after {
-  background: linear-gradient(
+[dir="rtl"] .cds-skeleton:not([data-motion])::after,
+[dir="rtl"] .cds-skel-sweep-band,
+[dir="rtl"] .cds-skel-sweep-clip:where(:lang(ae),:lang(ar),:lang(arc),:lang(bcc),:lang(bqi),:lang(ckb),:lang(dv),:lang(fa),:lang(glk),:lang(he),:lang(ku),:lang(mzn),:lang(nqo),:lang(pnb),:lang(ps),:lang(sd),:lang(ug),:lang(ur),:lang(yi)) .cds-skel-sweep-band {
+  background-image: linear-gradient(
     255deg,
     transparent 35%,
-    var(--cds-skeleton-sheen, rgba(255, 255, 255, 0.25)) 50%,
+    var(--cds-skeleton-sheen) 50%,
     transparent 65%
   );
+  animation-direction: reverse;
 }
 
 /* lockstep 呼吸模式下禁用扫光伪元素以避免双重动画冲突 */
 .cds-skeleton[data-motion="lockstep"]::after,
 [data-motion="lockstep"] .cds-skeleton::after {
   display: none !important;
+}
+
+/* 减少动效双轨兕底 (官方实证：@media 系统偏好 + [data-reduce-motion] 应用开关)
+   此前骨架屏动画在任意条件下均无限循环，不响应系统设置 */
+@media (prefers-reduced-motion: reduce) {
+  .cds-skeleton,
+  .cds-skeleton[data-motion],
+  [data-motion] .cds-skeleton,
+  [data-cds="SkeletonGroup"][data-motion] [data-cds="Skeleton"] {
+    animation-duration: .01ms;
+    animation-iteration-count: 1;
+  }
+  .cds-skel-sweep-band,
+  .cds-skeleton::after {
+    display: none;
+  }
+}
+.cds-root:where([data-reduce-motion=true], [data-reduce-motion=true] *) .cds-skeleton,
+.cds-root:where([data-reduce-motion=true], [data-reduce-motion=true] *) [data-motion] .cds-skeleton {
+  animation-duration: .01ms;
+  animation-iteration-count: 1;
+}
+.cds-root:where([data-reduce-motion=true], [data-reduce-motion=true] *) .cds-skel-sweep-band,
+.cds-root:where([data-reduce-motion=true], [data-reduce-motion=true] *) .cds-skeleton::after {
+  display: none;
 }
 
 /* ==========================================================================
@@ -998,6 +1198,12 @@
 @property --cds-scroll-fade-right      { syntax: "<length>"; inherits: false; initial-value: 0; }
 @property --cds-scroll-fade-strip-raw    { syntax: "<number>"; inherits: false; initial-value: 0; }
 @property --cds-scroll-fade-strip-active { syntax: "<number>"; inherits: false; initial-value: 0; }
+
+/* 吸边 (Sticky Edge) —— 客户端 3.6556.2 注册的 3 个 @property
+   （本次从主样式表移植；v3 文档 4.5 节所列缺失项） */
+@property --cds-sticky-edge-active { syntax: "<number>"; inherits: false; initial-value: 0; }
+@property --cds-sticky-edge-start  { syntax: "<length>"; inherits: false; initial-value: 0; }
+@property --cds-sticky-edge-end    { syntax: "<length>"; inherits: false; initial-value: 0; }
 
 /* 只推进几何进度，不决定可见性 */
 @keyframes cds-scroll-fade-top     { 0% { --cds-scroll-fade-top-raw: 0px; }                      to { --cds-scroll-fade-top-raw: var(--cds-scroll-fade-size); } }
