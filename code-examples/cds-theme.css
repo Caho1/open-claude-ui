@@ -264,6 +264,24 @@
   --cds-radius-code: 12px;
   --cds-radius-btn-md: 8px;
   --cds-radius-btn-xs: 6px;
+  --cds-radius: 8px;
+  --cds-page-bg: var(--cds-surface-0);
+  --cds-clay-emphasized: var(--cds-clay-hover);
+  --cds-keycap-radius: var(--radius-xs, 2px);
+  --cds-checkbox-radius: var(--radius-xs, 2px);
+  --cds-anim-ease: var(--cds-ease-swift);
+  --cds-gap-xl: 1.5rem;
+  --cds-icon: 1.25rem;
+  --cds-h-control--xs: 24px;
+  --cds-h-control--sm: 28px;
+  --cds-h-control: 32px;
+  --cds-h-control--lg: 40px;
+  --cds-h-control-nested: 24px;
+
+  /* 16. 骨架屏与扫光动效变量 (Skeleton & Shimmer Motion Tokens - REA 取证) */
+  --cds-skel-i: 0;
+  --cds-skeleton-base: rgba(0, 0, 0, 0.05);
+  --cds-skeleton-sheen: rgba(255, 255, 255, 0.25);
 }
 
 /* 高分屏视网膜物理发丝细线补偿 */
@@ -366,6 +384,9 @@
   --cds-fill-brand-subtle: rgba(217, 119, 87, 0.15);
   --cds-fill-danger: #f87171;
   --cds-text-accent: var(--cds-clay);
+
+  --cds-skeleton-base: rgba(255, 255, 255, 0.06);
+  --cds-skeleton-sheen: rgba(255, 255, 255, 0.08);
 }
 
 /* ==========================================================================
@@ -448,10 +469,15 @@
   100%    { opacity: 0; transform: scale(0.92); }
 }
 
-/* 8. 骨架屏高级倾斜扫光 (REA 取证：2s linear 105deg) */
+/* 8. 骨架屏高级倾斜扫光与双模式呼吸 (REA 取证：2s linear 105deg / 2s ease-in-out) */
 @keyframes cds-skeleton-sweep {
   0%   { transform: translate(-100%); }
   100% { transform: translate(100%); }
+}
+
+@keyframes cds-skeleton-breathe {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.6; }
 }
 
 /* 9. 陶土呼吸指示灯 (REA 取证：3s ease-in-out) */
@@ -512,6 +538,21 @@
   background: var(--cds-clay);
   animation: 3s ease-in-out infinite dframe-clay-breathe;
 }
+.status-dot[data-kind="pulse"],
+.cds-dot-pulse {
+  background: var(--cds-fill-brand, var(--cds-clay));
+  animation: 1.8s infinite cds-dot-pulse;
+}
+
+.cds-message-fade-up {
+  animation: message-fade-up 0.45s cubic-bezier(0.34, 1.3, 0.64, 1);
+}
+.cds-saved-check-decay {
+  animation: saved-check-decay 0.35s cubic-bezier(0.165, 0.84, 0.44, 1) 2.2s forwards;
+}
+.cds-thumbnail-grow {
+  animation: file-thumbnail-grow-in 250ms cubic-bezier(0.165, 0.84, 0.44, 1);
+}
 
 /* ==========================================================================
    通用实用类 (CDS Utility Classes)
@@ -562,6 +603,63 @@
 
 .border-hairline {
   border-width: var(--cds-ring-hairline);
+}
+
+/* ==========================================================================
+   骨架屏系统 (CDS Skeleton & Dual-Mode Motion - REA 取证)
+   ========================================================================== */
+
+.cds-skeleton {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--cds-skeleton-base, rgba(0, 0, 0, 0.05));
+  border-radius: var(--radius-sm, 4px);
+}
+
+/* 密集列表同步呼吸模式: 整体透明度 1.0 -> 0.6 -> 1.0 周期 2.0s */
+.cds-skeleton[data-motion="lockstep"],
+[data-motion="lockstep"] .cds-skeleton {
+  animation: cds-skeleton-breathe 2s ease-in-out infinite;
+}
+
+/* 大卡片波浪扫光模式: 105° 倾斜扫光光带，支持 --cds-skel-i 级联延时 */
+.cds-skeleton-sweep,
+.cds-skeleton[data-motion="wave"]::after,
+.cds-skeleton:not([data-motion])::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translate(-100%);
+  background: linear-gradient(
+    105deg,
+    transparent 35%,
+    var(--cds-skeleton-sheen, rgba(255, 255, 255, 0.25)) 50%,
+    transparent 65%
+  );
+  animation: cds-skeleton-sweep 2s linear infinite;
+  animation-delay: calc(var(--cds-skel-i, 0) * 90ms);
+  pointer-events: none;
+}
+
+/* RTL 镜像角度适配: 105° -> 255° */
+:dir(rtl) .cds-skeleton-sweep,
+[dir="rtl"] .cds-skeleton-sweep,
+:dir(rtl) .cds-skeleton[data-motion="wave"]::after,
+[dir="rtl"] .cds-skeleton[data-motion="wave"]::after,
+:dir(rtl) .cds-skeleton:not([data-motion])::after,
+[dir="rtl"] .cds-skeleton:not([data-motion])::after {
+  background: linear-gradient(
+    255deg,
+    transparent 35%,
+    var(--cds-skeleton-sheen, rgba(255, 255, 255, 0.25)) 50%,
+    transparent 65%
+  );
+}
+
+/* lockstep 呼吸模式下禁用扫光伪元素以避免双重动画冲突 */
+.cds-skeleton[data-motion="lockstep"]::after,
+[data-motion="lockstep"] .cds-skeleton::after {
+  display: none !important;
 }
 
 /* ==========================================================================
@@ -753,6 +851,36 @@
   95%, 100% {
     background-position: 16.667% 0;
   }
+}
+
+.cds-shimmer-text {
+  background: linear-gradient(
+    105deg,
+    currentColor 0%,
+    currentColor 35%,
+    var(--cds-clay, #d97757) 50%,
+    currentColor 65%,
+    currentColor 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: 3s linear infinite cds-shimmer-text-shine;
+}
+
+.cds-shimmer-text-strong {
+  background: linear-gradient(
+    105deg,
+    currentColor 0%,
+    currentColor 35%,
+    var(--cds-clay, #d97757) 50%,
+    currentColor 65%,
+    currentColor 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: 2.5s linear infinite cds-shimmer-text-shine-strong;
 }
 
 /* 5. Epitaxy 线性扫光与绘制物理学 (Epitaxy Linear Sweep) */

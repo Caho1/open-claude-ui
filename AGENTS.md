@@ -53,6 +53,13 @@ All tokens are defined in [`code-examples/cds-theme.css`](code-examples/cds-them
 | `--cds-border-subtle` | `var(--cds-alpha-2)` | `var(--cds-alpha-2)` | Fine hairline dividers |
 | `--cds-border-accent` | `var(--cds-clay)` | `var(--cds-clay)` | Focus and active borders |
 
+### Skeleton & Motion Tokens
+| Token | Light Mode Value | Dark Mode Value | Usage |
+| :--- | :--- | :--- | :--- |
+| `--cds-skel-i` | `0` | `0` | Cascading index for skeleton wave delay (`calc(var(--cds-skel-i, 0) * 90ms)`) |
+| `--cds-skeleton-base` | `rgba(0, 0, 0, 0.05)` | `rgba(255, 255, 255, 0.06)` | Base skeleton placeholder container surface |
+| `--cds-skeleton-sheen` | `rgba(255, 255, 255, 0.25)` | `rgba(255, 255, 255, 0.08)` | 105° linear sweep band highlight (2s linear) |
+
 ### Brand Clay Palette
 * `--brand`: `#c6613f` (Official desktop brand primary color)
 * `--cds-clay`: `#d97757` (Light / pulse indicator) / `#cc6b49` (Dark)

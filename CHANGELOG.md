@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 🐛 Fixed (Issue #25 - Skeleton Sweep Parameters, Dual-Mode Motion & Keyframe Consumers)
+- **Forensic Parameter Alignment**: Aligned skeleton sweep across the entire repository to Claude desktop ground truth: `2s` / `linear` / `105deg` (RTL `255deg`), correcting the divergent `1.8s` / `cubic-bezier(0.4, 0, 0.2, 1)` / `90deg` horizontal sweep in Storybook and `tailwind.config.js`.
+- **First-Class `.cds-skeleton` & `.cds-skeleton-sweep` Classes**: Implemented `.cds-skeleton` base container and `.cds-skeleton-sweep` with 105° linear glass sheen in `code-examples/cds-theme.css`, exported to standalone `code-examples/cds-pure.css` so pure CSS consumers receive the promised skeleton sweep utility.
+- **2.0 Dual-Motion Skeleton Implementation**:
+  - `[data-motion="wave"]`: 105° linear sweep band with per-block cascading delay via `calc(var(--cds-skel-i, 0) * 90ms)` for large cards and hero content.
+  - `[data-motion="lockstep"]`: Synchronized 2.0s opacity dimming (`1.0` -> `0.6` -> `1.0`) via `@keyframes cds-skeleton-breathe` for dense lists.
+- **Storybook Source of Truth Calibration**: Updated `docs/claude-components-storybook.html` section 7.2 to consume canonical `.cds-skeleton` classes and showcase both `[data-motion="wave"]` and `[data-motion="lockstep"]` side-by-side with interactive mode inspection.
+- **Enhanced Token & Keyframe CI Gate**: Extended `scripts/check-tokens.mjs` to scan both `AGENTS.md` and `docs/` for `--cds-*` tokens (79 total unique tokens), explicitly assert skeleton tokens (`--cds-skel-i`, `--cds-skeleton-base`, `--cds-skeleton-sheen`), and assert that every `@keyframes cds-*` has at least one real consumer class.
+
 ### 🐛 Fixed (Issue #20 - WebKit Post-Composition Key Swallowing Guard)
 - **Scoped Post-Composition Guard**: Constrained the WebKit 500ms post-composition guard in `code-examples/RichComposerWithMentions.tsx` to target only the phantom `Enter` (`e.key === 'Enter' || e.keyCode === 13`) dispatched by Safari/WebKit after IME candidate commit (`compositionend`), preventing regular keystrokes (letters, Space, Backspace, arrows) from being swallowed.
 - **Immediate Timestamp Reset**: Reset `lastCompositionEndTimeRef.current = -1` immediately upon intercepting the phantom Enter, ensuring at most one phantom keydown event is consumed and subsequent typing passes through without delay.

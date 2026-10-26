@@ -319,8 +319,13 @@
     }
 
     @keyframes cds-skeleton-sweep {
-      0%   { transform: translateX(-100%); }
-      100% { transform: translateX(100%); }
+      0%   { transform: translate(-100%); }
+      100% { transform: translate(100%); }
+    }
+
+    @keyframes cds-skeleton-breathe {
+      0%, 100% { opacity: 1; }
+      50%      { opacity: 0.6; }
     }
 
     @keyframes dframe-clay-breathe {
@@ -343,25 +348,85 @@
       50%      { opacity: 0.45; }
     }
 
-    /* 骨架屏扫光条 */
+    /* 骨架屏系统 (CDS Skeleton & Dual-Mode Motion - 对齐 cds-theme.css 权威规范) */
+    .cds-skeleton,
     .skeleton-shimmer {
       position: relative;
       overflow: hidden;
-      background-color: rgba(0, 0, 0, 0.05);
+      background-color: var(--cds-skeleton-base, rgba(0, 0, 0, 0.05));
+      border-radius: var(--radius-sm, 4px);
     }
+    .dark .cds-skeleton,
     .dark .skeleton-shimmer {
-      background-color: rgba(255, 255, 255, 0.05);
+      background-color: var(--cds-skeleton-base, rgba(255, 255, 255, 0.06));
     }
-    .skeleton-shimmer::after {
+
+    /* 密集列表同步呼吸模式: 整体透明度 1.0 -> 0.6 -> 1.0 周期 2.0s */
+    .cds-skeleton[data-motion="lockstep"],
+    [data-motion="lockstep"] .cds-skeleton,
+    .skeleton-shimmer[data-motion="lockstep"],
+    [data-motion="lockstep"] .skeleton-shimmer {
+      animation: cds-skeleton-breathe 2s ease-in-out infinite;
+    }
+
+    /* 大卡片波浪扫光模式: 105° 倾斜扫光光带，支持 --cds-skel-i 级联延时 */
+    .cds-skeleton-sweep,
+    .cds-skeleton[data-motion="wave"]::after,
+    .cds-skeleton:not([data-motion])::after,
+    .skeleton-shimmer[data-motion="wave"]::after,
+    .skeleton-shimmer:not([data-motion])::after {
       content: "";
       position: absolute;
       inset: 0;
-      transform: translateX(-100%);
-      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%);
-      animation: cds-skeleton-sweep 1.8s infinite cubic-bezier(0.4, 0, 0.2, 1);
+      transform: translate(-100%);
+      background: linear-gradient(
+        105deg,
+        transparent 35%,
+        var(--cds-skeleton-sheen, rgba(255, 255, 255, 0.25)) 50%,
+        transparent 65%
+      );
+      animation: cds-skeleton-sweep 2s linear infinite;
+      animation-delay: calc(var(--cds-skel-i, 0) * 90ms);
+      pointer-events: none;
     }
-    .dark .skeleton-shimmer::after {
-      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 50%, transparent 100%);
+    .dark .cds-skeleton-sweep,
+    .dark .cds-skeleton[data-motion="wave"]::after,
+    .dark .cds-skeleton:not([data-motion])::after,
+    .dark .skeleton-shimmer[data-motion="wave"]::after,
+    .dark .skeleton-shimmer:not([data-motion])::after {
+      background: linear-gradient(
+        105deg,
+        transparent 35%,
+        var(--cds-skeleton-sheen, rgba(255, 255, 255, 0.08)) 50%,
+        transparent 65%
+      );
+    }
+
+    /* RTL 镜像角度适配: 105° -> 255° */
+    :dir(rtl) .cds-skeleton-sweep,
+    [dir="rtl"] .cds-skeleton-sweep,
+    :dir(rtl) .cds-skeleton[data-motion="wave"]::after,
+    [dir="rtl"] .cds-skeleton[data-motion="wave"]::after,
+    :dir(rtl) .cds-skeleton:not([data-motion])::after,
+    [dir="rtl"] .cds-skeleton:not([data-motion])::after,
+    :dir(rtl) .skeleton-shimmer[data-motion="wave"]::after,
+    [dir="rtl"] .skeleton-shimmer[data-motion="wave"]::after,
+    :dir(rtl) .skeleton-shimmer:not([data-motion])::after,
+    [dir="rtl"] .skeleton-shimmer:not([data-motion])::after {
+      background: linear-gradient(
+        255deg,
+        transparent 35%,
+        var(--cds-skeleton-sheen, rgba(255, 255, 255, 0.25)) 50%,
+        transparent 65%
+      );
+    }
+
+    /* lockstep 呼吸模式下禁用扫光伪元素以避免双重动画冲突 */
+    .cds-skeleton[data-motion="lockstep"]::after,
+    [data-motion="lockstep"] .cds-skeleton::after,
+    .skeleton-shimmer[data-motion="lockstep"]::after,
+    [data-motion="lockstep"] .skeleton-shimmer::after {
+      display: none !important;
     }
 
     /* 容器查询自适应定义 */
@@ -2493,25 +2558,39 @@ export const irradiationCompensation = {
             </ComponentShowcase>
           </div>
 
-          {/* 7.2 骨架屏高级倾斜扫光 */}
+          {/* 7.2 骨架屏高级倾斜扫光与双模式动效 */}
           <ComponentShowcase
-            title="高级倾斜骨架屏 (Skeleton Shimmer)"
+            title="高级倾斜骨架屏 (Skeleton Dual-Mode Shimmer)"
             tag='data-cds="Skeleton"'
-            code={`<div className="skeleton-shimmer h-4 rounded w-3/4" />`}
-            description="内容加载中展示的占位条，90 度渐变遮罩伴随 cds-skeleton-sweep 关键帧在 1.8 秒内横向扫光。"
+            code={`<!-- 波浪扫光模式 (Wave) -->\n<div className="cds-skeleton cds-skeleton-sweep h-4 rounded w-3/4" data-motion="wave" style={{ "--cds-skel-i": 1 }} />\n\n<!-- 密集列表同步呼吸模式 (Lockstep) -->\n<div className="cds-skeleton h-4 rounded w-3/4" data-motion="lockstep" />`}
+            description="内容加载中展示的占位条，105 度微斜渐变遮罩伴随 cds-skeleton-sweep 关键帧在 2.0 秒内匀速扫光。支持 [data-motion='wave'] 波浪级联延时与 [data-motion='lockstep'] 密集列表同步呼吸。"
           >
-            <div className="max-w-md mx-auto space-y-3 p-2">
-              <div className="flex items-center gap-3">
-                <div className="size-10 rounded-full skeleton-shimmer shrink-0" />
-                <div className="space-y-1.5 flex-1">
-                  <div className="h-3.5 skeleton-shimmer rounded w-2/5" />
-                  <div className="h-2.5 skeleton-shimmer rounded w-4/5" />
+            <div className="max-w-md mx-auto space-y-6 p-2">
+              <div>
+                <div className="text-xs font-semibold text-text-muted mb-2 uppercase tracking-wider">波浪扫光模式 [data-motion="wave"] (105° 2.0s 线性扫光 + 90ms 级联延时)</div>
+                <div className="space-y-3" data-motion="wave">
+                  <div className="flex items-center gap-3">
+                    <div className="size-10 rounded-full cds-skeleton shrink-0" style={{ "--cds-skel-i": 0 }} />
+                    <div className="space-y-1.5 flex-1">
+                      <div className="h-3.5 cds-skeleton rounded w-2/5" style={{ "--cds-skel-i": 1 }} />
+                      <div className="h-2.5 cds-skeleton rounded w-4/5" style={{ "--cds-skel-i": 2 }} />
+                    </div>
+                  </div>
+                  <div className="space-y-2 pt-1">
+                    <div className="h-3 cds-skeleton rounded w-full" style={{ "--cds-skel-i": 3 }} />
+                    <div className="h-3 cds-skeleton rounded w-5/6" style={{ "--cds-skel-i": 4 }} />
+                    <div className="h-3 cds-skeleton rounded w-2/3" style={{ "--cds-skel-i": 5 }} />
+                  </div>
                 </div>
               </div>
-              <div className="space-y-2 pt-2">
-                <div className="h-3 skeleton-shimmer rounded w-full" />
-                <div className="h-3 skeleton-shimmer rounded w-5/6" />
-                <div className="h-3 skeleton-shimmer rounded w-2/3" />
+
+              <div>
+                <div className="text-xs font-semibold text-text-muted mb-2 uppercase tracking-wider">密集列表同步呼吸模式 [data-motion="lockstep"] (2.0s 周期性 60% 呼吸暗光)</div>
+                <div className="space-y-2" data-motion="lockstep">
+                  <div className="h-3.5 cds-skeleton rounded w-3/4" />
+                  <div className="h-3 cds-skeleton rounded w-full" />
+                  <div className="h-3 cds-skeleton rounded w-1/2" />
+                </div>
               </div>
             </div>
           </ComponentShowcase>
