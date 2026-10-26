@@ -3572,6 +3572,223 @@ focusShadow    inset …#2a78d6, #cde2fb ✅
 
 ---
 
+---
+
+## 6.10 补充盘点：3.6556.2 中此前未留意的架构与特性
+
+本节是对整个 ASAR 的全量盘点结果，聚焦此前章节未覆盖的**应用架构**（非 CSS）内容。
+
+### 6.10.1 ASAR 顶层结构（此前只看了 .vite）
+
+```
+app.asar
+├── .vite/                  ← 已分析（build 547 JS + renderer 7 窗口）
+├── compile-cache/          ← ★ V8 编译缓存预热（.jsc，arm64）
+│   ├── index.js.arm64.jsc                    1,632 B
+│   ├── index.chunk-BjdXj7EG.js.arm64.jsc     5,928 B
+│   └── index.chunk-jPKPzV-P.js.arm64.jsc     6,873,864 B
+├── node_modules/           ← 仅 4 个包（见 6.10.2）
+└── resources/
+    ├── artifact-libs/      ← 已分析（Mermaid 11.17.2 / Chart.js 4.5.0 / Grid.js 5.0.2）
+    ├── bundled-skills/     ← ★ 内置 Agent Skills（见 6.10.3）
+    ├── github-mcp/         ← ★ 完整的 GitHub MCP server 二进制（19,218,370 B）
+    └── office365-mcp/      ← ★ 完整的 Office365 MCP server（含 MSAL 认证）
+```
+
+**V8 compile-cache 是启动性能优化**：三个 `.jsc` 文件是 V8 code cache，对应主入口与两个大 chunk，Electron 启动时跳过重复编译。`@electron/fuses` 与 `node --compile-cache-dir` 生态的标准做法。
+
+### 6.10.2 运行时依赖只有 4 个包
+
+```
+node_modules/
+├── @ant/claude-native      claude-native-binding.node 2,798,496 B（0.0.0）
+├── @ant/claude-swift       swift_addon.node 12,693,656 B
+│                          computer_use.node 1,069,048 B（1.0.0，"A demo module that exposes Swift code to Electron"）
+├── node-pty                pty.node + spawn-helper（1.2.0-beta.14，optionalDependencies）
+└── ws                      （^8.18.0）
+```
+
+**package.json `dependencies` 声明了 8 个包，但只有 4 个真正存在于 ASAR**：
+
+```json
+{
+  "@ant/claude-for-chrome-mcp": "*",   ← 不在 ASAR
+  "@ant/claude-native": "*",           ✅
+  "@ant/claude-swift": "*",            ✅
+  "@ant/computer-use-mcp": "*",        ← 不在 ASAR
+  "@ant/imagine-server": "*",          ← 不在 ASAR
+  "@loc/electron-window": "1.1.0",     ← 不在 ASAR
+  "https-proxy-agent": "^7.0.6",       ← 不在 ASAR
+  "ws": "^8.18.0"                      ✅
+}
+```
+
+缺失的 5 个是**依赖被构建期内联**进 `.vite/build/*.js`（Vite 打包），仅原生插件保留外部形态。这与「551 个 JS 文件里搜不到 `imagine-server` 字样」一致——功能在，名字没了。
+
+### 6.10.3 内置 Agent Skills（bundled-skills）
+
+`resources/bundled-skills/` 包含 **6 个 `.skill` 文件**（格式为**前缀 1 字节的 zip**，即 zip 数据前多一个 ` `）加 manifest：
+
+| Skill | 大小 | tier |
+| :--- | ---: | :--- |
+| `docx.skill` | 163,372 | always |
+| `pdf.skill` | 21,600 | always |
+| `pdf-reading.skill` | 7,997 | always |
+| `pptx.skill` | 173,007 | always |
+| `xlsx.skill` | 155,709 | always |
+| **`frontend-design.skill`** | 8,125 | always |
+
+manifest 结构：
+
+```json
+{ "agentSkillsRef": "1792682972",
+  "skills": [ { "name": "docx", "description": "…", "tier": "always" }, … ] }
+```
+
+### 6.10.4 ★ frontend-design.skill 与 open-claude-ui 的直接关联
+
+这是本次盘点**对 open-claude-ui 最相关**的发现。`frontend-design/SKILL.md`（9,390 字节）是 Anthropic 给 Claude 的官方前端设计指南，其「AI 生成设计校准清单」**精确描述了我们项目的技术特征**：
+
+原文（第一点，逐字）：
+
+```
+1. a warm cream background (near #F4F1EA) with a high-contrast serif display
+   and a terracotta or warm-clay accent (often near #D97757 — Anthropic's own
+   Claude-interaction accent, so on a user's brief it reads as a tell);
+```
+
+**翻译**：暖奶油底（近 #F4F1EA）+ 高对比衬线标题 + 陶土色 accent（**近 #D97757——Anthropic 自己的 Claude 交互色，用在用户项目上会被认出是 AI 生成的痕迹**）。
+
+其余四条 default 特征：近黑底+荧光绿/朱红单 accent、报纸式 hairline 布局、「SaaS 卡片套件」（同圆角+同阴影+渐变装饰）、模板化 chrome（全大写 eyebrow 标签、`A · B · C` 中点连接、`WORD — fragment` 破折号、`#0B0B0B`/`#111` 替代纯黑、等宽字体小标签、`→` 尾缀链接）。
+
+**对 open-claude-ui 的双重含义**：
+
+1. **作为逆向参照**：该 skill 是 Anthropic **自己写的**关于「Claude 交互色是 #D97757」的确认，与我们的 `--cds-clay: #d97757` 实测一致——这是官方文档级别的色彩佐证，可直接引用。
+2. **作为还原质量的对照**：skill 的核心主张是「避免 default treatment、做有 brief 意图的取舍」。open-claude-ui 作为**还原项目**不受此约束（我们的 brief 就是精确复刻），但如果项目未来派生自定义主题，该清单就是现成的「避免 AI 味」检查表。
+
+skill 的其它要点：两遍工作流（先 token 草案→对照 brief 自审→再写码）、「把大胆花在一处」、CSS 选择器特异性互相抵消的告诫（与 issue #25 的 `.cds-skeleton-sweep` 缺陷同类）、写作规范（CTA 用「Save changes」不用「Submit」）。
+
+### 6.10.5 ★ 内置 Linux 虚拟机（Cowork VM）
+
+**这是 3.6556.2 最大的未文档化特性**。证据链：
+
+`Resources/smol-bin.arm64.img`（**24,117,248 字节**，`file` 判定为 DOS/MBR boot sector）——配合 `index.chunk-jPKPzV-P.js` 中的 VM 管理代码：
+
+```js
+m6r = "smol-bin.vhdx"                    // Hyper-V 磁盘镜像名
+p6r = "efivars.fd"                       // UEFI 变量文件
+// Windows 路径：process.resourcesPath + smol-bin.${arch}.vhdx
+// [VM:start] memory=${_}GB … vmCpuCount …
+// d6r = VMDownloadError / f6r = VMConnectionTimeoutError(guestReady, …)
+// [VM:start] … vm_shutdown_failed … trigger:"app_quit"
+```
+
+**体系归属 Cowork**（`CoworkVM*` 系列导出）：
+
+```
+CoworkVMDownloadStatus / CoworkVMRunningStatus / CoworkVMHostIPv6Notice
+CoworkSpaces / CoworkStorage / CoworkUserFiles / CoworkMemory
+CoworkScheduledTasks / CoworkRewindRefusal / CoworkMcpUnavailableReason
+CoworkDataExportStatus / CoworkFeedback / CoworkFilePreview
+```
+
+**结论**：Claude 桌面端为 Cowork（代理长任务）内置了一个**可下载/可启动的 Linux micro-VM**（macOS 用 `.img`，Windows 用 `.vhdx`，配 UEFI），在 VM 里跑隔离的 Claude Code 会话。相关 feature flag：`cowork_bypass_permissions_mode`、`cowork_auto_permission_mode`、`cowork_device_attestation_*`、`cowork_remote_device_revoked_reenroll`、`cowork_hipaa_crash_dumps`（HIPAA 合规的崩溃转储隔离）。
+
+**对 open-claude-ui 的含义**：Cowork 是一个完整的界面 surface（与 chat/code 并列，见 `coworkSurface`/`codeSurface`/`chatSurface` 三态开关），其 UI 层尚未被我们还原。v3 的 45 个 `data-cds` 里未见 Cowork 专属组件——说明其 UI 可能走 claude.ai Web 而非本地 CSS，**此点未验证**。
+
+### 6.10.6 内置 MCP servers
+
+`resources/` 下捆绑了两个完整的 MCP server：
+
+| Server | 内容 | 大小 |
+| :--- | :--- | ---: |
+| **github-mcp** | `github-mcp-server`（Go 编译的单一二进制） | 19,218,370 |
+| **office365-mcp** | `office365-mcp-stdio.mjs` + `pdfExtractorProcess.mjs` + `pdf.worker.mjs` + MSAL 运行时（`libmsalruntime_arm64.dylib` + `msal-node-runtime.node`） | 共 ~8.7 MB |
+
+结合 ASAR 内的 `@ant/computer-use-mcp`（内联）与 `@ant/claude-for-chrome-mcp`（内联），Claude 桌面端**自带 4 个 MCP server**。`office365-mcp` 的 MSAL 依赖解释了 OAuth 面板中「Client secret / IdP app registration」等企业配置项。
+
+### 6.10.7 会话类型全景（路由表）
+
+主进程的 URL 路由表揭示了完整的 surface 清单（`X("...")` 为路径段）：
+
+```
+chat（默认）          agent_session          cowork / cowork / agent / session
+claude-code-desktop   ├── share / shared     ├── hub
+                      ├── memory             ├── scheduled（+ remote）
+                      ├── routines           ├── artifact
+                      └── project / thread
+cowork_sessions       cowork-artifact        scheduled-task
+routines              claude-ship            cic / task / task
+presence              browser-session        experiments / code / shared
+verify                badges                 certificates
+test / runs           test / targets         local_sessions
+artifacts / latest    org / artifacts        public / library
+v2 / ccr-sessions(+ws)  v2 / sessions-share  v2 / ccr-sessions-share
+v1 / code / triggers    v1 / claude_code / routines
+v1 / code / agent-proxy / provisioning-links
+v1 / code / shared-sessions / shared-threads / debug-shares
+api / organizations / cowork / scheduled_tasks
+```
+
+**3.6556.2 的会话/功能面远超 chat**：Claude Code 桌面版、Cowork、定时任务、例程（routines）、claude-ship、presence、浏览器会话、共享会话（ccr）、徽章与证书、插件市场。
+
+### 6.10.8 现代 CSS 特性清单（3.6556.2 主样式表）
+
+| 特性 | 出现次数 | 说明 |
+| :--- | ---: | :--- |
+| `@property` | **90** | v3 文档已记录 24 个 `--cds-*`，其余为 Tailwind `--tw-*` |
+| `color-mix()` | 114 | 暗色混色主力 |
+| `@supports` | 64 | 渐进增强探测 |
+| `@starting-style` | **3** | **入场过渡初始态**（此前未记录） |
+| `view-transition-name` | 3 | **附件拖拽重排的共享元素过渡** |
+| `@layer` | 6 | `cds-card` 等 |
+| `@container` | 1 | 仅 Tailwind 的 `.\@container` 工具类 |
+
+**`@starting-style` + View Transitions 的实际用途**（原文）：
+
+```css
+/* 消息操作按钮的悬停/聚焦浮现 */
+@starting-style {
+  .cds-root .group\/message-row:hover [data-cds=MessageActions][data-reveal]… {
+    opacity: 0; transform: scale(.92) translateY(4px);
+  }
+}
+
+/* 附件卡片的增删重排：view-transition-name: match-element（Chromium 新特性） */
+:root:active-view-transition-type(cds-attachments)
+  [data-cds-composer-attachments-clip][data-cds-attachments-clipping] {
+  view-transition-name: match-element;
+  view-transition-class: cds-attachments-clip;
+  view-transition-group: contain;
+}
+@supports selector(::view-transition-group-children(.x)) and (view-transition-group:contain) { … }
+```
+
+**对 open-claude-ui 的影响**：`match-element` + `view-transition-group: contain` 是 3.6556.2 附件重排动画的核心，我们完全没有实现。这是 P2 级的动效补全项。
+
+### 6.10.9 其它零散发现
+
+| 项 | 说明 |
+| :--- | :--- |
+| `claude-ios-sim` | 主进程含 **iOS 模拟器宿主**（`Claude iOS Sim.app/Contents/MacOS/claude-ios-sim`），`xcodebuild`/`xcrun`/`plutil` 工具链白名单，用于 iOS 端开发调试 |
+| `claude-browser-shim.js` | 6,568 B 的 **shell + JS 混合脚本**：作为 `$BROWSER` shim 拦截 URL 打开，带 `CLAUDE_BROWSER_BRIDGE` 时走 Node 分支 |
+| `ion-dist/` | claude.ai 的**网页壳资源**（`frame-shell.html` / `frame-connect.html` / `frame-manage.html`），通过自定义 `app://` 协议服务——即桌面端内嵌的 claude.ai 页面 |
+| `clawdQuestEngine` | main_window 的 1.2 MB JS + 10 KB CSS，`--cq-*` 独立命名空间（`--cq-bg:#171717` 等），含 55 处 quest/XP 引用——**游戏化/任务系统**，与 CDS 完全隔离 |
+| `compile-cache` | 见 6.10.1 |
+| `quick-actions/document.wflow` | macOS Automator 工作流 |
+| feature flags | 98 个 `cai_*`（claude.ai 内部）/`ccr_*`/`cowork_*`/`claude_ai_*` flag 名可提取，含 `cowork_bypass_permissions_mode`、`ccr_plan_mode_enabled` 等 |
+
+### 6.10.10 对 open-claude-ui 的行动项汇总
+
+| 优先级 | 项 | 依据 |
+| :--- | :--- | :--- |
+| **P1** | 引用官方 skill 对 `#D97757` 的确认作为 `--cds-clay` 的文档佐证 | 6.10.4 |
+| **P2** | 实现 `@starting-style` + `view-transition-name: match-element` 的附件重排动画 | 6.10.8 |
+| **P2** | Cowork surface 的 UI 还原评估（先确认其 UI 载体是本地还是 Web） | 6.10.5 |
+| **P3** | 记录内置 MCP servers 与 skills 体系（文档完整性） | 6.10.3 / 6.10.6 |
+| **P3** | `clawdQuestEngine` 游戏化系统的还原评估 | 6.10.9 |
+
+
 ## 本章证据索引
 
 | 断言 | 命令 |
@@ -3674,6 +3891,12 @@ focusShadow    inset …#2a78d6, #cde2fb ✅
 | data-cds：交集 18 / 缺失 27 / 独有 4 | A | [5.3.2](05-open-claude-ui差异审计.md) |
 | @property：交集 17 / 缺失 7 / 独有 2 | A | [5.3.3](05-open-claude-ui差异审计.md) |
 | CI 门禁未剥离注释，存在漏报 | A | [5.4](05-open-claude-ui差异审计.md) |
+| ASAR 顶层含 compile-cache / bundled-skills / github-mcp / office365-mcp | A | [6.10.1](06-全量CSS扫描与官方规范比对.md) |
+| 内置 6 个 Agent Skills（含 frontend-design） | A | [6.10.3](06-全量CSS扫描与官方规范比对.md) |
+| 官方 skill 原文确认 `#D97757` 为 "Anthropic's own Claude-interaction accent" | A | [6.10.4](06-全量CSS扫描与官方规范比对.md) |
+| Cowork 体系内置 Linux micro-VM（smol-bin 24MB） | A | [6.10.5](06-全量CSS扫描与官方规范比对.md) |
+| 内置 4 个 MCP server（github / office365 / computer-use / chrome） | A | [6.10.6](06-全量CSS扫描与官方规范比对.md) |
+| `@starting-style` + `view-transition-name: match-element` 用于附件重排 | A | [6.10.8](06-全量CSS扫描与官方规范比对.md) |
 
 ---
 
@@ -3710,6 +3933,15 @@ focusShadow    inset …#2a78d6, #cde2fb ✅
 | v2.37337.1 的 CSS 实际内容 | 本机无该版本备份，无法比对「#cc5a36 从何而来」 |
 | v2 的 40 个 `data-cds` 具体名单 | v2 文档只写总数，04 章是占位符 `[40 大标准化组件清单]` |
 | 「7 停非线性 mask」是否真实存在过 | 3.6556.2 主表中未找到；无法确认是重构还是 v2 文档的推断 |
+
+### 7.3.2.1 第六章 6.10 新增的待验证项
+
+| 未知项 | 原因 | 可行手段 |
+| :--- | :--- | :--- |
+| Cowork surface 的 UI 载体是本地 CSS 还是 claude.ai Web | 45 个 `data-cds` 中无 Cowork 专属组件 | 运行时打开 Cowork 界面后用 CDP 检查 DOM |
+| `heavy-work-worker` / `pty-host` / `file-index-worker` 是 `worker_threads` 还是 `utilityProcess` | 本会话未触发 | 运行时触发后看进程树 |
+| `clawdQuestEngine`（游戏化）的数据来源与 UI 触发点 | 仅静态扫描 | 同上 |
+| `smol-bin` VM 的最小规格（内存/CPU 配置） | 代码中有 `vmCpuCount`/`memory GB` 逻辑但未运行 | Cowork 启动 VM 时观测 |
 
 ### 7.3.3 需要组件源码
 

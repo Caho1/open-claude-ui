@@ -124,7 +124,10 @@ semantic analysis of <file> was not started
   - 6.4 提取到官方 CDS 规范文档（58,354 字符）
   - 6.5 `--cds-*` 与官方 token 的 131 项比对（90 等价 / 4 单位 / 37 真实差异）
   - 6.6 对前序章节结论的修正
-  - 6.7 更新后的差异优先级
+  - 6.7 运行时实证（Main Process Debugger：preload 真实路径 / utility process / 双模值表 / 修复验证）
+  - 6.8 对前序章节结论的修正
+  - 6.9 更新后的差异优先级
+  - 6.10 补充盘点：ASAR 全量架构（compile-cache / bundled-skills / 内置 MCP servers / Cowork VM / 现代 CSS 特性）
 - [第七章：总结与后续工作](07-总结与后续工作.md)
   - 7.1 本次取证的确定性边界
   - 7.2 已完成的结论清单
