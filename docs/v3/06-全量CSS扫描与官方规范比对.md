@@ -640,7 +640,162 @@ for m in re.finditer(r'--cds-alpha-(\d)\s*:\s*([^;]+)', s):
 
 ---
 
-## 6.6 对前序章节结论的修正
+## 6.6 静态可解项的最终裁定
+
+本章额外完成了 [7.3](07-总结与后续工作.md) 原列为「需运行时观测」的 3 项，全部可静态解决。
+
+### 6.6.1 `--cds-rem-scale` 从未被赋值，恒为 1
+
+**结论**：`--cds-rem-scale` 在 CSS 中**零定义**，在 JS 中**零赋值**，所有 306 处引用都走 fallback `1`。
+
+```bash
+# CSS 中的声明
+grep -c -- "--cds-rem-scale\s*:" MainWindowPage-BjVtjJFx.css
+# → 0
+
+# CSS 中的 fallback 引用
+grep -c "var(--cds-rem-scale" MainWindowPage-BjVtjJFx.css
+# → 306
+
+# JS 中的赋值点（: / setProperty / =）
+# → 0 处
+```
+
+**配套证据**——官方 px→rem 换算函数（来自 `find_in_page/assets/FindInPage-BDboRkUg.js`）：
+
+```js
+lt = "--cds-rem-scale",
+ut = `calc(16rem * var(${lt}, 1))`,
+H  = e => `calc(${e/16}rem * var(${lt}, 1))`
+```
+
+**含义**：
+1. `--cds-rem-scale` 是为宿主预留的**密度缩放钩子**，Claude 桌面端自己**不设置**
+2. 因此所有 `calc(Xrem * var(--cds-rem-scale,1))` 在桌面端等价于 `calc(Xrem)`
+3. 但**写死 px 仍是错的**——一旦宿主设置该变量，写死的 px 不会跟着缩放
+
+**对 open-claude-ui 的影响**：我们把 `--cds-radius-composer` 写成 `20px` 而非 `calc(...)`，即使将来由宿主设置 `--cds-rem-scale` 也不会缩放。这是结构性问题，不只是数值问题。
+
+### 6.6.2 `--cds-radius-composer` 的 12px / 14px 切换条件
+
+**结论**：切换条件是 **`[data-density=comfortable]`**。
+
+```bash
+# 提取两条定义所属的选择器
+```
+
+| 值 | 选择器 | 换算 |
+| :--- | :--- | :--- |
+| `calc(.75rem * var(--cds-rem-scale,1))` = **12px** | `.cds-root`（默认 = compact） | 12px |
+| `calc(.875rem * var(--cds-rem-scale,1))` = **14px** | `.cds-root[data-density=comfortable]` | 14px |
+
+同样的模式适用于全部尺寸 token：
+
+| Token | `.cds-root`（compact） | `[data-density=comfortable]` |
+| :--- | :--- | :--- |
+| `--cds-radius` | `.5rem` = 8px | `.5rem` = 8px（不变） |
+| `--cds-radius-composer` | `.75rem` = **12px** | `.875rem` = **14px** |
+| `--cds-h-control` | `2rem` = 32px | `2rem` = 32px |
+| `--cds-h-control-nested` | `1.375rem` = **22px** | `1.375rem` = 22px |
+| `--cds-radius--xs` | `.3125rem` = **5px** | `.375rem` = **6px** |
+| `--cds-radius--sm` | `.4375rem` = **7px** | 同 7px（另有 `.3125rem`=5px 在别处） |
+| `--cds-radius--lg` | `.625rem` = **10px** | `.4375rem` = 7px |
+| `--cds-gap-xl` | `2.5rem` = **40px** | `2.5rem` = 40px |
+
+**`data-density` 只有 `comfortable` 一个显式块**（`compact` 出现 0 次）——即 **compact 是默认，无需显式标记**。
+
+```bash
+grep -c "data-density=comfortable" MainWindowPage-BjVtjJFx.css   # 3
+grep -c "data-density=compact"     MainWindowPage-BjVtjJFx.css   # 0
+```
+
+三个 `comfortable` 块分别覆盖：
+1. 基础尺寸（radius / h-control / icon / pad / gap / font-size / leading）
+2. 尺寸变体（`--xs` / `--sm` / `--lg` 后缀）
+3. 字体-字号组合（`--textsm` / `--textlg` 后缀）
+
+与 [6.4.6](#64-结论三提取到官方-cds-规范文档) 引用的官方文档「Density is one switch on `CdsRoot`」完全对应。
+
+### 6.6.3 「7 停非线性 mask」确定不存在
+
+**结论**：3.6556.2 主样式表中**没有任何 6 停以上的 gradient**。
+
+```bash
+# 所有 mask-image 声明（共 9 处）
+```
+
+| mask-image 值 | 出现次数 | 用途 |
+| :--- | ---: | :--- |
+| `radial-gradient(circle at var(--btn-dot-x) …,transparent …,black …)` | 4 | Pulse 指示点镂空 |
+| `linear-gradient(#000 0 0)` | 1 | **shimmer 克隆层的 mask-clip:text** |
+| `linear-gradient(90deg,#000 calc(100% - 24px),#0000)` | 2 | 单侧硬切（非渐隐） |
+| `linear-gradient(270deg,#000 calc(100% - 24px),#0000)` | 2 | 同上（RTL） |
+
+```bash
+# 统计 6 停以上的 gradient
+node -e '过滤 linear-gradient 内含 >=6 个百分比的'
+# → 0
+```
+
+**因此 v2 文档的「7 停非线性 fade mask」在 3.6556.2 中不存在。** 可能的解释（本文不判定）：
+1. v2 的方案已被 `@property` + `animation-timeline` 取代
+2. v2 的描述本身是推断而非取证
+
+### 6.6.4 滚动渐隐的真实实现，以及一个未实现的类
+
+**结论**：滚动渐隐的 token 体系（17 个 `@property` + 8 个 keyframes）是**完整注册**的，但**主样式表中没有任何 mask 规则消费它们**。
+
+```bash
+# 17 个 @property 已注册
+grep -o "@property --cds-scroll-fade-[a-zA-Z0-9_-]*" MainWindowPage-BjVtjJFx.css | sort -u | wc -l   # 17
+
+# 8 个 keyframes 已定义
+```
+
+已注册的关键帧：
+
+```css
+@keyframes cds-scroll-fade-top    { 0%{--cds-scroll-fade-top-raw:0px}    to{--cds-scroll-fade-top-raw:var(--cds-scroll-fade-size)} }
+@keyframes cds-scroll-fade-bottom { 0%{--cds-scroll-fade-bottom-raw:var(--cds-scroll-fade-size)} to{--cds-scroll-fade-bottom-raw:0px} }
+@keyframes cds-scroll-fade-left   { 0%{--cds-scroll-fade-left-raw:0px}   to{--cds-scroll-fade-left-raw:var(--cds-scroll-fade-size)} }
+@keyframes cds-scroll-fade-right  { 0%{--cds-scroll-fade-right-raw:var(--cds-scroll-fade-size)} to{--cds-scroll-fade-right-raw:0px} }
+@keyframes cds-scroll-fade-y-active { 0%,to{--cds-scroll-fade-y-active:1} }
+@keyframes cds-scroll-fade-x-active { 0%,to{--cds-scroll-fade-x-active:1} }
+```
+
+**消费方是 Tailwind 工具类 `.scroll-fade-y`**，证据来自 `find_in_page/assets/impl-BfCfv0QC.js`：
+
+```js
+Ji = "relative min-h-0 overflow-y-auto overflow-x-hidden scroll-fade-y rounded-[inherit] …"
+Yi = "relative min-h-0 flex-1 overflow-y-auto overflow-x-hidden scroll-fade-y …"
+```
+
+**但 `.scroll-fade-y` 类在全部 9 个 CSS 文件中都没有定义**：
+
+```bash
+# 9 个 CSS 中搜索 .scroll-fade-y 选择器
+# → 0 匹配
+# 主样式表的 "scroll-fade-y" 4 处全部是 --cds-scroll-fade-y-active 变量名的一部分
+```
+
+同时：
+
+```bash
+grep -c "@utility"         MainWindowPage-BjVtjJFx.css   # 0
+grep -c "@custom-variant"  MainWindowPage-BjVtjJFx.css   # 0
+```
+
+**这是一个重要发现**：`.scroll-fade-y` 是一个**在打包产物中未落地的 Tailwind 工具类**。可能是：
+1. 由未包含在此窗口的 CSS 文件提供
+2. Tailwind v4 的 `@theme` 定义在构建时被 tree-shake 掉了
+3. 该功能当前是惰性的
+
+**本文不判定原因**，但确认事实：**引用存在，定义缺失**。
+
+---
+
+## 6.7 对前序章节结论的修正
+
 
 ### 6.6.1 修正：`--cds-h-control-nested` 24px 是错的
 
@@ -679,7 +834,7 @@ for m in re.finditer(r'--cds-alpha-(\d)\s*:\s*([^;]+)', s):
 
 ---
 
-## 6.7 更新后的差异优先级
+## 6.8 更新后的差异优先级
 
 在 [5.5 修复优先级总表](05-open-claude-ui差异审计.md) 基础上，新增以下项（按优先级排序）：
 
