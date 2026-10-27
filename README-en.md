@@ -39,6 +39,8 @@
 
 `open-claude-ui` is a high-fidelity open-source UI component library and motion physics engine, built through in-depth clean-room reverse engineering of the modern desktop AI client.
 
+> 🧭 **Forensic baseline (v3)**: token and motion values are aligned to **Claude Desktop `@ant/desktop 3.6556.2`** (ASAR root digest `b2dfbbb4…d68a`), verified through dual channels — **REA v6.8.0** static extraction plus live measurement via the app's **Main Process Debugger** (see [docs/v3](docs/v3/README.md)). v1/v2 documents are kept as historical snapshots.
+
 All reverse derivation, de-obfuscation static analysis, and ASAR package deconstruction were conducted using the advanced multi-platform reverse engineering framework **[REA (Reverse Engineer Anything)](https://github.com/morluto/rea)**. Leveraging REA's static AST deconstruction, closure de-obfuscation, and runtime tracing capabilities, we penetrated production bundles to faithfully extract the underlying physical constants, interaction constraints, and mathematical models.
 
 Unlike superficial visual approximations or guesswork replicas, every component specification, damping constant, shader keyframe, and audio pipeline in this project has been **rigorously verified against decompiled production front-end architecture**:
@@ -47,7 +49,7 @@ Unlike superficial visual approximations or guesswork replicas, every component 
 * **Audiovisual & Desktop Architecture**: Zero-latency procedural audio synthesis via Web Audio API oscillators, cursor-anchored gallery pan/zoom affine transformations, macOS vibrancy glass fusion, and Cowork multi-agent orchestration topologies.
 
 > 💡 **Architecture & Portability Note**:  
-> The **Design Tokens and Pure-CSS presentation layer can be consumed completely independently from React and Tailwind**. Whether you are integrating into custom desktop harnesses (e.g. DSH, agent desktop shells), standard web pages, or Vue/Svelte environments, simply import `@import "open-claude-ui/tokens.css";` or `@import "open-claude-ui/pure.css";` to access all 183 design tokens, zero-JS native scroll-fade masks (`[data-cds-scroll-fade]`), and core animations.
+> The **Design Tokens and Pure-CSS presentation layer can be consumed completely independently from React and Tailwind**. Whether you are integrating into custom desktop harnesses (e.g. DSH, agent desktop shells), standard web pages, or Vue/Svelte environments, simply import `@import "open-claude-ui/tokens.css";` or `@import "open-claude-ui/pure.css";` to access all 242 design tokens (aligned with Claude Desktop 3.6556.2 runtime measurements), zero-JS native scroll-fade masks (`[data-cds-scroll-fade]`), and core animations.
 
 > ⚖️ **Copyright & Asset Compliance (DMCA & Assets Policy)**:  
 > This open-source repository **does not distribute any proprietary binary assets** (including commercial `.ttf` fonts and recorded `.mp3` audio). We provide native system font fallback stacks and procedural Web Audio synthesis algorithms, ensuring a completely self-contained, legal, and clean-room compliant codebase. For details, see [assets/README.md](assets/README.md).
@@ -134,7 +136,17 @@ It documents exact decompilation evidence locations alongside Anthropic's archit
 * **[8.1~8.7 Agent Roles, Design Token Contracts & Spring Decision Tree](docs/v1/08-AI-Agent-前端-UI-与动效开发指南.md)**: Standardized guidelines for AI Coding Agents to implement pixel-perfect CDS components.
 
 ### 🚀 Claude Desktop 2.0 (v2.37337.1) Comprehensive Reverse Engineering Analysis
-* **[1~6 Overview, Additions, Refactorings, Baseline Secrets, Reference Implementations & Summary](docs/v2/README.md)**: Standalone decompilation report for Claude Desktop 2.0.
+* **[1~6 Overview, Additions, Refactorings, Baseline Secrets, Reference Implementations & Summary](docs/v2/README.md)**: Standalone decompilation report for Claude Desktop 2.0. **(Historical snapshot: superseded by 3.6556.2 — defer to v3 for values)**
+
+### 🧬 Claude Desktop 3.x (3.6556.2) Full Forensic Report (current baseline)
+* **[v3/README.md — seven chapters + merged edition](docs/v3/README.md)**: full reverse engineering of the current production build, **every claim backed by code evidence and a repro command**.
+  - **Ch.1 Scope & version boundary**: `@ant/desktop 3.6556.2`, ASAR digest, 532-file semantic truncation boundary, six structural zeros
+  - **Ch.2 Electron architecture**: 6 Sentry IPC channels / 0 business handlers in the main process, 12 literal bridge API names, 7 renderer entry points
+  - **Ch.3 Architecture refactorings**: two-layer skeleton components + `data-hold` three-state reveal, real wave/lockstep delay formulas, RTL `:lang()` list, dual reduced-motion guards
+  - **Ch.4 Baseline manifests**: 55 `@keyframes`, 45 `data-cds` namespaces, 24 `@property`, full 35-stop gray/orange ramps, 5-step durations and 4 bezier curves
+  - **Ch.5 open-claude-ui diff audit**: item-by-item diff and issue #25 rulings
+  - **Ch.6 Full CSS scan & official spec comparison**: all 17 stylesheets, extracted official CDS spec, 131-token comparison, **runtime dual-mode value tables via Main Process Debugger**, whole-ASAR architecture inventory (bundled Cowork VM / 4 MCP servers / 6 Agent Skills / V8 compile-cache)
+  - **Ch.7 Summary & next steps**: certainty tiers, unknowns, reproducibility statement
 
 ---
 
@@ -143,6 +155,8 @@ It documents exact decompilation evidence locations alongside Anthropic's archit
 UI components are merely the presentation layer. **What truly sets Claude's interaction quality apart are the mathematical models and physics equations buried beneath minified production code**. This repository decompiled and faithfully recreated 8 core algorithms:
 
 ### 1. 7-Stop Non-Linear Alpha Gradient Fade Mask
+
+> ⚠️ **v3 correction**: the hardcoded 7-stop ladder exists in v1/v2-era artifacts; the 3.6556.2 main stylesheet contains **zero** gradients with 6+ stops — scroll fading is now `@property` + `animation-timeline` variable-driven (see docs/v3/06 §6.6.3). Historical record below; the dynamic edge-zeroing logic in `ScrollFadeContainer.tsx` remains valid.
 * **The Problem**: Conventional two-stop linear scroll masks cause harsh color banding and jarring geometric cutoffs on high-DPI Retina displays.
 * **Claude's Algorithm**: Discards blunt linear cuts in favor of 7 non-linear gradient stops across the fade distance (15% position with 5.1% alpha `#0d`, 30% with 14.9% `#26`, 45% with 30.2% `#4d`, 60% with 50.2% `#80`, 75% with 70.2% `#b3`, 87% with 85.1% `#d9`, closely tracking a $y \approx x^{1.5}$ power curve), dynamically zeroed out by scroll boundary sensors at the top and bottom:
 ```css
@@ -258,7 +272,7 @@ open-claude-ui/
 
 ### 1. Import Stylesheet & Tokens (Pure CSS Support)
 
-Regardless of whether you use React, you can directly import the CDS core stylesheet and its 183 design tokens:
+Regardless of whether you use React, you can directly import the CDS core stylesheet and its 242 design tokens (aligned with Claude Desktop 3.6556.2):
 ```css
 /* Import global theme variables, scroll-fade masks, and keyframes */
 @import "open-claude-ui/css";

@@ -39,15 +39,17 @@
 
 `open-claude-ui` 是基于对现代桌面端 AI 客户端进行深度拆解与逆向分析构建的高保真开源 UI 组件库与动效引擎。
 
+> 🧭 **取证基线 (v3)**：当前令牌与动效值对齐 **Claude Desktop `@ant/desktop 3.6556.2`**（ASAR 根摘要 `b2dfbbb4…d68a`），全部经 **REA v6.8.0** 静态提取 + **Main Process Debugger** 运行时实测双通道验证（详见 [docs/v3](docs/v3/README.md)）。v1/v2 文档保留为历史快照。
+
 整个逆向推导、反混淆静态分析与 ASAR 资源解构，均依托于先进的多平台逆向工程框架 **[REA (Reverse Engineer Anything)](https://github.com/morluto/rea)** 完成——通过 REA 的静态 AST 解析、闭包代码反混淆与运行时跟踪能力，穿透生产级压缩包，精准还原了底层工程物理常数与数学模型。
 
 不同于市面上常见的盲猜或近似复刻，本项目所有组件规范、物理阻尼常数、着色器关键帧及音频管道均**严格依据真实前端架构反编译验证**提炼而成：
 * **温润的人文质感 (Editorial Warmth)**：纯正陶土橙（Clay `#d97757`）、4 层微对比表面阶梯（Surface 0-3）与视网膜高分屏发丝细边补偿（Hairline Ring）；
-* **严苛的交互物理学 (Interaction Physics)**：4 套生产级物理弹簧参数调校、4px 指针移动死区、CJK 输入法合成守卫、7 档渐隐非线性 Alpha 遮罩；
+* **严苛的交互物理学 (Interaction Physics)**：4 套生产级物理弹簧参数调校、4px 指针移动死区、CJK 输入法合成守卫、滚动渐隐遮罩（v1 取证的 7 档非线性阶梯；3.6556.2 已重构为 `@property` 变量驱动，见 [docs/v3](docs/v3/README.md)）；
 * **高阶视听与系统架构 (Audiovisual & Architecture)**：基于原生 Web Audio API 的零延迟合成提示音、以光标为锚点的画廊跑道平移缩放、macOS 桌面毛玻璃透明融合与 Cowork 多代理协同拓扑。
 
 > 💡 **架构分层说明 (Architecture & Portability)**：  
-> 本项目的 **令牌层 (Tokens) 与纯 CSS 表现层可脱离 React 与 Tailwind 单独使用**。无论是自研桌面 Harness（如 DSH、各类 Agent 桌面容器）、传统 Web 页面还是 Vue/Svelte 宿主，只需引入 `@import "open-claude-ui/tokens.css";` 或 `@import "open-claude-ui/pure.css";`，即可直接消费全量 183 个设计令牌、Zero-JS 原生滚动消隐遮罩（`[data-cds-scroll-fade]`）与核心动效类，详情见下文快速上手。
+> 本项目的 **令牌层 (Tokens) 与纯 CSS 表现层可脱离 React 与 Tailwind 单独使用**。无论是自研桌面 Harness（如 DSH、各类 Agent 桌面容器）、传统 Web 页面还是 Vue/Svelte 宿主，只需引入 `@import "open-claude-ui/tokens.css";` 或 `@import "open-claude-ui/pure.css";`，即可直接消费全量 242 个设计令牌（对齐 Claude Desktop 3.6556.2 运行时实测）、Zero-JS 原生滚动消隐遮罩（`[data-cds-scroll-fade]`）与核心动效类，详情见下文快速上手。
 
 > ⚖️ **版权与合规声明 (DMCA & Assets Policy)**：  
 > 本开源项目**不公开分发任何专有二进制资产**（包括商业字体 `.ttf` 与录音 `.mp3`）。本项目提供原生系统级字体回退栈与 Web Audio API 纯代码合成音效，完全自包含、合规安全。详情参见 [assets/README.md](assets/README.md)。
@@ -134,7 +136,17 @@ graph TD
 * **[8.1~8.7 Agent 角色定位、设计令牌契约与弹簧决策树](docs/v1/08-AI-Agent-前端-UI-与动效开发指南.md)**：专为 AI Agent 定制的前端 UI 与动效装配自检指南。
 
 ### 🚀 第二版：Claude Desktop 2.0 (v2.37337.1) 全量版本更新深度逆向分析
-* **[v2/README.md 综述、新增特性、架构重构、底座解密与参考实现](docs/v2/README.md)**：全量划分为 6 大独立章节，深度解析 2.0 桌面端架构大跃迁。
+* **[v2/README.md 综述、新增特性、架构重构、底座解密与参考实现](docs/v2/README.md)**：全量划分为 6 大独立章节，深度解析 2.0 桌面端架构大跃迁。**（历史快照：基线版本已被 3.6556.2 取代，取值以 v3 为准）**
+
+### 🧬 第三版：Claude Desktop 3.x (3.6556.2) 全量逆向取证报告（当前基线）
+* **[v3/README.md 七章取证 + 单文件完整版](docs/v3/README.md)**：对当前生产包的全量逆向，**每条结论附代码证据与复现命令**。
+  - **第一章 综述与版本边界**：`@ant/desktop 3.6556.2`、ASAR 摘要、532 文件语义截断边界、6 个结构性零值
+  - **第二章 Electron 架构取证**：主进程 6 个 Sentry IPC 通道、0 个业务 handler、12 个字面量桥接 API、7 个 renderer 入口
+  - **第三章 架构重构与对比分析**：骨架屏双层组件 + `data-hold` 三态揭示、wave/lockstep 真实延时公式、RTL `:lang()` 列表、减少动效双轨
+  - **第四章 系统底座全景解密**：55 个 `@keyframes`、45 个 `data-cds` 命名空间、24 个 `@property`、35 阶 gray/orange 全表、5 阶时间与 4 条贝塞尔
+  - **第五章 open-claude-ui 差异审计**：逐项 diff 与 issue #25 取值裁定
+  - **第六章 全量 CSS 扫描与官方规范比对**：17 个 CSS 全扫、官方 CDS 规范文档提取、131 项 token 逐项比对、**Main Process Debugger 运行时双模值表**、ASAR 全量架构盘点（内置 Cowork VM / 4 个 MCP server / 6 个 Agent Skills / V8 compile-cache）
+  - **第七章 总结与后续工作**：确定性分级、未知项清单、可复现性声明
 
 ---
 
@@ -143,6 +155,8 @@ graph TD
 UI 组件只是外壳，**真正让 Claude 交互质感脱颖而出的是隐藏在混淆代码底部的物理学方程与数学模型**。本项目从生产环境反编译还原了以下 8 项关键算法：
 
 ### 1. 7 档渐隐非线性透明度遮罩 (7-Stop Non-Linear Fade Mask)
+
+> ⚠️ **v3 勘误**：7 档写死阶梯存在于 v1/v2 时代的产物；3.6556.2 主样式表中 6 停以上 gradient 为 **0**，滚动渐隐已重构为 `@property` + `animation-timeline` 变量驱动（见 [docs/v3/06](docs/v3/06-全量CSS扫描与官方规范比对.md) §6.6.3）。以下为历史取证记录，`ScrollFadeContainer.tsx` 的动态归零逻辑仍然有效。
 * **痛点**：常规双色线性滚动遮罩在视网膜高分屏上存在严重的色阶断层（Color Banding）与生硬切断感。
 * **Claude 算法**：没有采用粗暴的线性双色切线，而是在羽化距离内采用 7 档非线性采样阶梯（采样位置 15% 处对应 Alpha 5.1% `#0d`、30% 处 14.9% `#26`、45% 处 30.2% `#4d`、60% 处 50.2% `#80`、75% 处 70.2% `#b3`、87% 处 85.1% `#d9`，曲线紧密贴合 $y \approx x^{1.5}$ 幂律感知感知模型），搭配触顶/触底动态归零传感器，呈现温润如沉入水雾的边缘渐隐：
 ```css
@@ -257,7 +271,7 @@ open-claude-ui/
 
 ### 1. 引入样式表与 Tokens (纯 CSS 支持)
 
-无论是否使用 React，均可直接引入 CDS 核心样式表与 183 个设计令牌：
+无论是否使用 React，均可直接引入 CDS 核心样式表与 242 个设计令牌：
 ```css
 /* 引入全局主题变量、渐变消隐遮罩与核心关键帧 */
 @import "open-claude-ui/css";

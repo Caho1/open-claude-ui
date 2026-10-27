@@ -44,10 +44,10 @@ All tokens are defined in [`code-examples/cds-theme.css`](code-examples/cds-them
 ### Text & Border Tokens
 | Token | Light Mode Value | Dark Mode Value | Usage |
 | :--- | :--- | :--- | :--- |
-| `--cds-text-primary` | `#151515` | `#ffffff` | Headings, primary body text, active labels |
-| `--cds-text-secondary` | `#525252` | `#c2c2c2` | Timestamps, subtitles, secondary actions |
-| `--cds-text-muted` | `#8a8a8a` | `#808080` | Placeholders, disabled text, hotkey hints (alias: `--cds-text-tertiary`) |
-| `--cds-text-accent` | `var(--cds-clay)` | `var(--cds-clay)` | Highlighted brand terracotta text |
+| `--cds-text-primary` | `var(--cds-neutral-900)` → `#0b0b0b` | `#f0efec` (gray-50) | Headings, primary body text, active labels (v3 运行时实证) |
+| `--cds-text-secondary` | `var(--cds-neutral-600)` → `#52514e` | `#c3c2b7` (gray-200) | Timestamps, subtitles, secondary actions (v3) |
+| `--cds-text-muted` | `var(--cds-neutral-400)` → `#898781` | `#898781` (双模同值) | Placeholders, disabled text, hotkey hints (alias: `--cds-text-tertiary`) (v3) |
+| `--cds-text-accent` | `var(--cds-role-accent-600)` → `#184f95` | `#6da7ec` | Accent role is **blue**, not clay (v3 运行时实证) |
 | `--cds-border` | `var(--cds-alpha-2)` | `var(--cds-alpha-2)` | Dividers, subtle list borders (alias: `--cds-border-subtle`, `--cds-border-card`) |
 | `--cds-border-strong` | `var(--cds-alpha-3)` | `var(--cds-alpha-3)` | Emphasized component borders |
 | `--cds-border-subtle` | `var(--cds-alpha-2)` | `var(--cds-alpha-2)` | Fine hairline dividers |
@@ -57,8 +57,8 @@ All tokens are defined in [`code-examples/cds-theme.css`](code-examples/cds-them
 | Token | Light Mode Value | Dark Mode Value | Usage |
 | :--- | :--- | :--- | :--- |
 | `--cds-skel-i` | `0` | `0` | Cascading index for skeleton wave delay (`calc(var(--cds-skel-i, 0) * 90ms)`) |
-| `--cds-skeleton-base` | `rgba(0, 0, 0, 0.05)` | `rgba(255, 255, 255, 0.06)` | Base skeleton placeholder container surface |
-| `--cds-skeleton-sheen` | `rgba(255, 255, 255, 0.25)` | `rgba(255, 255, 255, 0.08)` | 105° linear sweep band highlight (2s linear) |
+| `--cds-skeleton-base` | `var(--cds-alpha-1)` → `hsl(from neutral-900 / 5%)` | `hsl(from neutral-900 / 7.5%)` (白) | Base skeleton placeholder container surface (v3 运行时实证：base 与 sheen 同值) |
+| `--cds-skeleton-sheen` | `var(--cds-alpha-1)`（同 base） | 同 base（白 7.5%） | 105° linear sweep band highlight (2s linear) |
 
 ### Brand Clay Palette
 * `--brand`: `#c6613f` (Official desktop brand primary color)
@@ -159,7 +159,10 @@ current-version record in this repo. When a scenario label matters, re-derive it
 from the bundle rather than trusting either volume.
 
 ### 7-Stop Non-Linear Fade Mask
-Never use a linear gradient for scroll fading. Use the calibrated 7-stop non-linear mask:
+Never use a linear gradient for scroll fading. Use the calibrated 7-stop non-linear mask
+(v3 forensic note: the 3.6556.2 client drives scroll fading through `@property` variables +
+`animation-timeline: scroll()` with no hardcoded multi-stop mask; keep the stops below only as a
+static fallback for engines without scroll-driven animation):
 ```css
 mask-image: linear-gradient(
   to bottom,
