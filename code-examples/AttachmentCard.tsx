@@ -15,6 +15,26 @@
 
 import React from "react";
 
+/**
+ * 附件集合变更的 View Transition 包装 (REA v6.8.0 运行时实证 3.6556.2)。
+ *
+ * 官方在附件增删/重排时用 document.startViewTransition() 包裹 DOM 更新，
+ * 配合 cds-theme.css 中的 view-transition-name/match-element 规则，
+ * 使被增删的卡片产生共享元素动画。
+ *
+ * 用法：
+ *   const updateAttachments = withAttachmentTransition(() => setFiles(next));
+ *
+ * 不支持 startViewTransition 的环境（旧浏览器）直接同步执行更新。
+ */
+export function withAttachmentTransition(update: () => void): void {
+  if (typeof document !== "undefined" && typeof (document as any).startViewTransition === "function") {
+    (document as any).startViewTransition(update);
+  } else {
+    update();
+  }
+}
+
 export type FileCategory = "code" | "pdf" | "image" | "text" | "archive" | "general";
 
 export interface AttachmentCardProps {
@@ -52,6 +72,7 @@ function truncateFileName(fileName: string, maxLen: number = 18): { head: string
 }
 
 export function AttachmentCard({
+  id,
   name,
   size,
   type,
@@ -96,7 +117,10 @@ export function AttachmentCard({
         className={`group/tile relative inline-flex items-center gap-2 px-2.5 py-1 rounded-[10px] bg-surface-2 border border-neutral-200/80 dark:border-neutral-700/80 shadow-field select-none transition-all ${
           uploading ? "animate-pulse opacity-75" : "hover:border-neutral-300 dark:hover:border-neutral-600"
         } ${className}`}
-        style={{ animation: "file-thumbnail-grow-in 250ms cubic-bezier(.165, .84, .44, 1)" }}
+        style={{
+          animation: "file-thumbnail-grow-in 250ms cubic-bezier(.165, .84, .44, 1)",
+          ...(id != null ? { "--cds-attachment-vt-name": `attachment-${id}` } as React.CSSProperties : {}),
+        }}
       >
         <span className={`px-1 py-0.5 rounded ${badgeStyle.bg} ${badgeStyle.text} font-mono text-[9px] font-bold shrink-0 tracking-wide`}>
           {inferredBadge}
@@ -135,6 +159,7 @@ export function AttachmentCard({
       } ${className}`}
       style={{
         animation: "file-thumbnail-grow-in 250ms cubic-bezier(.165, .84, .44, 1)",
+        ...(id != null ? { "--cds-attachment-vt-name": `attachment-${id}` } as React.CSSProperties : {}),
       }}
     >
       {/* 顶部徽标与文件类型 */}

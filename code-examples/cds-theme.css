@@ -94,11 +94,14 @@
   --cds-surface-popover: var(--cds-gray-0); /* #ffffff 悬浮 Popover 表面 */
 
   /* 4. Alpha 透明度与边框色系 */
-  --cds-alpha-0: hsla(0, 0%, 8%, 0);
-  --cds-alpha-1: hsla(0, 0%, 8%, 0.05); /* Ghost hover, skeleton */
-  --cds-alpha-2: hsla(0, 0%, 8%, 0.10); /* Standard border */
-  --cds-alpha-3: hsla(0, 0%, 8%, 0.20); /* Border strong */
-  --cds-alpha-4: hsla(0, 0%, 8%, 0.35); /* Heavy divider */
+  /* 4. 透明度阶梯 (Alpha Ramps) —— 单表达式自动翻转 (官方 vanilla 实证)
+     neutral-900 在暗色下解析为 gray-0(白)，整个阶梯自动变白，
+     无需暗色块覆盖（原来双块硬编码的 0.09/0.18/0.30 与官方 10/20/35% 有偏差） */
+  --cds-alpha-0: hsl(from var(--cds-neutral-900) h s l / 0%);
+  --cds-alpha-1: hsl(from var(--cds-neutral-900) h s l / 5%);   /* Ghost hover, skeleton */
+  --cds-alpha-2: hsl(from var(--cds-neutral-900) h s l / 10%);  /* Standard border */
+  --cds-alpha-3: hsl(from var(--cds-neutral-900) h s l / 20%);  /* Border strong */
+  --cds-alpha-4: hsl(from var(--cds-neutral-900) h s l / 35%);  /* Heavy divider */
 
   --cds-border: var(--cds-alpha-2);
   --cds-border-strong: var(--cds-alpha-3);
@@ -158,8 +161,8 @@
      dark : text-primary=#f0efec(gray-50)  / secondary=#c3c2b7(gray-200) / muted=#898781(gray-400 不变) */
   --cds-fill-ghost-hover: var(--cds-alpha-1);
   --cds-fill-ghost-selected: var(--cds-alpha-2);
-  --cds-fill-secondary: var(--cds-alpha-2);
-  --cds-fill-secondary-hover: rgba(21, 21, 21, 0.14);
+  --cds-fill-secondary: hsl(0 0% 100% / 0.1);  /* 官方实证：浅色为白 10% */
+  --cds-fill-secondary-hover: var(--cds-alpha-1);
 
   --cds-text-primary: var(--cds-neutral-900);      /* #0b0b0b */
   --cds-text-secondary: var(--cds-neutral-600);    /* #52514e */
@@ -400,11 +403,8 @@
   --cds-role-accent-fill: var(--cds-role-accent-450);
   --cds-fill-accent: var(--cds-role-accent-fill);
 
-  --cds-alpha-0: hsla(0, 0%, 100%, 0);
-  --cds-alpha-1: hsla(0, 0%, 100%, 0.05);
-  --cds-alpha-2: hsla(0, 0%, 100%, 0.10);
-  --cds-alpha-3: hsla(0, 0%, 100%, 0.20);
-  --cds-alpha-4: hsla(0, 0%, 100%, 0.35);
+  /* alpha 阶梯不再需要暗色覆盖：:root 的单表达式随 neutral-900 翻转
+     （此前这里的白色硬编码与浅色块的百分比不一致，已删除） */
 
   /* 主题阶梯暗色翻转 (Theme Ramp Inversion)
      运行时实证 (3.6556.2)：neutral-N 在暗色下 = gray-(900-N)，因此
@@ -592,6 +592,83 @@
   100% { opacity: 1; }
 }
 
+/* 8.5 附件重排 View Transitions (REA v6.8.0 + 运行时实证 3.6556.2)
+   附件卡增删/重排的共享元素过渡。三层结构：
+   1. 容器 [data-cds-composer-attachments]：整体 opacity/transform 过渡
+   2. 每张卡 [data-cds-attachment]：注册 view-transition-name + class
+   3. 旧 Chromium 回退：:active-view-transition-type 分发 root 动画
+   官方原文逐字移植（含新特性 @supports 探测 view-transition-group:contain）。
+   JS 侧需在 document.startViewTransition() 中更新 DOM，并给每张卡
+   --cds-attachment-vt-name: attachment-<id>（唯一名）。 */
+.cds-root [data-cds-composer-attachments]:has([data-cds-attachment]) {
+  transition: opacity .2s cubic-bezier(.215, .61, .355, 1),
+              transform .2s cubic-bezier(.215, .61, .355, 1);
+}
+
+.cds-root [data-cds-composer-attachments] [data-cds-attachment] {
+  --cds-attachment-vt-name: none;
+  transform-origin: 0;
+  view-transition-class: cds-attachment;
+  transition: transform .18s cubic-bezier(.215, .61, .355, 1),
+              opacity .18s cubic-bezier(.215, .61, .355, 1);
+}
+
+/* RTL 侧 transform-origin 镜像（官方 :lang 列表） */
+.cds-root [data-cds-composer-attachments] [data-cds-attachment]:where(
+  :is(:lang(ae),:lang(ar),:lang(arc),:lang(bcc),:lang(bqi),:lang(ckb),:lang(dv),:lang(fa),:lang(glk),
+       :lang(he),:lang(ku),:lang(mzn),:lang(nqo),:lang(pnb),:lang(ps),:lang(sd),:lang(ug),:lang(ur),:lang(yi)),
+  [dir=rtl] *
+) {
+  transform-origin: 100%;
+}
+
+/* 过渡期间才启用命名（避免常驻占用 painting 资源） */
+:root:active-view-transition-type(cds-attachments)
+  [data-cds-composer-attachments] [data-cds-attachment] {
+  view-transition-name: var(--cds-attachment-vt-name);
+}
+
+/* Chromium 141+ 路径：match-element 自动跟随元素几何，无需逐卡命名 */
+@supports selector(::view-transition-group-children(.x)) and (view-transition-group: contain) {
+  :root:active-view-transition-type(cds-attachments)
+    [data-cds-composer-attachments-clip][data-cds-attachments-clipping] {
+    view-transition-name: match-element;
+    view-transition-class: cds-attachments-clip;
+    view-transition-group: contain;
+  }
+  :root:active-view-transition-type(cds-attachments)::view-transition-group-children(.cds-attachments-clip) {
+    overflow: clip visible;
+  }
+}
+
+/* 入场初始态：新附件从下方缩放浮入 */
+@starting-style {
+  .cds-root [data-cds-composer-attachments]:has([data-cds-attachment]:not([data-cds-attachment-restored])) {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  .cds-root [data-cds-composer-attachments] [data-cds-attachment]:not([data-cds-attachment-restored]) {
+    opacity: 0;
+    transform: scale(.92) translateY(4px);
+  }
+}
+
+/* 过渡路由：root 零动画，只让附件组动 */
+:root:active-view-transition-type(cds-attachments) {
+  view-transition-name: none;
+}
+:root:active-view-transition-type(cds-attachments)::view-transition-group(root) {
+  animation-duration: 0s;
+}
+:root:active-view-transition-type(cds-attachments)::view-transition-group(.cds-attachment) {
+  animation-duration: .18s;
+  animation-timing-function: cubic-bezier(.215, .61, .355, 1);
+}
+/* 移除的旧快照：缩至一半并淡出（官方实证：仅当该附件无新快照时触发） */
+:root:active-view-transition-type(cds-attachments)::view-transition-old(.cds-attachment):only-child {
+  animation: .13s cubic-bezier(.55, .055, .675, .19) forwards cds-attachment-out;
+}
+
 /* 9. 陶土呼吸指示灯 (REA 取证：3s ease-in-out) */
 @keyframes dframe-clay-breathe {
   0%, 100% { filter: brightness(0.96); transform: scale(0.86); }
@@ -614,6 +691,15 @@
 @keyframes file-thumbnail-grow-in {
   0%   { opacity: 0; transform: scale(0.85); }
   100% { opacity: 1; transform: scale(1); }
+}
+
+/* 11.5 附件移除退场 (官方实证：to { opacity:0; scale(.5) }，
+   用于 View Transition 旧快照的 exit 动画） */
+@keyframes cds-attachment-out {
+  to {
+    opacity: 0;
+    transform: scale(.5);
+  }
 }
 
 /* 12. 按钮动态物理阻尼按压与回弹 (REA 取证：.cds-btn-squish) */
