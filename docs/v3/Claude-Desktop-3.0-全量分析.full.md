@@ -3557,18 +3557,21 @@ focusShadow    inset …#2a78d6, #cde2fb ✅
 
 在 [5.5 修复优先级总表](05-open-claude-ui差异审计.md) 基础上，新增以下项（按优先级排序）：
 
-| 优先级 | 项 | 预估影响 |
+| 优先级 | 项 | 状态 |
 | :--- | :--- | :--- |
-| **P0** | `--text-primary/secondary/muted` 三个值全错 | 全局文本色偏差 |
-| **P0** | `--border-accent` / `--text-accent` 用了 clay 而非 blue | accent 角色语义错误 |
-| **P0** | `--shadow-popover` 混入 inset ring | 弹层阴影结构错误 |
-| **P1** | `--radius-composer` 20px → 14px | 输入框圆角偏大 |
-| **P1** | `--gap-xl` 24px → 40px | 间距偏小 |
-| **P1** | `--h-control-nested` 24px → 22px | 嵌套控件偏高 |
-| **P1** | 5 个尺寸 token 未乘 `--cds-rem-scale` | 密度系统失效 |
-| **P1** | `--alpha-2/3/4` 暗色不透明度偏差 1/2/5 百分点；建议改单表达式 | 半透明遮罩略淡；新增作用域易漏写 |
-| **P2** | `--fill-brand-hover` 语义反转 | hover 方向错 |
-| **P2** | `--fill-secondary` 浅色用黑而非白 | 次级填充色偏差 |
+| **P0** | `--text-primary/secondary/muted` 三个值全错 | ✅ 已修复（6.7.6 验证） |
+| **P0** | `--border-accent` / `--text-accent` 用了 clay 而非 blue | ✅ 已修复（6.7.6 验证） |
+| **P0** | `--shadow-popover` 混入 inset ring | ✅ 已修复 |
+| **P1** | `--radius-composer` 20px → 14px | ✅ 已修复（含密度块） |
+| **P1** | `--gap-xl` 24px → 40px | ✅ 已修复 |
+| **P1** | `--h-control-nested` 24px → 22px | ✅ 已修复 |
+| **P1** | 尺寸 token 未乘 `--cds-rem-scale` | ✅ 已修复（radius/h-control*/icon/pad-*/gap-* 全族） |
+| **P1** | `--alpha-*` 改单表达式 | ✅ 已修复（暗色硬编码删除） |
+| **P2** | `--fill-brand-hover` 语义反转 | ✅ 已修复（hover 向上） |
+| **P2** | `--fill-secondary` 浅色用黑而非白 | ✅ 已修复（白 10%） |
+| **P2** | 附件重排 View Transitions（`match-element` + `@starting-style`） | ✅ 已实现（含 `withAttachmentTransition` hook） |
+| **P1** | 官方 skill 佐证写入 AGENTS.md | ✅ 已完成 |
+| **P2** | Cowork surface 的 UI 还原评估 | ⬜ 待做（需先确认 UI 载体） |
 
 ---
 
