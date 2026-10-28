@@ -39,7 +39,7 @@
 
 `open-claude-ui` is a high-fidelity open-source UI component library and motion physics engine, built through in-depth clean-room reverse engineering of the modern desktop AI client.
 
-> 🧭 **Forensic baseline (v3)**: token and motion values are aligned to **Claude Desktop `@ant/desktop 3.6556.2`** (ASAR root digest `b2dfbbb4…d68a`), verified through dual channels — **REA v6.8.0** static extraction plus live measurement via the app's **Main Process Debugger** (see [docs/v3](docs/v3/README.md)). v1/v2 documents are kept as historical snapshots.
+> 🧭 **Forensic baseline (v3)**: values are aligned to **Claude Desktop `@ant/desktop 3.6556.2`** (ASAR root digest `b2dfbbb4…d68a`), with an incremental re-check against `4.29.0` (§6.11) confirming every fix, all verified through dual channels — **REA v6.8.0** static extraction plus live measurement via the app's **Main Process Debugger** (see [docs/v3](docs/v3/README.md)). v1/v2 documents are kept as historical snapshots.
 
 All reverse derivation, de-obfuscation static analysis, and ASAR package deconstruction were conducted using the advanced multi-platform reverse engineering framework **[REA (Reverse Engineer Anything)](https://github.com/morluto/rea)**. Leveraging REA's static AST deconstruction, closure de-obfuscation, and runtime tracing capabilities, we penetrated production bundles to faithfully extract the underlying physical constants, interaction constraints, and mathematical models.
 
@@ -138,7 +138,7 @@ It documents exact decompilation evidence locations alongside Anthropic's archit
 ### 🚀 Claude Desktop 2.0 (v2.37337.1) Comprehensive Reverse Engineering Analysis
 * **[1~6 Overview, Additions, Refactorings, Baseline Secrets, Reference Implementations & Summary](docs/v2/README.md)**: Standalone decompilation report for Claude Desktop 2.0. **(Historical snapshot: superseded by 3.6556.2 — defer to v3 for values)**
 
-### 🧬 Claude Desktop 3.x (3.6556.2) Full Forensic Report (current baseline)
+### 🧬 Claude Desktop 3.x (3.6556.2) Full Forensic Report (current baseline, with 4.29.0 delta appendix)
 * **[v3/README.md — seven chapters + merged edition](docs/v3/README.md)**: full reverse engineering of the current production build, **every claim backed by code evidence and a repro command**.
   - **Ch.1 Scope & version boundary**: `@ant/desktop 3.6556.2`, ASAR digest, 532-file semantic truncation boundary, six structural zeros
   - **Ch.2 Electron architecture**: 6 Sentry IPC channels / 0 business handlers in the main process, 12 literal bridge API names, 7 renderer entry points

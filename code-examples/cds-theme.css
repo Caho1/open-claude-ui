@@ -121,6 +121,7 @@
   --cds-neutral-500: var(--cds-gray-500);
   --cds-neutral-600: var(--cds-gray-600);
   --cds-neutral-700: var(--cds-gray-700);
+  --cds-neutral-750: var(--cds-gray-750);
   --cds-neutral-800: var(--cds-gray-800);
   --cds-neutral-850: var(--cds-gray-850);
   --cds-neutral-900: var(--cds-gray-900);
@@ -297,6 +298,8 @@
   --cds-fill-danger: #ef4444;
   --cds-text-accent: var(--cds-role-accent-600);      /* #184f95 蓝，非 clay */
   --cds-bg-accent: var(--cds-blue-100);               /* focus glow 的颜色源，运行时实证 #cde2fb */
+  --cds-fill-primary: var(--cds-neutral-900);          /* 4.29.0 实证；失焦态覆盖为 gray-450 */
+  --cds-fill-primary-hover: var(--cds-neutral-750);
   --cds-focus-shadow: inset 0 0 0 1px var(--cds-page-bg),
                       0 0 0 1px var(--cds-fill-accent),
                       0 0 6px 1px var(--cds-bg-accent);
@@ -419,6 +422,7 @@
   --cds-neutral-500: var(--cds-gray-400);
   --cds-neutral-600: var(--cds-gray-200);   /* 实证：#c3c2b7 */
   --cds-neutral-700: var(--cds-gray-100);
+  --cds-neutral-750: var(--cds-gray-150);
   --cds-neutral-800: var(--cds-gray-50);
   --cds-neutral-850: var(--cds-gray-50);    /* 实证：#f0efec */
   --cds-neutral-900: var(--cds-gray-0);
@@ -946,6 +950,18 @@
 .cds-root:where([data-reduce-motion=true], [data-reduce-motion=true] *) .cds-skel-sweep-band,
 .cds-root:where([data-reduce-motion=true], [data-reduce-motion=true] *) .cds-skeleton::after {
   display: none;
+}
+
+/* 4.29.0 新增：窗口失焦去色 (Window-Inactive Desaturation)
+   客户端在 [data-window-active=false] 时把 accent 角色全系映射到 gray，
+   并把 Button/Group/SplitDropdownButton 的 brand/primary 填充统一去色。
+   这是 Electron 多窗口应用的「非活动窗口降饱和」机制。 */
+[data-window-active="false"] :is(.cds-skeleton, [data-cds]) {
+  --cds-fill-brand: var(--cds-gray-450);
+  --cds-fill-brand-hover: var(--cds-gray-400);
+  --cds-fill-primary: var(--cds-gray-450);
+  --cds-fill-primary-hover: var(--cds-gray-400);
+  --cds-fill-accent-hover: var(--cds-role-accent-fill-hover);
 }
 
 /* ==========================================================================

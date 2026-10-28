@@ -39,7 +39,7 @@
 
 `open-claude-ui` 是基于对现代桌面端 AI 客户端进行深度拆解与逆向分析构建的高保真开源 UI 组件库与动效引擎。
 
-> 🧭 **取证基线 (v3)**：当前令牌与动效值对齐 **Claude Desktop `@ant/desktop 3.6556.2`**（ASAR 根摘要 `b2dfbbb4…d68a`），全部经 **REA v6.8.0** 静态提取 + **Main Process Debugger** 运行时实测双通道验证（详见 [docs/v3](docs/v3/README.md)）。v1/v2 文档保留为历史快照。
+> 🧭 **取证基线 (v3)**：令牌与动效值对齐 **Claude Desktop `@ant/desktop 3.6556.2`**（ASAR 根摘要 `b2dfbbb4…d68a`），全部经 **REA v6.8.0** 静态提取 + **Main Process Debugger** 运行时实测双通道验证（详见 [docs/v3](docs/v3/README.md)）。v1/v2 文档保留为历史快照。
 
 整个逆向推导、反混淆静态分析与 ASAR 资源解构，均依托于先进的多平台逆向工程框架 **[REA (Reverse Engineer Anything)](https://github.com/morluto/rea)** 完成——通过 REA 的静态 AST 解析、闭包代码反混淆与运行时跟踪能力，穿透生产级压缩包，精准还原了底层工程物理常数与数学模型。
 

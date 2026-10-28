@@ -1334,6 +1334,93 @@ api / organizations / cowork / scheduled_tasks
 | **P3** | `clawdQuestEngine` 游戏化系统的还原评估 | 6.10.9 |
 
 
+---
+
+## 6.11 基线更新：3.6556.2 → 4.29.0 增量取证
+
+**本报告撰写期间，Claude Desktop 完成了一次大版本跳迁**。本节记录增量复核结果。
+
+### 6.11.1 版本事实
+
+| 项 | 报告主体（v3） | 当前实测 |
+| :--- | :--- | :--- |
+| 版本 | `@ant/desktop 3.6556.2` | **`@ant/desktop 4.29.0`**（Info.plist 与 package.json 双确认） |
+| ASAR 根摘要 | `b2dfbbb4…d68a` | **`fea39d03…42aa`** |
+| 主样式表 | `MainWindowPage-BjVtjJFx.css`（237,145 B） | `MainWindowPage-BIxm3NVN.css`（238,086 B，**+941 B**） |
+| ASAR 条目 | 629 | **696**（build JS 551 → 509，条目增加来自其它目录） |
+| 主入口 | `index.pre.js` 982,086 B | 1,002,540 B（**+20,454 B**） |
+
+fuse 状态不变（`EnableNodeCliInspectArguments` 仍 Disabled）。
+
+### 6.11.2 CSS 层面：结构几乎无变化，两处实质更新
+
+**清单级对比（old 995 vs new 998 个选择器块）**：
+
+| 维度 | 3.6556.2 | 4.29.0 | 变化 |
+| :--- | ---: | ---: | :--- |
+| `@keyframes` | 55 | **55（完全相同）** | 0 |
+| `@property` | 90 | **90（完全相同）** | 0 |
+| token 总数 | 1,109 | 1,109 | 新增 0、删除 0、**值变化 2** |
+| `data-cds` 命名空间 | 45 | 45 | `-Heatmap` `+CellChartContainer` |
+
+**变化 1：`Heatmap` → `CellChartContainer`**（组件更名，同为消息内嵌图表容器，替换发生在同一条规则内）。
+
+**变化 2：`--cds-fill-primary` 系在 `[data-window-active=false]` 下新增灰色覆盖**：
+
+```css
+/* 4.29.0 新增（失焦态的 brand/primary 填充统一去色） */
+[data-window-active=false] :is([data-cds=Button],[data-cds=ButtonGroup],[data-cds=SplitDropdownButton]) {
+  --cds-fill-brand: var(--cds-gray-450);
+  --cds-fill-brand-hover: var(--cds-gray-400);
+  --cds-fill-primary: var(--cds-gray-450);
+  --cds-fill-primary-hover: var(--cds-gray-400);
+}
+[data-window-active=false] [data-cds]:not(:where([data-cds-theme],[data-cds-theme] *)) {
+  --cds-fill-accent-hover: var(--cds-role-accent-fill-hover);
+}
+```
+
+3.6556.2 已有失焦去饱和的基础（`data-window-active=false` 时 `role-accent-*` 全系映射到 gray），但只覆盖了 `[data-cds=Button]` 的 `--cds-fill-brand`。4.29.0 把覆盖面扩到 **Button/ButtonGroup/SplitDropdownButton** 三类组件并补上 `fill-primary` 与 `fill-accent-hover`。
+
+**全部我们关心的 token 复验（text 三色、accent 蓝、clay-emphasized、brand 对、radius/h-control/gap、shadow-popover、focus-shadow 蓝环、skeleton 同值、alpha 单表达式）——在 4.29.0 中逐项一致，无一回归。**
+
+### 6.11.3 JS 层面：新增 2 个桥接 API + 字节码优化
+
+`mainView.js` 的 `exposeInMainWorld` 调用 23 → 25，字面量 API 名 12 → **14**：
+
+| 新增 API | 上下文证据 |
+| :--- | :--- |
+| **`desktopNoFlushBytecode`** | `Sp="--js-flags=--no-flush-bytecode"`；当主进程以该 flag 启动时暴露布尔值。V8 bytecode 不落盘刷新的开关探测，与 ASAR 内 `compile-cache/` 的 V8 code cache 预热配套 |
+| **`desktopHomePath`** | 主进程把 `home` 路径直接暴露给渲染层（try/catch 包裹，失败时不暴露） |
+
+其余 12 个 API 名（`buddyBle`、`claudeAppBindings`、`desktop*` 系列、`electronWindowControl`、`electronIntl`、`process`）不变。
+
+### 6.11.4 对本报告结论的影响裁定
+
+| 项 | 裁定 |
+| :--- | :--- |
+| 55 keyframes / 45→45 data-cds / 90 @property / token 值 | **全部在 4.29.0 中复验成立**（除组件更名与失焦覆盖扩展） |
+| 我们的修复清单（text 三色、accent 蓝、brand 对、密度、skeleton、shadow） | **逐项与 4.29.0 一致，无需任何改动** |
+| `frontend-design` skill 佐证、Cowork VM、4 个 MCP server、compile-cache | 全部仍在（bundled-skills 7 个文件同名） |
+| `data-cds` 组件清单 | **需微调**：45 个名字中 `Heatmap` 应更正为 `CellChartContainer` |
+| 桥接 API 名清单 | **需微调**：12 → 14 个（新增 `desktopNoFlushBytecode`、`desktopHomePath`） |
+| 运行时值表（6.7.5） | 系 3.6556.2 实测；CSS token 值零变化，**结论可直接沿用**，如需严格复测可在 4.29.0 上重跑 |
+
+### 6.11.5 open-claude-ui 需要的动作
+
+| 优先级 | 动作 |
+| :--- | :--- |
+| P2 | `cds-theme.css` 增加 `[data-window-active=false]` 失焦去色块（Button/Group/SplitDropdownButton 的 fill-brand/fill-primary + 全局 fill-accent-hover） |
+| P3 | 组件清单与桥接 API 清单的命名更新（`Heatmap`→`CellChartContainer`，+2 API） |
+| — | 其余全部无需改动 |
+
+### 6.11.6 版本策略说明
+
+Claude Desktop 的版本节奏明显快于本仓库（本次取证期间即经历 3.6556.2 → 4.29.0）。**v3 报告的取证方法论（REA 静态 + debugger 运行时 + 逐条复现命令）比任何一份快照更有长期价值**：版本更替时只需重跑证据索引里的命令即可刷新基线。后续版本号变化不再单独出报告，按本节格式做增量附录。
+
+---
+---
+
 ## 本章证据索引
 
 | 断言 | 命令 |
