@@ -1,12 +1,12 @@
 ---
-title: "Claude Desktop 3.x (3.6556.2 → 4.29.0) 全量逆向取证报告 · 单文件完整版"
+title: "Claude Desktop (3.6556.2 → 4.29.0) 全量逆向取证报告 · 单文件完整版"
 category: reverse-engineering
 domain: architecture/desktop_application
 version: "3.0 (3.6556.2) + 4.29.0 delta"
 status: stable
-date: 2026-10-26
+date: 2026-10-29
 author: "REA 逆向工程实验室"
-evidence_root: "b2dfbbb40325d978dcb7561ad12a6f9bc199f8f46b7d3d2899af74ce8965d68a / fea39d0330a1f6dcb143d9a3fe7b45ed21343c5fc2895c1dff2cb942a28eeb7a"
+evidence_root: "b2dfbbb4…d68a / fea39d03…42aa"
 ---
 
 > 本文件由 `docs/v3/` 下七章合并而成，便于离线全局检索。
@@ -3871,6 +3871,22 @@ fuse 状态不变（`EnableNodeCliInspectArguments` 仍 Disabled）。
 | P2 | `cds-theme.css` 增加 `[data-window-active=false]` 失焦去色块（Button/Group/SplitDropdownButton 的 fill-brand/fill-primary + 全局 fill-accent-hover） |
 | P3 | 组件清单与桥接 API 清单的命名更新（`Heatmap`→`CellChartContainer`，+2 API） |
 | — | 其余全部无需改动 |
+
+### 6.11.7 深挖补充：6.11 首轮遗漏的三项
+
+对 6.11 的增量复核做完整性回查后，补充三项：
+
+**a) `resources/` 实际有 7 个条目，不是 4+3 的两份记录**
+
+3.6556.2 的 `resources/` 为 4 项（artifact-libs / bundled-skills / github-mcp / office365-mcp）。4.29.0 实为 **7 项**：上述 4 项 + **`i18n/`（43 个语言 JSON，3.5 MB，947 键的 ICU 消息目录）** + **`claude-browser-shim.js`**（原磁盘文件收编进 asar）+ **`quick-actions/`**（Automator 工作流，同前收编）。同时磁盘上的 `ion-dist/` 目录变为 **`ion-dist.asar`（191 MB，4,532 条目）**——claude.ai 网页壳独立打包，内含自己的 12 语言 i18n 与模块依赖图 `scc.json`（3,925 chunks / 52,735 edges）。`i18n` 进入 app.asar 属于 4.29.0 的真实新增。
+
+**b) 官方 CDS 文档逐字 diff 完成**
+
+3.6556.2 的文档位于 `index.chunk-CbnfBP-3.js`，4.29.0 移至 `index.chunk-JNXX2nzx.js`（486,586 B）。全文 668 行逐字对比，实质差异仅一处：构建工具链 `yarn workspace @ant/cds-docs gen:cds-skill` → **`bun run --cwd apps/cds-docs gen:cds-skill`**（`gen:tokens` 同样 yarn→bun）。token 模型、elevation 表、motion 词表、全部 design rules **一字未改**——进一步确认我们提取的规范在 4.29.0 中继续有效。
+
+**c) 构建产物重组**
+
+build JS 从 551 个文件（23.0 MB）变为 **501 个（23.0 MB）**——文件数减 50 而总量不变，是 chunk 合并；最大 chunk 从 4.4 MB（`CbnfBP-3`，含 CDS 文档）变为 **6.8 MB（`C7NkbHFq`）**。入口 `index.js` 带 `SENTRY_RELEASE` id（`2609742292…`）。这类打包形态变化不影响任何取证结论，但说明「按 chunk 文件名引用证据」不可靠——后续引用证据应使用**内容特征**（如 `gen-cds-skill` 字样）而非文件名。
 
 ### 6.11.6 版本策略说明
 
