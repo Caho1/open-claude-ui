@@ -1,4 +1,4 @@
-# Claude Desktop 4.29.0 逆向取证报告 · CDS 基线（3.6556.2 取证 + 4.29.0 增量复核）
+# Claude Desktop 4.29.0 分析报告 · CDS 基线（3.6556.2 取证 + 4.29.0 增量复核）
 
 > **目标应用载体**：Anthropic 官方生产包 macOS `/Applications/Claude.app`
 > **主基线**：`@ant/desktop 3.6556.2`（ASAR 摘要 `b2dfbbb40325d978dcb7561ad12a6f9bc199f8f46b7d3d2897af74ce8965d68a`，主样式表 `MainWindowPage-BjVtjJFx.css`）

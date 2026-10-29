@@ -140,7 +140,7 @@ It documents exact decompilation evidence locations alongside Anthropic's archit
 ### 🚀 Claude Desktop 2.0 (v2.37337.1) Comprehensive Reverse Engineering Analysis
 * **[1~6 Overview, Additions, Refactorings, Baseline Secrets, Reference Implementations & Summary](docs/v2/README.md)**: Standalone decompilation report for Claude Desktop 2.0. **(Historical snapshot: superseded by 3.6556.2 — defer to v3 for values)**
 
-### 🧬 Claude Desktop 4.29.0 Full Forensic Report (current baseline)
+### 🧬 Claude Desktop 4.29.0 Full Analysis Report (current baseline)
 * **[v4.29.0/README.md — seven chapters + merged edition](docs/v4.29.0/README.md)**: full reverse engineering of the current production build, **every claim backed by code evidence and a repro command**. Directory name tracks the Claude version.
   - **Ch.1 Scope & version boundary**: `@ant/desktop 3.6556.2`, ASAR digest, 532-file semantic truncation boundary, six structural zeros
   - **Ch.2 Electron architecture**: 6 Sentry IPC channels / 0 business handlers in the main process, 12 literal bridge API names, 7 renderer entry points

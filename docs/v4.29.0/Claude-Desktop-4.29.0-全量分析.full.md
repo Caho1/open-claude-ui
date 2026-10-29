@@ -1,5 +1,5 @@
 ---
-title: "Claude Desktop (3.6556.2 → 4.29.0) 全量逆向取证报告 · 单文件完整版"
+title: "Claude Desktop (3.6556.2 → 4.29.0) 全量分析报告 · 单文件完整版"
 category: reverse-engineering
 domain: architecture/desktop_application
 version: "3.0 (3.6556.2) + 4.29.0 delta"
