@@ -1,10 +1,9 @@
-# Claude Desktop 3.x (3.6556.2) 逆向取证报告 · CDS 3.0 基线重锚
+# Claude Desktop 4.29.0 逆向取证报告 · CDS 基线（3.6556.2 取证 + 4.29.0 增量复核）
 
 > **目标应用载体**：Anthropic 官方生产包 macOS `/Applications/Claude.app`
-> **二进制元数据**：`@ant/desktop v3.6556.2`（`CFBundleShortVersionString = 3.6556.2`）
-> **ASAR 根摘要**：`b2dfbbb40325d978dcb7561ad12a6f9bc199f8f46b7d3d2897af74ce8965d68a`
-> **主样式表**：`.vite/renderer/main_window/assets/MainWindowPage-BjVtjJFx.css`（237,153 bytes）
-> **逆向工具栈**：**REA (Reverse Engineer Anything) v6.8.0**
+> **主基线**：`@ant/desktop 3.6556.2`（ASAR 摘要 `b2dfbbb40325d978dcb7561ad12a6f9bc199f8f46b7d3d2897af74ce8965d68a`，主样式表 `MainWindowPage-BjVtjJFx.css`）
+> **增量复核**：`@ant/desktop 4.29.0`（ASAR 摘要 `fea39d0330a1f6dcb143d9a3fe7b45ed21343c5fc2895c1dff2cb942a28eeb7a`，主样式表 `MainWindowPage-BIxm3NVN.css`，238,086 bytes）——见 [§6.11](06-全量CSS扫描与官方规范比对.md)
+> **逆向工具栈**：**REA (Reverse Engineer Anything) v6.8.0** + 应用内 **Main Process Debugger** 运行时实测
 
 ---
 
@@ -22,7 +21,7 @@
 
 **因此：**
 - v2 文档已被标记为 `status: historical`，仅作历史快照保留。
-- 本目录（`docs/v3/`）是当前唯一有效的取证基线。
+- 本目录（`docs/v4.29.0/`）是当前唯一有效的取证基线。
 - `code-examples/` 中基于 v2 的令牌值需要按本文修正（详见 [第四章](04-系统底座全景解密.md)）。
 
 ---
@@ -83,7 +82,7 @@ semantic analysis of <file> was not started
 
 ---
 
-## 🧭 第三版分章目录
+## 🧭 v4.29.0 版分章目录
 
 - [第一章：综述与版本边界](01-综述与版本边界.md)
   - 1.1 版本边界声明（`@ant/desktop@3.6556.2`，ASAR 根摘要，进程/窗口拓扑）
@@ -157,4 +156,4 @@ grep -o "@property --cds-[a-zA-Z0-9_-]*" MainWindowPage-BjVtjJFx.css | sort -u |
 
 
 
-> 💡 **单文件检索**：如需离线全局搜索第三版全文，参见 [第三版单文件完整版](Claude-Desktop-3.0-全量分析.full.md)。
+> 💡 **单文件检索**：如需离线全局搜索v4.29.0 版全文，参见 [v4.29.0 版单文件完整版](Claude-Desktop-4.29.0-全量分析.full.md)。

@@ -63,7 +63,7 @@ All tokens are defined in [`code-examples/cds-theme.css`](code-examples/cds-them
 ### Brand Clay Palette
 * `--brand`: `#c6613f` (Official desktop brand primary color)
 * `--cds-clay`: `#d97757` (Light / pulse indicator) / `#cc6b49` (Dark)
-* **官方佐证 (v3 取证)**：Claude 桌面端 3.6556.2 内置的官方 `frontend-design` skill 原文确认 #D97757 为 "Anthropic's own Claude-interaction accent"（见 `docs/v3/06` §6.10.4），与 REA 运行时实测一致
+* **官方佐证 (v3 取证)**：Claude 桌面端 3.6556.2 内置的官方 `frontend-design` skill 原文确认 #D97757 为 "Anthropic's own Claude-interaction accent"（见 `docs/v4.29.0/06` §6.10.4），与 REA 运行时实测一致
 * 角色区分 (运行时实证 3.6556.2)：`brand`=陶土（Claude 发起的动作，如发送/生成）；`accent`=**蓝色**（`--cds-text-accent: #184f95`、`--cds-border-accent: #86b6ef`）——二者是不同角色，不可互换
 * Focus shadow: `var(--cds-focus-shadow)` (`inset 0 0 0 1px var(--cds-page-bg), 0 0 0 1px var(--cds-fill-accent), 0 0 6px 1px var(--cds-bg-accent)`, 即蓝色 ring + 蓝色 glow，运行时实证)
 

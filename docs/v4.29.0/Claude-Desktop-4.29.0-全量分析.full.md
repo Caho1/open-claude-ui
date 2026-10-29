@@ -9,7 +9,7 @@ author: "REA 逆向工程实验室"
 evidence_root: "b2dfbbb4…d68a / fea39d03…42aa"
 ---
 
-> 本文件由 `docs/v3/` 下七章合并而成，便于离线全局检索。
+> 本文件由 `docs/v4.29.0/` 下七章合并而成，便于离线全局检索。
 > 章节内容与各分章文件完全一致。若两者不符，**以分章文件为准**。
 
 ---
@@ -4093,7 +4093,7 @@ Claude Desktop 的版本节奏明显快于本仓库（本次取证期间即经�
 
 ```yaml
 status: historical
-superseded_by: "docs/v3/"
+superseded_by: "docs/v4.29.0/"
 verified_against: "2026-10-15"
 ```
 
