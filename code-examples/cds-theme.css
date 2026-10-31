@@ -367,7 +367,21 @@
   --cds-skeleton-base: var(--cds-alpha-1);   /* hsl(from neutral-900 / 5%) */
   --cds-skeleton-sheen: var(--cds-alpha-1);  /* 与 base 同值，运行时实证 */
 
-  /* 20. 吸边 (Sticky Edge) 默认值 —— 官方 @property 注册项的运行时初值 */
+  /* 20. 字体字重 role 链 (Font Weight Roles - 4.4212.0 实证)
+     字重优先跟随「控件 / 标题」语义角色，再回落到字面权重。
+     默认 initial 表示不覆盖，由使用方按需设置。
+     .font-medium → var(--cds-font-weight-control, var(--cds-font-weight-medium))
+     .font-semibold → var(--cds-font-axis-wght-header, var(--cds-font-axis-wght-semibold)) */
+  --cds-font-weight-medium: 500;
+  --cds-font-weight-control: initial;
+  --cds-font-weight-header: initial;
+  --cds-font-weight-body: initial;
+  --cds-font-wght-control: initial;
+  --cds-font-wght-header: initial;
+  --cds-font-axis-wght-control: initial;
+  --cds-font-axis-wght-header: initial;
+
+  /* 21. 吸边 (Sticky Edge) 默认值 —— 官方 @property 注册项的运行时初值 */
   --cds-sticky-edge-active: 0;
   --cds-sticky-edge-start: 0px;
   --cds-sticky-edge-end: 0px;
@@ -588,6 +602,13 @@
 @keyframes cds-skeleton-breathe {
   0%, 100% { opacity: 1; }
   50%      { opacity: 0.6; }
+}
+
+/* 进度条扫光 (4.4212.0 新增) —— 未确定进度指示器的循环光带
+   1.6s cubic-bezier(.65,0,.35,1) infinite；--_progress-dir 控制方向（默认 -1）。 */
+@keyframes cds-progress-sweep {
+  0%   { transform: translateX(calc(var(--_progress-dir, -1) * 100%)); }
+  100% { transform: translateX(calc(var(--_progress-dir, -1) * -166.67%)); }
 }
 
 /* 占位揭示淡入 (官方实证：.15s ease-out，配 data-hold=delayed) */
@@ -925,6 +946,25 @@
 .cds-skeleton[data-motion="lockstep"]::after,
 [data-motion="lockstep"] .cds-skeleton::after {
   display: none !important;
+}
+
+/* 进度条扫光类 (4.4212.0) */
+.cds-progress-sweep {
+  opacity: .5;
+  width: 60%;
+  animation: 1.6s cubic-bezier(.65, 0, .35, 1) infinite cds-progress-sweep;
+  -webkit-mask-image: linear-gradient(90deg, #0000, #000 40% 60%, #0000);
+  mask-image: linear-gradient(90deg, #0000, #000 40% 60%, #0000);
+}
+@media (prefers-reduced-motion: reduce) {
+  .cds-progress-sweep { margin-inline-start: 20%; animation: none; }
+}
+.cds-root:where([data-reduce-motion=true], [data-reduce-motion=true] *) .cds-progress-sweep {
+  margin-inline-start: 20%;
+  animation: none;
+}
+@media (forced-colors: active) {
+  .cds-progress-sweep.cds-progress-sweep { opacity: 1; background-color: Highlight; }
 }
 
 /* 减少动效双轨兕底 (官方实证：@media 系统偏好 + [data-reduce-motion] 应用开关)

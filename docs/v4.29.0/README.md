@@ -1,8 +1,8 @@
-# Claude Desktop 4.29.0 分析报告 · CDS 基线（3.6556.2 取证 + 4.29.0 增量复核）
+# Claude Desktop 4.4212.0 分析报告 · CDS 基线（3.6556.2 取证 + 4.29.0 / 4.4212.0 增量复核）
 
 > **目标应用载体**：Anthropic 官方生产包 macOS `/Applications/Claude.app`
 > **主基线**：`@ant/desktop 3.6556.2`（ASAR 摘要 `b2dfbbb40325d978dcb7561ad12a6f9bc199f8f46b7d3d2897af74ce8965d68a`，主样式表 `MainWindowPage-BjVtjJFx.css`）
-> **增量复核**：`@ant/desktop 4.29.0`（ASAR 摘要 `fea39d0330a1f6dcb143d9a3fe7b45ed21343c5fc2895c1dff2cb942a28eeb7a`，主样式表 `MainWindowPage-BIxm3NVN.css`，238,086 bytes）——见 [§6.11](06-全量CSS扫描与官方规范比对.md)
+> **增量复核**：`4.29.0`（ASAR `fea39d03…`）→ **`4.4212.0`**（ASAR `ce90267c…`，主样式表 `MainWindowPage-BoMeyaMm.css`，239,201 bytes）——见 [§6.11](06-全量CSS扫描与官方规范比对.md) / [§6.12](06-全量CSS扫描与官方规范比对.md)
 > **逆向工具栈**：**REA (Reverse Engineer Anything) v6.8.0** + 应用内 **Main Process Debugger** 运行时实测
 
 ---

@@ -1437,6 +1437,96 @@ Claude Desktop 的版本节奏明显快于本仓库（本次取证期间即经�
 ---
 ---
 
+---
+
+## 6.12 基线更新：4.29.0 → 4.4212.0 增量取证
+
+### 6.12.1 版本事实
+
+| 项 | 4.29.0 | 4.4212.0 |
+| :--- | :--- | :--- |
+| ASAR 摘要 | `fea39d03…42aa` | **`ce90267cb07b08d1…`** |
+| 主样式表 | `MainWindowPage-BIxm3NVN.css`（238,086 B） | `MainWindowPage-BoMeyaMm.css`（**239,201 B**，+1,115） |
+| ASAR 条目 | 696 | **707** |
+| build JS | 501 个 / 23.0 MB | 512 个 / 22.3 MB |
+| 主入口 | 1,002,540 B | 1,008,616 B |
+| `mainView.js` | 267,641 B | 268,308 B |
+
+### 6.12.2 CSS：新增 1 个关键帧 + 字体 role 链补全
+
+清单对比：`@keyframes` 55 → **56**；`data-cds` 45 → 45（**完全相同**）；`@property` 90 → 90（**完全相同**）；token 1,109 个，**新增 0 / 删除 0 / 值变化 0**。
+
+**新增 1：进度条扫光 `cds-progress-sweep`**（首个「未确定进度」指示器原语）
+
+```css
+@keyframes cds-progress-sweep {
+  0%   { transform: translateX(calc(var(--_progress-dir, -1) * 100%)); }
+  100% { transform: translateX(calc(var(--_progress-dir, -1) * -166.67%)); }
+}
+
+.cds-root .cds-progress-sweep {
+  opacity: .5;
+  width: 60%;
+  animation: 1.6s cubic-bezier(.65, 0, .35, 1) infinite cds-progress-sweep;
+  -webkit-mask-image: linear-gradient(90deg, #0000, #000 40% 60%, #0000);
+  mask-image: linear-gradient(90deg, #0000, #000 40% 60%, #0000);
+}
+```
+
+三个设计要点：
+
+- **`--_progress-dir` 控制方向**（默认 `-1`，RTL/反向可设 `1`），位移量 `-166.67%`（≈1.67 倍自身宽度，配合 60% 宽度形成无接缝循环）
+- **`mask-image` 双向淡出**（`#0000 → #000 40%~60% → #0000`）
+- **两套降级**：`prefers-reduced-motion` / `[data-reduce-motion=true]` 下改为 `margin-inline-start:20%` 静态停驻；`forced-colors: active` 下 `opacity:1` + `background-color: Highlight`
+
+**新增 2：字体字重 role 链补全**（5 处规则值变化）
+
+```css
+/* 4.29.0 */
+.font-medium   { font-weight: var(--_cds-font-weight-role, var(--cds-font-weight-medium)); }
+.font-semibold { --cds-font-axis-wght: var(--_cds-font-axis-wght-role, var(--cds-font-axis-wght-semibold)); }
+
+/* 4.4212.0 —— 插入 role 语义中间层 */
+.font-medium   { font-weight: var(--_cds-font-weight-role, var(--cds-font-weight-control, var(--cds-font-weight-medium))); }
+.font-semibold { --cds-font-axis-wght: var(--_cds-font-axis-wght-role, var(--cds-font-axis-wght-header, var(--cds-font-axis-wght-semibold))); }
+```
+
+即字重现在**优先跟随「控件 / 标题」语义角色**，再回落到字面权重。同时新增 `.text-code-regular/medium/semibold` 工具类，与 `.font-serif`/`.font-voice`/`.font-mono` 一起把 role 变量重置为 `initial`，避免代码字体被正文/控件字重覆盖。
+
+### 6.12.3 JS：零变化
+
+| 项 | 4.29.0 | 4.4212.0 |
+| :--- | ---: | ---: |
+| `ipcMain` / `.handle` | 6 / 0 | **6 / 0** |
+| Sentry 通道 | 6 个 | **6 个（同名）** |
+| `BrowserWindow` / `utilityProcess` | 2 / 3 | **2 / 3** |
+| `exposeInMainWorld` / 字面量 API | 25 / 14 | **25 / 14（同名）** |
+| renderer 入口 | 7 | **7** |
+| `resources/` | 7 项 | **7 项（同名）** |
+| `dependencies` | 8 项 | **8 项（同名）** |
+
+`cds-progress-sweep` 在全部 512 个 build JS 中**零引用**——纯 CSS 工具类，由宿主自行套用。
+
+### 6.12.4 对本报告结论的影响
+
+| 项 | 裁定 |
+| :--- | :--- |
+| token 值（text 三色 / accent 蓝 / clay / 密度 / shadow / alpha） | **零变化，全部继续成立** |
+| `data-cds` 45 个 / `@property` 90 个 | **完全不变** |
+| 骨架屏 / 附件 View Transitions / Pill 等动效 | **完全不变** |
+| 桥接 API / IPC 拓扑 / 窗口结构 | **完全不变** |
+| 新增 | `cds-progress-sweep`、字体 role 链、`.text-code-*` 工具类 |
+
+### 6.12.5 open-claude-ui 的动作
+
+| 优先级 | 动作 | 状态 |
+| :--- | :--- | :--- |
+| P2 | 移植 `cds-progress-sweep` 关键帧 + 消费类（含两套降级） | ✅ 已实现，Chrome 实测 1.6s / cubic-bezier(.65,0,.35,1) / 60% 宽 / 0.5 透明 / 双向 mask 全部对齐 |
+| P3 | 字体 role 链 token（`--cds-font-weight-control` / `--cds-font-axis-wght-header` 等 8 个） | ✅ 已补入 `:root` |
+| P3 | `.text-code-*` 工具类 | ⬜ 待做（需先确认本仓库的 `.font-mono` 体系） |
+
+---
+
 ## 本章证据索引
 
 | 断言 | 命令 |
