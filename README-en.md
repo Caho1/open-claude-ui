@@ -39,9 +39,9 @@
 
 `open-claude-ui` is a high-fidelity open-source UI component library and motion physics engine, built through in-depth clean-room reverse engineering of the modern desktop AI client.
 
-> 🧭 **Forensic baseline**: values are aligned to **Claude Desktop `@ant/desktop 4.4212.0`** (primary forensics on 3.6556.2, re-verified on 4.29.0 and 4.4212.0), all verified through dual channels — **REA v6.8.0** static extraction plus live measurement via the app's **Main Process Debugger** (see [docs/v4.29.0](docs/v4.29.0/README.md)).
+> 🧭 **Forensic baseline**: values are aligned to **Claude Desktop `@ant/desktop 4.4212.0`** (primary forensics on 3.6556.2, re-verified on 4.29.0 and 4.4212.0), all verified through dual channels — **REA v6.8.0** static extraction plus live measurement via the app's **Main Process Debugger** (see [docs/v4.29.0-4.4212.0](docs/v4.29.0-4.4212.0/README.md)).
 >
-> 📁 **Doc versioning convention**: from this release on, manual directory names **track the Claude Desktop version** (e.g. `docs/v4.29.0/`); future Claude updates will get a new directory named after their version. Earlier `docs/v1/` and `docs/v2/` keep their names as historical snapshots (v2 values are superseded — defer to v4.29.0).
+> 📁 **Doc versioning convention**: from this release on, manual directory names **track the Claude Desktop version** (e.g. `docs/v4.29.0-4.4212.0/`); future Claude updates will get a new directory named after their version. A directory may name a single version (e.g. `docs/v5.0.0/`) or a covered range (e.g. `docs/v4.29.0-4.4212.0/`, meaning primary forensics on the first version with incremental re-checks on the later ones). Earlier `docs/v1/` and `docs/v2/` keep their names as historical snapshots (v2 values are superseded — defer to `docs/v4.29.0-4.4212.0/`).
 
 All reverse derivation, de-obfuscation static analysis, and ASAR package deconstruction were conducted using the advanced multi-platform reverse engineering framework **[REA (Reverse Engineer Anything)](https://github.com/morluto/rea)**. Leveraging REA's static AST deconstruction, closure de-obfuscation, and runtime tracing capabilities, we penetrated production bundles to faithfully extract the underlying physical constants, interaction constraints, and mathematical models.
 
@@ -141,7 +141,7 @@ It documents exact decompilation evidence locations alongside Anthropic's archit
 * **[1~6 Overview, Additions, Refactorings, Baseline Secrets, Reference Implementations & Summary](docs/v2/README.md)**: Standalone decompilation report for Claude Desktop 2.0. **(Historical snapshot: superseded by 3.6556.2 — defer to v3 for values)**
 
 ### 🧬 Claude Desktop 4.4212.0 Full Analysis Report (current baseline)
-* **[v4.29.0/README.md — seven chapters + merged edition](docs/v4.29.0/README.md)**: full reverse engineering of the current production build, **every claim backed by code evidence and a repro command**. Directory name tracks the Claude version.
+* **[v4.29.0/README.md — seven chapters + merged edition](docs/v4.29.0-4.4212.0/README.md)**: full reverse engineering of the current production build, **every claim backed by code evidence and a repro command**. Directory name tracks the Claude version.
   - **Ch.1 Scope & version boundary**: `@ant/desktop 3.6556.2`, ASAR digest, 532-file semantic truncation boundary, six structural zeros
   - **Ch.2 Electron architecture**: 6 Sentry IPC channels / 0 business handlers in the main process, 12 literal bridge API names, 7 renderer entry points
   - **Ch.3 Architecture refactorings**: two-layer skeleton components + `data-hold` three-state reveal, real wave/lockstep delay formulas, RTL `:lang()` list, dual reduced-motion guards
@@ -158,7 +158,7 @@ UI components are merely the presentation layer. **What truly sets Claude's inte
 
 ### 1. 7-Stop Non-Linear Alpha Gradient Fade Mask
 
-> ⚠️ **v4.29.0 correction**: the hardcoded 7-stop ladder exists in v1/v2-era artifacts; the 3.6556.2 main stylesheet contains **zero** gradients with 6+ stops — scroll fading is now `@property` + `animation-timeline` variable-driven (see docs/v4.29.0/06 §6.6.3). Historical record below; the dynamic edge-zeroing logic in `ScrollFadeContainer.tsx` remains valid.
+> ⚠️ **v4.29.0 correction**: the hardcoded 7-stop ladder exists in v1/v2-era artifacts; the 3.6556.2 main stylesheet contains **zero** gradients with 6+ stops — scroll fading is now `@property` + `animation-timeline` variable-driven (see docs/v4.29.0-4.4212.0/06 §6.6.3). Historical record below; the dynamic edge-zeroing logic in `ScrollFadeContainer.tsx` remains valid.
 * **The Problem**: Conventional two-stop linear scroll masks cause harsh color banding and jarring geometric cutoffs on high-DPI Retina displays.
 * **Claude's Algorithm**: Discards blunt linear cuts in favor of 7 non-linear gradient stops across the fade distance (15% position with 5.1% alpha `#0d`, 30% with 14.9% `#26`, 45% with 30.2% `#4d`, 60% with 50.2% `#80`, 75% with 70.2% `#b3`, 87% with 85.1% `#d9`, closely tracking a $y \approx x^{1.5}$ power curve), dynamically zeroed out by scroll boundary sensors at the top and bottom:
 ```css
