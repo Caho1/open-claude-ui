@@ -6,7 +6,9 @@
  * 
  * 核心准则：
  *   - 严格遵循“单闭合边框原则 (The 1-Border Rule)”：卡片内部的 Secondary 按钮严禁带边框，默认采用 Surface-2 浅底填充。
- *   - 尺寸阶梯：XXS (20px)、XS (24px, 6px圆角)、SM (28px, 8px圆角)、MD (32px, 8px圆角)、LG (40px, 12px圆角)。
+ *   - 尺寸阶梯：XXS (20px)、XS (24px, 6px圆角, 6px内边距)、SM (28px, 8px圆角, 8px内边距)、MD (32px, 8px圆角, 8px内边距)、LG (40px, 12px圆角, 12px内边距)。
+ *     内边距以 AGENTS.md 现行规格 (6/8/8/12px) 为准（2026-10-31 v4 审计版），
+ *     取代本文件早期 REA v6.5.0 审计的 px-2/2.5/3.5/5 旧值。
  *   - 物理阻尼：真实 15 阶 CSS linear() 弹簧回弹曲线 (--cds-btn-spring) 与动态按压形变 (.cds-btn-squish)。
  *   - 架构分离：外层定位外壳 + 内层独立绘景图层 (data-cds-part="paint")，杜绝内边距与边框干涉。
  */
@@ -27,10 +29,10 @@ export interface CdsButtonProps extends React.ButtonHTMLAttributes<HTMLButtonEle
 
 const SIZE_STYLES: Record<ButtonSize, string> = {
   xxs: "h-5 px-1.5 rounded text-[11px] gap-1",
-  xs: "h-6 px-2 rounded-md text-[11.5px] gap-1",
-  sm: "h-7 px-2.5 rounded-lg text-xs gap-1.5",
-  md: "h-8 px-3.5 rounded-lg text-sm gap-1.5",
-  lg: "h-10 px-5 rounded-xl text-[15px] gap-2 font-medium",
+  xs: "h-6 px-1.5 rounded-md text-[11.5px] gap-1",
+  sm: "h-7 px-2 rounded-lg text-xs gap-1.5",
+  md: "h-8 px-2 rounded-lg text-sm gap-1.5",
+  lg: "h-10 px-3 rounded-xl text-[15px] gap-2 font-medium",
   icon: "size-8 rounded-lg p-0 flex items-center justify-center",
 };
 
