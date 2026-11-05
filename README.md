@@ -76,13 +76,13 @@ graph TD
 1. **30 个生产级独立代码模块**：包含 11 个基础原子控件 + 19 个深度架构物理学模块与 React Hooks，即拷即用，零黑盒依赖。
 2. **纯原生系统级排版与音效**：支持系统高保真字体回退栈，内置基于 Web Audio 振荡器的零延迟提示音合成引擎。
 3. **交互式组件故事书 (Storybook Preview)**：内置单文件开箱即用的离线 Storybook，支持浏览器直接打开预览全部组件动效。
-4. **七大领域分卷完整技术手册**：附带深度逆向分析开发手册 [`docs/Claude Design System (CDS).md`](docs/Claude%20Design%20System%20(CDS).md)。
+4. **七大领域分卷完整技术手册**：附带深度逆向分析开发手册 [`docs/v1/Claude Design System (CDS).full.md`](docs/v1/Claude%20Design%20System%20%28CDS%29.full.md)。
 
 ---
 
 ## 📚 七大篇章逆向分析手册 (Complete Technical Manual)
 
-整个仓库最具工业价值的核心是这本长达 3,000+ 行、31 个核心子节的深度逆向工程手册：[`docs/Claude Design System (CDS).md`](docs/Claude%20Design%20System%20(CDS).md)。
+整个仓库最具工业价值的核心是这本长达 3,000+ 行、31 个核心子节的深度逆向工程手册：[`docs/v1/Claude Design System (CDS).full.md`](docs/v1/Claude%20Design%20System%20%28CDS%29.full.md)。
 
 它不仅记录了所有反编译源码取证位置，还详尽解构了 Anthropic 解决当代大模型产品前端痛点的系统架构方案：
 
@@ -140,8 +140,13 @@ graph TD
 ### 🚀 第二版：Claude Desktop 2.0 (v2.37337.1) 全量版本更新深度逆向分析
 * **[v2/README.md 综述、新增特性、架构重构、底座解密与参考实现](docs/v2/README.md)**：全量划分为 6 大独立章节，深度解析 2.0 桌面端架构大跃迁。**（历史快照：基线版本已被 3.6556.2 取代，取值以 v3 为准）**
 
-### 🧬 Claude Desktop 4.4212.0 全量分析报告（当前基线）
-* **[v4.29.0/README.md 七章取证 + 单文件完整版](docs/v4.29.0-4.4212.0/README.md)**：对当前生产包的全量分析，**每条结论附代码证据与复现命令**。目录名对齐 Claude 版本号。
+### 🧬 Claude Desktop 4.16336.0 全量分析（当前版本卷）
+* **[v4.16336.0/README.md 侧边浏览器全量技术文档库](docs/v4.16336.0/README.md)**：与 v1 体例一致，**按功能点分 8 篇** + 合并阅读版。基于 REA 静态取证、9229 主进程 inspector 只读活体观测、519 帧逐帧与像素级验证；参考实现 [`code-examples/ElementInspectHighlight.ts`](code-examples/ElementInspectHighlight.ts)。
+  - 版本实测依据：`Info.plist` / `app.asar/package.json` / 运行进程参数 / 活体 `app.getVersion()` 均为 `4.16336.0`
+  - 八篇：总体架构与设计令牌 / 导航、地址栏与标签页 / 预览面板与开发服务器 / 站点权限、安全与浏览数据 / 元素选择、组件名与上下文注入 / 标注、截图与自动化光标 / 动效物理学与逐帧验证 / 系统级架构、运行时与工程复刻
+
+### 🧬 Claude Desktop 4.4212.0 全量分析报告（历史基线）
+* **[v4.29.0/README.md 七章取证 + 单文件完整版](docs/v4.29.0-4.4212.0/README.md)**：对该版本生产包的全量分析，**每条结论附代码证据与复现命令**。目录名对齐 Claude 版本号。
   - **第一章 综述与版本边界**：`@ant/desktop 3.6556.2`、ASAR 摘要、532 文件语义截断边界、6 个结构性零值
   - **第二章 Electron 架构取证**：主进程 6 个 Sentry IPC 通道、0 个业务 handler、12 个字面量桥接 API、7 个 renderer 入口
   - **第三章 架构重构与对比分析**：骨架屏双层组件 + `data-hold` 三态揭示、wave/lockstep 真实延时公式、RTL `:lang()` 列表、减少动效双轨
@@ -149,6 +154,25 @@ graph TD
   - **第五章 open-claude-ui 差异审计**：逐项 diff 与 issue #25 取值裁定
   - **第六章 全量 CSS 扫描与官方规范比对**：17 个 CSS 全扫、官方 CDS 规范文档提取、131 项 token 逐项比对、**Main Process Debugger 运行时双模值表**、ASAR 全量架构盘点（内置 Cowork VM / 4 个 MCP server / 6 个 Agent Skills / V8 compile-cache）
   - **第七章 总结与后续工作**：确定性分级、未知项清单、可复现性声明
+
+### 📐 文档版本卷命名约定 (Documentation Versioning Convention)
+
+> 完整规则见 [`AGENTS.md` §7](AGENTS.md#-7-documentation-versioning-convention-文档版本卷约定)。
+
+每次 Claude Desktop 版本更新，新的取证文档**必须**：
+
+1. 新建 `docs/v<版本号>/`（如 `docs/v4.16336.0/`）；若需覆盖多个基线的增量复核，可用区间名 `docs/v4.29.0-4.4212.0/`。**绝不**按日期、主题、取证轮次或流程命名。
+2. 卷内**按功能点分篇**，沿用 `docs/v1/` 体例（frontmatter `part`、上/下篇导航、英文指代、编号小节、证据索引、合并阅读版 `.full.md`）；不得按取证时间线编章。
+3. 提供卷 `README.md` 分卷导航索引，并在 `README.md` / `README-en.md` / `docs/README.md` / `AGENTS.md` 四处登记当前卷、把上一卷标为历史基线。
+4. 每条结论附 ASAR 路径 + 字节偏移或 REA Evidence ID，区分 observed / inferred / unknown。
+5. 提交前跑 `npm run typecheck` / `npm run check:tokens` / `npm run build`，三项全部 0 error。
+
+| 卷 | 版本 | 状态 |
+| :--- | :--- | :--- |
+| `docs/v4.16336.0/` | `4.16336.0` | **当前** |
+| `docs/v4.29.0-4.4212.0/` | `4.29.0 → 4.4212.0` | 历史基线 |
+| `docs/v2/` | `2.37337.1` | 历史快照 |
+| `docs/v1/` | `1.x` | 历史快照 |
 
 ---
 
