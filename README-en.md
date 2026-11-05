@@ -23,7 +23,7 @@
 
 <p align="center">
   <a href="https://openclaudeui.com"><img src="https://img.shields.io/badge/Website-openclaudeui.com-ea580c" alt="Website" /></a>
-  <a href="https://github.com/Caho1/open-claude-ui/stargazers"><img src="https://img.shields.io/github/stars/Caho1/open-claude-ui?style=flat&logo=github&color=ea580c" alt="GitHub Stars" /></a>
+  <a href="https://github.com/Caho1/open-claude-ui"><img src="https://img.shields.io/github/stars/Caho1/open-claude-ui?style=flat&logo=github&color=ea580c" alt="GitHub Stars" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT" /></a>
   <a href="https://github.com/morluto/rea"><img src="https://img.shields.io/badge/Reverse%20Engineered%20with-REA-ea580c?logo=github" alt="Reverse Engineered with REA" /></a>
   <a href="assets/README.md"><img src="https://img.shields.io/badge/assets-clean--room%20compliance-success" alt="Asset Compliance" /></a>
@@ -39,9 +39,9 @@
 
 `open-claude-ui` is a high-fidelity open-source UI component library and motion physics engine, built through in-depth clean-room reverse engineering of the modern desktop AI client.
 
-> 🧭 **Forensic baseline**: values are aligned to **Claude Desktop `@ant/desktop 4.4212.0`** (primary forensics on 3.6556.2, re-verified on 4.29.0 and 4.4212.0), all verified through dual channels — **REA v6.8.0** static extraction plus live measurement via the app's **Main Process Debugger** (see [docs/v4.29.0-4.4212.0](docs/v4.29.0-4.4212.0/README.md)).
+> 🧭 **Forensic baseline**: the **current volume** is [`docs/v4.16336.0`](docs/v4.16336.0/README.md) (`@ant/desktop 4.16336.0`, verified by `Info.plist`, `app.asar/package.json`, process args and live `app.getVersion()`). Earlier volumes: [`docs/v4.29.0-4.4212.0`](docs/v4.29.0-4.4212.0/README.md) (primary forensics on 3.6556.2, re-verified on 4.29.0 and 4.4212.0 — **historical baseline**). Every release is verified through dual channels — **REA** static extraction plus live measurement via the app's **Main Process Debugger** / 9229 Node inspector (read-only).
 >
-> 📁 **Doc versioning convention**: from this release on, manual directory names **track the Claude Desktop version** (e.g. `docs/v4.29.0-4.4212.0/`); future Claude updates will get a new directory named after their version. A directory may name a single version (e.g. `docs/v5.0.0/`) or a covered range (e.g. `docs/v4.29.0-4.4212.0/`, meaning primary forensics on the first version with incremental re-checks on the later ones). Earlier `docs/v1/` and `docs/v2/` keep their names as historical snapshots (v2 values are superseded — defer to `docs/v4.29.0-4.4212.0/`).
+> 📁 **Doc versioning convention**: manual directory names **track the Claude Desktop version** (e.g. `docs/v4.16336.0/`); future Claude updates get a new directory named after their version. A directory may name a single version or a covered range (e.g. `docs/v4.29.0-4.4212.0/`). Chapters are **organised by feature point**, following the `docs/v1/` format — never by date, topic, or investigation workflow. Full rule: [`AGENTS.md` §7](AGENTS.md#-7-documentation-versioning-convention-文档版本卷约定). Earlier `docs/v1/` and `docs/v2/` keep their names as historical snapshots (v2 values are superseded).
 
 All reverse derivation, de-obfuscation static analysis, and ASAR package deconstruction were conducted using the advanced multi-platform reverse engineering framework **[REA (Reverse Engineer Anything)](https://github.com/morluto/rea)**. Leveraging REA's static AST deconstruction, closure de-obfuscation, and runtime tracing capabilities, we penetrated production bundles to faithfully extract the underlying physical constants, interaction constraints, and mathematical models.
 
@@ -76,13 +76,13 @@ graph TD
 1. **30 Production-Grade Independent Modules**: 11 atomic UI components + 19 deep architecture physics modules and React Hooks. Copy-paste ready with zero black-box dependencies.
 2. **Native System Typography & Procedural Audio**: Engineered system font fallback stacks and zero-latency Web Audio oscillator synthesis engines.
 3. **Interactive Offline Storybook Preview**: Single-file offline storybook previewable directly in any browser without spinning up local dev servers.
-4. **Complete 7-Part Technical Engineering Manual**: Accompanied by a 3,000+ line reverse engineering manual: [`docs/Claude Design System (CDS).md`](docs/Claude%20Design%20System%20(CDS).md).
+4. **Complete 7-Part Technical Engineering Manual**: Accompanied by a 3,000+ line reverse engineering manual: [`docs/v1/Claude Design System (CDS).full.md`](docs/v1/Claude%20Design%20System%20%28CDS%29.full.md).
 
 ---
 
 ## 📚 Complete Technical Manual (Seven Volumes)
 
-The crown jewel of this repository is the exhaustive 3,000+ line, 31-chapter reverse engineering manual: [`docs/Claude Design System (CDS).md`](docs/Claude%20Design%20System%20(CDS).md).
+The crown jewel of this repository is the exhaustive 3,000+ line, 31-chapter reverse engineering manual: [`docs/v1/Claude Design System (CDS).full.md`](docs/v1/Claude%20Design%20System%20%28CDS%29.full.md).
 
 It documents exact decompilation evidence locations alongside Anthropic's architectural solutions for modern LLM client engineering hurdles:
 
@@ -140,8 +140,11 @@ It documents exact decompilation evidence locations alongside Anthropic's archit
 ### 🚀 Claude Desktop 2.0 (v2.37337.1) Comprehensive Reverse Engineering Analysis
 * **[1~6 Overview, Additions, Refactorings, Baseline Secrets, Reference Implementations & Summary](docs/v2/README.md)**: Standalone decompilation report for Claude Desktop 2.0. **(Historical snapshot: superseded by 3.6556.2 — defer to v3 for values)**
 
-### 🧬 Claude Desktop 4.4212.0 Full Analysis Report (current baseline)
-* **[v4.29.0/README.md — seven chapters + merged edition](docs/v4.29.0-4.4212.0/README.md)**: full reverse engineering of the current production build, **every claim backed by code evidence and a repro command**. Directory name tracks the Claude version.
+### 🧬 Claude Desktop 4.16336.0 Side Browser Manual (current volume)
+* **[v4.16336.0/README.md — eight feature-oriented chapters + merged edition](docs/v4.16336.0/README.md)**: full reverse engineering of the current production build's Browser / Preview pane, **every claim backed by code evidence or a REA Evidence ID**. Chapters follow the `docs/v1/` format and are grouped by feature (architecture/tokens, navigation, preview, security, element inspect, annotation, motion physics, host & engineering). Reference implementation: [`code-examples/ElementInspectHighlight.ts`](code-examples/ElementInspectHighlight.ts).
+
+### 🧬 Claude Desktop 4.4212.0 Full Analysis Report (historical baseline)
+* **[v4.29.0/README.md — seven chapters + merged edition](docs/v4.29.0-4.4212.0/README.md)**: full reverse engineering of that production build, **every claim backed by code evidence and a repro command**. Directory name tracks the Claude version.
   - **Ch.1 Scope & version boundary**: `@ant/desktop 3.6556.2`, ASAR digest, 532-file semantic truncation boundary, six structural zeros
   - **Ch.2 Electron architecture**: 6 Sentry IPC channels / 0 business handlers in the main process, 12 literal bridge API names, 7 renderer entry points
   - **Ch.3 Architecture refactorings**: two-layer skeleton components + `data-hold` three-state reveal, real wave/lockstep delay formulas, RTL `:lang()` list, dual reduced-motion guards
@@ -391,3 +394,19 @@ Distributed under the [MIT License](LICENSE). All decompiled research findings a
 [![Star History Chart](https://api.star-history.com/svg?repos=Caho1/open-claude-ui&type=Date)](https://star-history.com/#Caho1/open-claude-ui&Date)
 
 </div>
+
+---
+
+## 🐧 Support & Follow
+
+If **open-claude-ui** helped you, please ⭐ [Star the repo](https://github.com/Caho1/open-claude-ui). Feedback and discussions on CDS design tokens, Claude interaction physics and AI-agent frontend engineering are always welcome.
+
+| Platform | Account | Link |
+| :--- | :--- | :--- |
+| 𝕏 **X (Twitter)** | [@BystAnd3rs](https://x.com/BystAnd3rs) | [Open profile](https://x.com/BystAnd3rs) |
+| 📕 **Xiaohongshu / RED** | 企鹅AI指南 | [Open profile](https://xhslink.cn/o/AK5ds1Bx0vw) |
+| 💬 **WeChat Official Account** | 企鹅AI指南 | Search「企鹅AI指南」inside WeChat |
+
+**⭐ [Star this repo](https://github.com/Caho1/open-claude-ui) · 🐛 [Open an issue](https://github.com/Caho1/open-claude-ui/issues) · 🔀 [Open a PR](https://github.com/Caho1/open-claude-ui/pulls)**
+
+> No QR-code image for the WeChat account yet; a text search hint is used for now. Any future QR asset will live under `assets/` and be referenced here.

@@ -48,3 +48,6 @@ export * from '../code-examples/useRateLimitBackoff';
 export * from '../code-examples/ModelSelectorEffort';
 export * from '../code-examples/ChatComposerChin';
 export * from '../code-examples/CdsMotionEngine';
+
+// 7. Side Browser / Element Inspect & Annotation Overlay (4.16336.0 forensics)
+export * from '../code-examples/ElementInspectHighlight';

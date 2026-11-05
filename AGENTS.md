@@ -24,6 +24,8 @@ When assisting users with building, modifying, or reviewing frontend components,
 5. **Strict Edge-Case Guards**:
    - Always guard chat/composer inputs against CJK IME composition accidents (`!(e.nativeEvent.isComposing || e.keyCode === 229)`).
    - Latch scroll pinning with a 150ms cooldown timestamp to prevent LLM streaming from hijacking manual user scrolling.
+6. **Version-Named Documentation Volumes**:
+   - Every Claude Desktop version gets its own `docs/v<version>/` volume — never a date-, topic- or workflow-named directory. See §7.
 
 ---
 
@@ -294,3 +296,52 @@ If your host application uses a custom design token prefix (e.g., `--app-*` or `
   --app-shadow-composer: var(--cds-shadow-composer);  /* composer diffuse shadow */
 }
 ```
+
+---
+
+## 📐 7. Documentation Versioning Convention (文档版本卷约定)
+
+**Every Claude Desktop release gets its own version-named documentation volume.** This is a repository invariant, not a suggestion.
+
+### 7.1 Naming
+
+- New forensics go into `docs/v<CFBundleShortVersionString>/` — e.g. `docs/v4.16336.0/`.
+- A volume may cover a range when it re-checks earlier baselines: `docs/v4.29.0-4.4212.0/` means primary forensics on 4.29.0 with incremental re-checks through 4.4212.0.
+- `docs/v1/` and `docs/v2/` keep their names as historical snapshots; their token values are superseded.
+- **Never** name a volume after a date, a topic, an investigation phase, or a workflow step ("audit", "remaining items", "live observation", "round 2").
+
+### 7.2 Structure — chapters by feature, not by investigation flow
+
+Each volume follows the `docs/v1/` format:
+
+| Requirement | Detail |
+| :--- | :--- |
+| Frontmatter | `title`, `part`, `category`, `domain` per chapter |
+| Navigation | top/bottom `<p align="center">` with previous / index / next links |
+| Chapters | **organised by feature point** (architecture & tokens, navigation, preview, security, element inspect, annotation, motion physics, host & engineering) — never by chronological discovery order |
+| Sections | numbered `X.Y`, each with `> **技术领域与英文指代**` and evidence tables |
+| Index | volume `README.md` with anchors for every section |
+| Merged edition | one `<Volume>.full.md` for offline reading |
+| Reproducibility | every claim carries an ASAR path + byte offset or a REA Evidence ID; distinguish observed / inferred / unknown |
+
+### 7.3 Registration
+
+When adding a volume, update **all four** entry points and mark the previous volume as historical:
+
+1. `README.md` (Chinese) — current-volume section + naming convention
+2. `README-en.md` — forensic baseline / convention lines
+3. `docs/README.md` — volume index
+4. `AGENTS.md` — this section stays the authoritative rule; the current version is recorded in §7.4
+
+### 7.4 Current volume
+
+| Volume | Version | Status |
+| :--- | :--- | :--- |
+| `docs/v4.16336.0/` | `@ant/desktop 4.16336.0` | **current** (verified by `Info.plist`, `app.asar/package.json`, process args and live `app.getVersion()`) |
+| `docs/v4.29.0-4.4212.0/` | `4.29.0` → `4.4212.0` | historical baseline |
+| `docs/v2/` | `2.37337.1` | historical snapshot |
+| `docs/v1/` | `1.x` | historical snapshot |
+
+### 7.5 Gates
+
+Before committing a new volume, run `npm run typecheck`, `npm run check:tokens` and `npm run build`; all three must exit 0. `check:tokens` scans `AGENTS.md` and every file under `docs/`, so any backticked `--cds-*` reference must be defined in `code-examples/cds-theme.css`.
