@@ -39,7 +39,7 @@
 
 `open-claude-ui` 是基于对现代桌面端 AI 客户端进行深度拆解与逆向分析构建的高保真开源 UI 组件库与动效引擎。
 
-> 🧭 **取证基线**：令牌与动效值对齐 **Claude Desktop `@ant/desktop 4.4212.0`**（主取证于 3.6556.2，4.29.0 与 4.4212.0 两轮增量复验一致），全部经 **REA v6.8.0** 静态提取 + **Main Process Debugger** 运行时实测双通道验证（详见 [docs/v4.29.0-4.4212.0](docs/v4.29.0-4.4212.0/README.md)）。
+> 🧭 **取证基线**：当前版本卷为 [docs/v4.16336.0](docs/v4.16336.0/README.md)（`@ant/desktop 4.16336.0`，经 `Info.plist` / `app.asar/package.json` / 进程参数 / 活体 `app.getVersion()` 四路核实）；[docs/v4.29.0-4.4212.0](docs/v4.29.0-4.4212.0/README.md)（主取证 3.6556.2，4.29.0 与 4.4212.0 两轮增量复验）为历史基线。全部经 **REA** 静态提取 + **Main Process Debugger** / 9229 Node inspector 只读活体实测双通道验证。
 >
 > 📁 **文档版本命名规范**：逆向分析手册的目录名从本版起**直接对齐 Claude Desktop 的版本号**（如 `docs/v4.29.0-4.4212.0/`）；后续 Claude 更新后，新取证报告将以对应版本号新建目录。目录名可写单个版本（如 `docs/v5.0.0/`）或覆盖区间（如 `docs/v4.29.0-4.4212.0/`，表示该报告在首个版本取证、后续版本增量复核）。早期的 `docs/v1/`、`docs/v2/` 保持原名不变，作为历史快照保留（v2 取值已被取代，以 `docs/v4.29.0-4.4212.0/` 为准）。
 
@@ -51,7 +51,7 @@
 * **高阶视听与系统架构 (Audiovisual & Architecture)**：基于原生 Web Audio API 的零延迟合成提示音、以光标为锚点的画廊跑道平移缩放、macOS 桌面毛玻璃透明融合与 Cowork 多代理协同拓扑。
 
 > 💡 **架构分层说明 (Architecture & Portability)**：  
-> 本项目的 **令牌层 (Tokens) 与纯 CSS 表现层可脱离 React 与 Tailwind 单独使用**。无论是自研桌面 Harness（如 DSH、各类 Agent 桌面容器）、传统 Web 页面还是 Vue/Svelte 宿主，只需引入 `@import "open-claude-ui/tokens.css";` 或 `@import "open-claude-ui/pure.css";`，即可直接消费全量 242 个设计令牌（对齐 Claude Desktop 3.6556.2 运行时实测）、Zero-JS 原生滚动消隐遮罩（`[data-cds-scroll-fade]`）与核心动效类，详情见下文快速上手。
+> 本项目的 **令牌层 (Tokens) 与纯 CSS 表现层可脱离 React 与 Tailwind 单独使用**。无论是自研桌面 Harness（如 DSH、各类 Agent 桌面容器）、传统 Web 页面还是 Vue/Svelte 宿主，只需引入 `@import "open-claude-ui/tokens.css";` 或 `@import "open-claude-ui/pure.css";`，即可直接消费全量 261 个设计令牌（初测于 3.6556.2，现以 docs/v4.16336.0 卷活体实测为准）、Zero-JS 原生滚动消隐遮罩（`[data-cds-scroll-fade]`）与核心动效类，详情见下文快速上手。
 
 > ⚖️ **版权与合规声明 (DMCA & Assets Policy)**：  
 > 本开源项目**不公开分发任何专有二进制资产**（包括商业字体 `.ttf` 与录音 `.mp3`）。本项目提供原生系统级字体回退栈与 Web Audio API 纯代码合成音效，完全自包含、合规安全。详情参见 [assets/README.md](assets/README.md)。
@@ -73,16 +73,16 @@ graph TD
     OCUI --> Setup["7. 完整工程规范与开箱即用<br/>(Tailwind, CSS Themes, Zero-Binary Dependency)"]
 ```
 
-1. **30 个生产级独立代码模块**：包含 11 个基础原子控件 + 19 个深度架构物理学模块与 React Hooks，即拷即用，零黑盒依赖。
+1. **37 个开箱即用代码文件**：30 个 v1 基线模块（11 个基础原子控件 + 19 个深度架构物理学模块与 React Hooks）+ 5 个后续版本新增模块 + 2 个主题/配置资产，零黑盒依赖。
 2. **纯原生系统级排版与音效**：支持系统高保真字体回退栈，内置基于 Web Audio 振荡器的零延迟提示音合成引擎。
 3. **交互式组件故事书 (Storybook Preview)**：内置单文件开箱即用的离线 Storybook，支持浏览器直接打开预览全部组件动效。
 4. **七大领域分卷完整技术手册**：附带深度逆向分析开发手册 [`docs/v1/Claude Design System (CDS).full.md`](docs/v1/Claude%20Design%20System%20%28CDS%29.full.md)。
 
 ---
 
-## 📚 七大篇章逆向分析手册 (Complete Technical Manual)
+## 📚 八大篇章逆向分析手册 (Complete Technical Manual)
 
-整个仓库最具工业价值的核心是这本长达 3,000+ 行、31 个核心子节的深度逆向工程手册：[`docs/v1/Claude Design System (CDS).full.md`](docs/v1/Claude%20Design%20System%20%28CDS%29.full.md)。
+整个仓库最具工业价值的核心是这本 4,600+ 行、8 篇 / 41 个核心子节的深度逆向工程手册：[`docs/v1/Claude Design System (CDS).full.md`](docs/v1/Claude%20Design%20System%20%28CDS%29.full.md)。
 
 它不仅记录了所有反编译源码取证位置，还详尽解构了 Anthropic 解决当代大模型产品前端痛点的系统架构方案：
 
@@ -131,14 +131,14 @@ graph TD
 
 ### 🛠️ 第七篇：工程配置与资产代码库总览
 * **[7.1 开箱即用的 Tailwind 配置与基础 CSS 代码](docs/v1/07-工程配置与资产代码库总览.md#71-开箱即用的-tailwind-配置与基础-css-代码)**：完整的全局主题样式表与 Tailwind 工程扩展。
-* **[7.2 生产级工程源码清单](docs/v1/07-工程配置与资产代码库总览.md#72-生产级工程源码清单)**：全量 30 个生产级独立代码文件（11 个基础原子 + 19 个深度架构模块）。
+* **[7.2 生产级工程源码清单](docs/v1/07-工程配置与资产代码库总览.md#72-生产级工程源码清单)**：v1 基线全量 30 个生产级独立代码文件（11 个基础原子 + 19 个深度架构模块）；当前仓库已扩展至 37 个文件，见下方项目结构。
 * **[7.3 资产规范与系统级字体/音频替代方案](docs/v1/07-工程配置与资产代码库总览.md#73-资产规范与系统级字体音频替代方案)**：系统级字体回退栈与 Web Audio API 纯代码合成提示音规范。
 
 ### 🤖 第八篇：AI Agent 前端 UI 与动效开发指南
 * **[8.1~8.7 Agent 角色定位、设计令牌契约与弹簧决策树](docs/v1/08-AI-Agent-前端-UI-与动效开发指南.md)**：专为 AI Agent 定制的前端 UI 与动效装配自检指南。
 
 ### 🚀 第二版：Claude Desktop 2.0 (v2.37337.1) 全量版本更新深度逆向分析
-* **[v2/README.md 综述、新增特性、架构重构、底座解密与参考实现](docs/v2/README.md)**：全量划分为 6 大独立章节，深度解析 2.0 桌面端架构大跃迁。**（历史快照：基线版本已被 3.6556.2 取代，取值以 v3 为准）**
+* **[v2/README.md 综述、新增特性、架构重构、底座解密与参考实现](docs/v2/README.md)**：全量划分为 6 大独立章节，深度解析 2.0 桌面端架构大跃迁。**（历史快照：取值以 docs/v4.16336.0 卷为准）**
 
 ### 🧬 Claude Desktop 4.16336.0 全量分析（当前版本卷）
 * **[v4.16336.0/README.md 侧边浏览器全量技术文档库](docs/v4.16336.0/README.md)**：与 v1 体例一致，**按功能点分 8 篇** + 合并阅读版。基于 REA 静态取证、9229 主进程 inspector 只读活体观测、519 帧逐帧与像素级验证；参考实现 [`code-examples/ElementInspectHighlight.ts`](code-examples/ElementInspectHighlight.ts)。
@@ -245,50 +245,36 @@ $$\text{Compressed} = \min\left(1, (\max(0, E - 0.08) / 0.92)^{0.7} \times 1.5 \
 
 ```
 open-claude-ui/
-├── assets/                           # 资产说明与合规指引
-│   ├── images/logo.svg               # 开源矢量标识
-│   └── README.md                     # 资产合规与系统级回退栈说明
-├── code-examples/                    # 30 个生产级独立代码文件 (开箱即用)
-│   ├── ArtifactsSplitPaneResizer.tsx # 双栏弹性分割与折叠引擎
-│   ├── AttachmentCard.tsx            # 附件磁贴与上下文胶囊
-│   ├── cds-theme.css                 # 全局主题样式表 (CSS 自定义属性与 Keyframes)
-│   ├── CdsButton.tsx                 # 4 级尺寸、5 大变体全能按钮
-│   ├── ChatComposer.tsx              # 核心输入框终端
-│   ├── ChatMessageBubbles.tsx        # 会话气泡套件 (User & Assistant)
-│   ├── ClaudeAudioPlayer.ts          # 低延迟音频引擎 (内置 Web Audio 原生合成振荡器)
-│   ├── ClaudeDesktopHeader.tsx       # macOS 沉浸式标题栏组件
-│   ├── ClaudeMotionPresets.ts        # 动效引擎与二阶阻尼谐振子数学求解
-│   ├── CodeBlock.tsx                 # 代码块容器与 2.5s 复制衰减状态机
-│   ├── ConfirmationDialog.tsx        # 模态确认对话框
-│   ├── ContainerResponsiveBar.tsx    # 自适应容器查询响应栏
-│   ├── CoworkAgentCanvas.tsx         # 多智能体协同看板与拓扑空间
-│   ├── createClaudeMainWindow.ts     # Electron 宿主主窗口创建工厂
-│   ├── DraggableSessionList.tsx      # 侧边栏会话拖放与固定物理
-│   ├── EpitaxyIframeBridge.tsx       # Artifacts 预览沙箱桥接器
-│   ├── LiveMicActivityBars.tsx       # 6 频段非线性麦克风波形柱
-│   ├── McpToolDecisionCard.tsx       # MCP 交互式工具调用决策卡片
-│   ├── MediaLightboxViewer.tsx       # 多模态媒体查看器与画廊跑道
-│   ├── ModelSwitcherWithTokenGauge.tsx # 模型矩阵选择器与 Token 仪表盘
-│   ├── ReasoningAmbientGlow.tsx      # 动态光效与推理氛围感组件
-│   ├── RichComposerWithMentions.tsx  # CJK 守卫、/ 与 @ 双触发符输入终端
-│   ├── ScrollFadeContainer.tsx       # 7 档非线性 Alpha 渐变遮罩
-│   ├── SegmentedControl.tsx          # 999px 全圆角分段选择胶囊
-│   ├── StatusIndicators.tsx          # 陶土呼吸灯、运行脉冲与骨架屏扫光
-│   ├── StreamingDiffViewer.tsx       # 代码差异对比与流式高亮引擎
-│   ├── tailwind.config.js            # Tailwind 配置工程扩展
-│   ├── ThinkingAccordion.tsx         # 思考过程状态机折叠组件
-│   ├── useClaudeRovingFocus.ts       # 全键盘无障碍焦点漫游 Hook
-│   ├── useClaudeScrollPinning.ts     # 流式滚动视口图钉 Hook
-│   ├── useClaudeSharedElementTransition.ts # View Transitions 共享元素变形 Hook
-│   └── useRateLimitBackoff.ts        # 429/503 指数退避与熔断状态机 Hook
-├── docs/
-│   ├── Claude Design System (CDS).md # 七大篇章 / 31 小节深度技术指导手册
-│   └── claude-components-storybook.html # 交互式可视化故事书 (双击即可离线体验)
+├── assets/                            # 资产说明与合规指引
+│   ├── images/                        # logo.svg + 双模字标 (SVG，零二进制字体)
+│   └── README.md                      # 资产合规与系统级回退栈说明
+├── code-examples/                     # 37 个文件：30 个 v1 基线模块 + 5 个后续版本模块 + 2 个配置资产
+│   ├── cds-theme.css / cds-pure.css   # 全局主题令牌 / 独立纯 CSS 发行版
+│   ├── tailwind.config.js             # Tailwind 工程扩展
+│   ├── CdsButton.tsx / SegmentedControl.tsx / ... # 30 个 v1 基线模块（原子控件 / 会话流 / 动效物理 / 桌面宿主）
+│   ├── CdsMotionEngine.tsx            # v2 动效引擎
+│   ├── ChatComposerChin.tsx           # v2 输入框下颌
+│   ├── ModelSelectorEffort.tsx        # v2 算力调节器
+│   └── ElementInspectHighlight.ts     # v4.16336.0 元素选择高亮层 + React Fiber 反射（本次新增）
+├── docs/                              # 按 Claude 版本号分卷（约定见 AGENTS.md §7）
+│   ├── README.md                      # 文档库总索引：版本卷约定 + 卷状态表
+│   ├── v1/                            # 1.x 历史快照：8 篇 / 41 小节 + .full.md
+│   ├── v2/                            # 2.37337.1 历史快照：6 章
+│   ├── v4.29.0-4.4212.0/             # 3.6556.2 → 4.4212.0 历史基线：7 章 + 合并版
+│   ├── v4.16336.0/                   # 当前版本卷：8 篇按功能点 + README 索引 + .full.md
+│   └── claude-components-storybook.html # 离线可视化故事书（双击即可体验）
+├── scripts/
+│   └── check-tokens.mjs               # 设计令牌 / keyframe 消费门禁
 ├── src/
-│   └── index.ts                      # 统一对外导出的 TypeScript 库入口
-├── package.json
-├── tsconfig.json
-└── README.md
+│   ├── index.ts                       # 统一对外导出入口（含 ElementInspectHighlight）
+│   └── types.d.ts
+├── AGENTS.md                          # Agent 规范：令牌 / 物理 / 版本卷约定 §7 / 质量门禁
+├── CLAUDE.md                          # Claude Code 专用指引
+├── CHANGELOG.md / LICENSE
+├── package.json / package-lock.json
+├── tsconfig.json / tsconfig.build.json
+├── README.md                          # 中文文档（默认）
+└── README-en.md                       # 英文文档
 ```
 
 ---
@@ -297,7 +283,7 @@ open-claude-ui/
 
 ### 1. 引入样式表与 Tokens (纯 CSS 支持)
 
-无论是否使用 React，均可直接引入 CDS 核心样式表与 242 个设计令牌：
+无论是否使用 React，均可直接引入 CDS 核心样式表与 261 个设计令牌：
 ```css
 /* 引入全局主题变量、渐变消隐遮罩与核心关键帧 */
 @import "open-claude-ui/css";
