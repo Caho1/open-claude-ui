@@ -23,7 +23,7 @@
 
 <p align="center">
   <a href="https://openclaudeui.com"><img src="https://img.shields.io/badge/%E5%AE%98%E7%BD%91-openclaudeui.com-ea580c" alt="官网" /></a>
-  <a href="https://github.com/Caho1/open-claude-ui/stargazers"><img src="https://img.shields.io/github/stars/Caho1/open-claude-ui?style=flat&logo=github&color=ea580c" alt="GitHub Stars" /></a>
+  <a href="https://github.com/Caho1/open-claude-ui"><img src="https://img.shields.io/github/stars/Caho1/open-claude-ui?style=flat&logo=github&color=ea580c" alt="GitHub Stars" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT" /></a>
   <a href="https://github.com/morluto/rea"><img src="https://img.shields.io/badge/Reverse%20Engineered%20with-REA-ea580c?logo=github" alt="Reverse Engineered with REA" /></a>
   <a href="assets/README.md"><img src="https://img.shields.io/badge/assets-clean--room%20compliance-success" alt="Asset Compliance" /></a>
@@ -413,3 +413,19 @@ open docs/claude-components-storybook.html
 [![Star History Chart](https://api.star-history.com/svg?repos=Caho1/open-claude-ui&type=Date)](https://star-history.com/#Caho1/open-claude-ui&Date)
 
 </div>
+
+---
+
+## 🐧 支持与关注 (Support & Follow)
+
+如果 **open-claude-ui** 对你有帮助，欢迎点个 ⭐ [Star](https://github.com/Caho1/open-claude-ui) 支持一下，也欢迎来聊聊 CDS 设计令牌、Claude 交互物理与 AI Agent 前端工程。
+
+| 平台 | 账号 | 入口 |
+| :--- | :--- | :--- |
+| 𝕏 **X (Twitter)** | [@BystAnd3rs](https://x.com/BystAnd3rs) | [打开主页](https://x.com/BystAnd3rs) |
+| 📕 **小红书** | 企鹅AI指南 | [打开主页](https://xhslink.cn/o/AK5ds1Bx0vw) |
+| 💬 **微信公众号** | 企鹅AI指南 | 微信内搜索「企鹅AI指南」 |
+
+**⭐ [给项目点个 Star](https://github.com/Caho1/open-claude-ui) · 🐛 [提 Issue](https://github.com/Caho1/open-claude-ui/issues) · 🔀 [提 PR](https://github.com/Caho1/open-claude-ui/pulls)**
+
+> 公众号暂无二维码图片，先以文字检索方式呈现；后续补图会放在 `assets/` 下并在本节引用。

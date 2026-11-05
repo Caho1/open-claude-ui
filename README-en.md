@@ -23,7 +23,7 @@
 
 <p align="center">
   <a href="https://openclaudeui.com"><img src="https://img.shields.io/badge/Website-openclaudeui.com-ea580c" alt="Website" /></a>
-  <a href="https://github.com/Caho1/open-claude-ui/stargazers"><img src="https://img.shields.io/github/stars/Caho1/open-claude-ui?style=flat&logo=github&color=ea580c" alt="GitHub Stars" /></a>
+  <a href="https://github.com/Caho1/open-claude-ui"><img src="https://img.shields.io/github/stars/Caho1/open-claude-ui?style=flat&logo=github&color=ea580c" alt="GitHub Stars" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT" /></a>
   <a href="https://github.com/morluto/rea"><img src="https://img.shields.io/badge/Reverse%20Engineered%20with-REA-ea580c?logo=github" alt="Reverse Engineered with REA" /></a>
   <a href="assets/README.md"><img src="https://img.shields.io/badge/assets-clean--room%20compliance-success" alt="Asset Compliance" /></a>
@@ -394,3 +394,19 @@ Distributed under the [MIT License](LICENSE). All decompiled research findings a
 [![Star History Chart](https://api.star-history.com/svg?repos=Caho1/open-claude-ui&type=Date)](https://star-history.com/#Caho1/open-claude-ui&Date)
 
 </div>
+
+---
+
+## 🐧 Support & Follow
+
+If **open-claude-ui** helped you, please ⭐ [Star the repo](https://github.com/Caho1/open-claude-ui). Feedback and discussions on CDS design tokens, Claude interaction physics and AI-agent frontend engineering are always welcome.
+
+| Platform | Account | Link |
+| :--- | :--- | :--- |
+| 𝕏 **X (Twitter)** | [@BystAnd3rs](https://x.com/BystAnd3rs) | [Open profile](https://x.com/BystAnd3rs) |
+| 📕 **Xiaohongshu / RED** | 企鹅AI指南 | [Open profile](https://xhslink.cn/o/AK5ds1Bx0vw) |
+| 💬 **WeChat Official Account** | 企鹅AI指南 | Search「企鹅AI指南」inside WeChat |
+
+**⭐ [Star this repo](https://github.com/Caho1/open-claude-ui) · 🐛 [Open an issue](https://github.com/Caho1/open-claude-ui/issues) · 🔀 [Open a PR](https://github.com/Caho1/open-claude-ui/pulls)**
+
+> No QR-code image for the WeChat account yet; a text search hint is used for now. Any future QR asset will live under `assets/` and be referenced here.
