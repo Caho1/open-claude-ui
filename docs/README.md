@@ -16,7 +16,7 @@
 ## 🔎 [4.16336.0 专项：侧边浏览器全量技术文档库](v4.16336.0/README.md)
 > **适用版本**：Claude Desktop `@ant/desktop 4.16336.0`（当前本机实测版本；上一卷 `docs/v4.29.0-4.4212.0/` 的 `4.4212.0` 是历史基线，版本沿革见卷 README）。
 > **体例**：与 v1 一致，**按功能点分 8 篇**（不是按取证流程）：架构与令牌 / 导航与标签页 / 预览与开发服务器 / 权限与浏览数据 / 元素选择与上下文注入 / 标注与截图 / 动效物理学 / 宿主与工程复刻。
-> **核心焦点**：Browser / Preview pane 全量功能与样式、`180ms cubic-bezier(0.16, 1, 0.3, 1)` 几何插值与节点复用 morph、React Fiber 组件名采集链路（含 VLQ sourcemap 反查）、`<Button />` 上下文胶囊、**文件拖拽上传的三套 drop overlay / badge 视觉规格 / 附件 View Transitions 动效（第五篇 5.8–5.11）**、`Launch` 服务 100+ API 契约、9229 活体只读观测与 519 帧逐帧 / 像素级验证。参考实现 `code-examples/ElementInspectHighlight.ts`。
+> **核心焦点**：Browser / Preview pane 全量功能与样式、`180ms cubic-bezier(0.16, 1, 0.3, 1)` 几何插值与节点复用 morph、React Fiber 组件名采集链路（含 VLQ sourcemap 反查）、`<Button />` 上下文胶囊、**hover 详情卡的 600/200ms 意图状态机 + Props/owner 链/来源字段构造（第五篇 5.7）**、**文件拖拽上传的三套 drop overlay / badge 视觉规格 / 附件 View Transitions 动效（第五篇 5.8–5.11）**、`Launch` 服务 100+ API 契约、9229 活体只读观测与 519 帧逐帧 / 像素级验证。参考实现 `code-examples/ElementInspectHighlight.ts`。
 
 ---
 
