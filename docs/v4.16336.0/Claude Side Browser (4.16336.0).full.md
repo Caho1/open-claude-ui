@@ -1137,7 +1137,272 @@ bg-fill-secondary  |  tile: bg-surface-3  |  flat: bg-alpha-2
 
 ---
 
-### 5.8 证据索引（本篇）
+### 5.8 文件拖拽上传：三套 drop overlay 与视觉规格
+
+> **技术领域与英文指代**：`File Drag & Drop / Drop Zone Overlay`
+> **证据类型**：`user-screenshot`（用户提供，3618×1952）+ `shipped-artifact`（字节偏移）+ `controlled-replay`（Chrome 157 CDP，注入客户端原始 CSS 后读 computed style / 动画时序）
+> **术语说明**：本节出现的 --cds-* / --df-* 均为 **4.16336.0 客户端运行时变量**（shipped-artifact 观测），不是本仓库 `cds-theme.css` 的复刻令牌；按 `check:tokens` 门禁要求，一律以 var(...) 形式或代码块书写，不登记为仓库令牌。
+
+#### 5.8.1 截图判读与像素证据
+
+| 观测项 | 原图实测 | 结论 |
+| :--- | :--- | :--- |
+| 亮蓝内描边 | 左边界 `x=20..24`、上边界 `y=20..24`，5 device px @2x ≈ **2 CSS px**，RGB `(31,101,216)` | 对应 `inset 0 0 0 2px var(--cds-fill-accent)` |
+| 蓝色胶囊包围盒 | `(423,946) → (709,1006)` = 286×60 device px → **143×30 CSS px** | 对应 `padding:4px 10px` + `border-radius:9999px` 的 8 字标签 |
+| pill 与边框同色 | 两者像素同为 `(31,101,216)` | 同一 accent 变量，而非两套色 |
+| 背景内容 | 会话文字被淡化、轻微模糊 | badge 的 surface-0 40% 覆盖 + `backdrop-filter:blur(2px)` |
+| 右侧 Browser/Preview pane | 完全无蓝框、无遮罩 | 该 pane 未注册同一 drop zone（截图实证 + 源码推断） |
+
+中文文案「将文件拖放到此处」对应 `i18n/en-US.json` 的 `8QkUkTTC9V = "Drop files here"`。`app.asar/resources/i18n/zh-Hans.json` 仅 823 条（主进程/原生菜单文案）且不含该 key，前端简中由运行时语言包提供 —— 这一层为 **inferred**，不作为 shipped-artifact 结论。
+
+#### 5.8.2 三套 overlay 在 4.16336.0 并存
+
+| # | 体系 | 载体 | 触发条件 | 视觉 | 动效 |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| A | 全局屏幕级 `DropZoneProvider` | `shared-9-BgdM6Y1f.js` `xh()` @ `36,766` | `dragState` 为 OFF/ON_TARGET | `fixed inset-0` + `bg-bg-100/90` + 居中 `ObjectDocumentAdd` 图标 + 文案，portal 到 `document.body`，zIndex `ve` | `animate-screen-drop-in` = `.1s ease-out fade`，`motion-reduce:animate-none` |
+| B | dframe badge（**截图同款**） | `c4c113f6f-B-i6bpoH.js` `_()` @ `1,116` + `shared-styles-C9nbzN1z.css` @ `53,484` | `isDragOver && fileHint && Files && localStorage 未关闭` | 2px accent 内描边 + surface-0 40% + blur(2px) + 蓝色 pill 标签 | `cds-fade-in` var(--cds-dur-base) var(--cds-ease-out)（0.2s / cubic-bezier(.165,.84,.44,1)） |
+| C | 区域 ring / dashed / 三图标 area | `cc63499d2-BD7iFRH4.js` `l()` @ `262`；`cc17a11d9-B39REwC5.js` @ `380` | `isDragOver`（无 hint）/ 空状态 area | on-target 2px ring + 24px glow；off-target 1px dashed；area 版三图标 + 文案 | `cds-drop-ring-in` .15s；`cds-fade-in` .2s / 80ms；`cds-drop-icon-rise` .22s 交错 0/60/120ms |
+
+A 属于旧主 App 的 provider 体系，B/C 属于 dframe（桌面框架 / 会话 pane / 侧边浏览器）体系；三套共用同一个 i18n key 与同一个 accent 变量。截图是 **B**，不是 A（A 会盖住整个窗口且为白色遮罩）也不是 C（C 没有蓝色 pill）。
+
+#### 5.8.3 badge / label 的完整样式规格（controlled-replay computed）
+
+| 元素 | 属性 | computed 值 | 来源 |
+| :--- | :--- | :--- | :--- |
+| badge | position / inset | `absolute` / `inset:0`（`c4c113f6f` 传 `inset-0`；分栏版改用 inline left/top/width/height） | `shared-styles` |
+| badge | border-radius | `8px`（var(--df-radius-card,8px) 回退） | 同上 |
+| badge | border | `1px solid hsl(none 0% 4.31% / .2)`（var(--cds-border-strong)） | 同上 |
+| badge | background | `color(srgb .976 .976 .969 / .4)` = color-mix(in srgb, var(--cds-surface-0) 40%, transparent) | 同上 |
+| badge | backdrop-filter | `blur(2px)` | 同上 |
+| badge | box-shadow | `rgb(42,120,214) 0 0 0 2px inset` | var(--cds-fill-accent) |
+| badge | ::before | `inset 0 0 24px 0 color-mix(in srgb, var(--cds-fill-accent) 20%, transparent)` | 同上 |
+| badge | transition | left / top / width / height / opacity 各 `.12s cubic-bezier(.215,.61,.355,1)`（RTL 用 right） | var(--df-ease-out-cubic) |
+| badge | 其它 | font 14px / 500，`pointer-events:none`，`aria-hidden:true`，zIndex 40 | `a(40)` / `i(40)` |
+| label | background / color | `rgb(42,120,214)` / `#fff` | var(--cds-fill-accent) / var(--cds-gray-0) |
+| label | border-radius / padding | `9999px` / `4px 10px` | 同上 |
+| label | font / transition | 14px / 500；background-color + color `.12s` 同曲线 | 同上 |
+| label | 实测尺寸 | 重放 `132×29 CSS px`（8 个汉字）；截图 `143×30 CSS px` | 两者高度一致，宽度差来自字体/色域换算 |
+
+**颜色核对**：客户端 CSS 定义 `--cds-blue-450: #2a78d6`（另一处 `#257de0`），`--cds-fill-accent` 经 var(--cds-role-accent-fill) / var(--cds-role-accent-450) 链路解析为 `#2a78d6`（重放 computed `rgb(42,120,214)`）；截图采样 `(31,101,216)` 与之同色系，差异来自 JPEG 压缩与 macOS 截屏色彩配置 —— 属像素级**一致**，不视为另一套色。窗口失焦时 `:root[data-window-active=false]` 把 accent 回落到 var(--cds-blue-450)。
+
+**变体**：`[data-hint]` 时 badge `opacity:.45`、label 改 var(--cds-neutral-30) 底 / var(--cds-neutral-700) 字（分栏拖拽的「预览态」）；`prefers-reduced-motion: reduce` 与 `[data-reduce-motion=true]` 下 badge/label/::before 全部 `transition:none`。
+
+#### 5.8.4 ring / glow / area overlay 与 badge 复用
+
+```css
+/* cc63499d2 l() · on-target */
+.pointer-events-none.absolute.inset-0.rounded {
+  box-shadow: inset 0 0 0 2px var(--cds-fill-accent);
+  animation: .15s cubic-bezier(.215,.61,.355,1) cds-drop-ring-in;
+}
+/* 内层 glow：.2s / cubic-bezier(.215,.61,.355,1) / 80ms / backwards cds-fade-in */
+/* off-target：border border-dashed border-accent + .15s cds-fade-in */
+```
+
+- `shared-9` 的 `bh()` 不是卸载重挂，而是**同节点 opacity 交叉淡入**：OFF 态 `border-dashed` opacity 100、ON 态 2px ring + glow opacity 100，靠 `transition-opacity duration-fast` 切换，避免 drag 目标切换时闪一下。
+- `cc17a11d9` 的 area 版：三图标 Image / Files / Folder 初始为 `-rotate-[14deg]` / `-translate-y-3` / `rotate-[14deg]`，用 `cds-drop-icon-rise .22s` 以 **60ms / 0ms / 120ms** 错峰浮起；`area=true` 用 `inset-0 rounded-[inherit]`、icons `lg`、无 backdrop-blur；`area=false` 用 `inset-3.5 rounded-card` + `backdrop-blur-[12px]` + icons `xl`；容器统一 `bg-page opacity-60`。
+- `shared-23-BRmsPtuN.js` 把**同名** `dframe-drop-overlay-badge` / `-label` 复用于会话分栏拖拽（Move here / Swap / Open here / Split view），按 col/row 权重用 `calc(...% - 16px)` 计算几何，并启用 badge 的 left/top/width/height 过渡 —— 证明这是**通用 drop 目标徽章**，不是文件上传专用组件。
+
+---
+
+### 5.9 拖拽状态机与事件契约
+
+#### 5.9.1 架构一：DropZoneProvider 四态（`shared-9` @ `32,995`）
+
+```js
+ph = { IDLE, DRAGGING_OFF_TARGET, DRAGGING_ON_TARGET, DROPPED }
+gh(e) = e.dataTransfer?.types.includes("Files") ?? false   // 唯一准入
+```
+
+事件全部挂在 `f.current.ownerDocument.body`，capture 与 bubble 混合：
+
+| 事件 | 阶段 | 行为 |
+| :--- | :--- | :--- |
+| dragenter / dragover | capture | `p.current = e.composedPath()[0]`（记住最后进入的节点） |
+| dragover | bubble | `f.current.contains(e.target) ? DRAGGING_ON_TARGET : DRAGGING_OFF_TARGET` |
+| dragleave | bubble | 三重条件（last target 相同 && 不含 relatedTarget && (target===currentTarget 或 relatedTarget===null)）→ `IDLE` |
+| drop | capture | 目标不在 zone → `IDLE`（兜底清理） |
+| drop | bubble | zone 内执行 `b(e)`；zone 外且 `enableScreenDrop` 也执行（全窗口投放），否则 preventDefault + `IDLE` |
+
+`b(e)` → `onDrop(e)` → `DROPPED` → `setTimeout(() => IDLE, 500)`：**成功态停留 500ms**，让退场动画播完。`vh()` 在 `disableFileAttachments` / `fileAttachmentsUnsupported` / `fileAttachmentsUnsupportedReasonAtEveryEntry` 或三个 feature flag 命中时禁用整个 zone；`yh()` 按 `enableScreenDrop` 选择 `xh()`（全屏）或 `bh()`（区域）。
+
+#### 5.9.2 架构二：useDragZone 的 Set 计数法（`cc63499d2` @ `262`，全文 2,653 B）
+
+```js
+function c({ accepts, dropEffect, claim, disabled, onDrop }) {
+  const [d, f] = useState(false);
+  const seen = useRef(new Set());   // 已进入过的 target 集合
+  const root = useRef(null);        // Gp(e.currentTarget) → 根/文档
+  // dragenter: accepts(e) → preventDefault + claim && stopPropagation
+  //            + seen.add(a(e.target)) + root.current = s(e.currentTarget) + f(true)
+  // dragleave: seen.delete(target) + 清理所有已不在 currentTarget 子树的元素
+  //            seen.size === 0 才 f(false)
+  // 捕获阶段监听 dragend / drop / pointerdown → g() 清空，避免 overlay 卡住
+  // dragover : dataTransfer.dropEffect = disabled ? "none" : dropEffect（默认 "copy"）
+  // drop     : 先记 e.isDefaultPrevented() → preventDefault → claim && stopPropagation
+  //            → 清理 → !disabled && onDrop(e, wasDefaultPrevented)
+  return { isDragOver: d && !disabled, handlers: {...} };
+}
+```
+
+两套架构的防抖策略不同：A 用 composedPath + 三重条件，B 用 Set&lt;Element&gt; 引用计数 + 捕获兜底；但准入（dataTransfer.types 含 Files）、`preventDefault()` 与 `claim` 的 `stopPropagation()` 完全一致 —— 多个 drop zone 嵌套时由最内层独占，不会冒泡重复响应。
+
+#### 5.9.3 drop zone 容器与 hint 分支（`c4c113f6f`，全文 2,644 B）
+
+| prop | 作用 |
+| :--- | :--- |
+| `onFilesDropped` / `onNonImageFilesDropped` | 按 `c98ab6e79` 的图片 MIME 列表切分两路回调 |
+| `onEntriesDropped` | `webkitGetAsEntry()` 目录条目优先（`g(e)`） |
+| `onDropped` | 拿到 `Ph`（shared-62 导出的 `bg()`）归一化结果 |
+| `appDrag` | 非文件类（会话/分栏）拖拽的 accepts / onDrop |
+| `filesElsewhere` | 允许其它 drop zone 抢走本次文件拖拽 |
+| `fileHint` | 决定渲染 **badge 版**还是 **ring 版** |
+| `overlayClassName` / `zoneRef` / `disabled` / `onContextMenu` | 布局、引用与禁用 |
+
+内部 `h()` 注册 `{accepts, dropEffect:"copy", claim:true, disabled, onDrop}`；`m(e)` = `dataTransfer?.types?.includes("Files") ?? false`。hint 分支：
+
+```js
+const [P, F] = useState(false);
+const onDragEnter = e => { F(fileHint && m(e) && s("__gb__4088364908") !== false); I(e); };
+// 渲染：M && t(P ? _ : f, { className: overlayClassName })
+//   P = true  → _()  badge（蓝色 pill，截图同款）
+//   P = false → cc63499d2 l()  on-target ring
+```
+
+`__gb__4088364908` 是 localStorage 键（`s()` 来自 shared-0 的 `Rx`）。shipped artifact 中只找到读取点、未找到写入点；从键名前缀 `__gb__`（ghost badge）与「未写入即 `!== false` 恒真」的行为**推断**为一次性引导标已读标记，语义标记为 **inferred**，不作强结论。
+
+**挂载点**：`cc43287c9-dzfX-J5i.js` @ `1,165,971` —— `<Vz onDropped={…} appDrag={…} fileHint:!0 overlayClassName={…} disabled={…} …>` 包住会话列 + composer。这是截图里唯一被蓝框圈住的区域。
+
+#### 5.9.4 截图为什么只有左侧 pane 有蓝框
+
+- badge 是 `inset-0` 覆盖其 drop zone，几何等于会话/composer 列（`c4c113f6f._()`）。
+- 右侧 Browser / Preview pane 是另一套 pane 容器，没有注册这个 `Vz` drop zone，因此不显示遮罩（截图实证；此因果为源码推断）。
+- badge 与 label 带 `aria-hidden:true` + `pointer-events:none`：不拦截拖放事件，也不进入无障碍树。
+
+---
+
+### 5.10 放下之后：归一化、校验与上传队列
+
+#### 5.10.1 dataTransfer → File[] 的四条路径
+
+- `yg(e)`（shared-62 @ `62,809`）：优先遍历 `dataTransfer.items`，逐项 `kind === "file"` → `getAsFile()`；无 items 或结果为空时回落 `Array.from(dataTransfer.files)`。
+- `bg(e,t)`（**导出别名 `Ph`**，@ `63,173`）：用 `webkitGetAsEntry()?.isDirectory` 把项拆成 folders / files，供目录拖拽。
+- 目录递归：`createReader().readEntries()` → `Sg` / `Cg`（`FileSystemEntry.file()` Promise）→ `Tg({limit, skipDirectory})`。
+- File System Access API 分支（shared-4 @ `360,495`）：`getAsFileSystemHandle()` 异步解析（8s handle 等待），`beginDropWait` 60s 兜底，`maxFiles` 限额，`onFolderDropped` 处理目录，`Co()` 关联 extracted_content，`CI()` 以 `new Blob([extracted_content]).size / 4` 校验项目知识库上限。
+- `c4c113f6f` 的分发顺序：`onEntriesDropped`（目录条目）→ `onDropped`（原始归一化结果）→ 否则 `onFilesDropped` / `onNonImageFilesDropped`（图片 vs 非图片）。
+
+#### 5.10.2 限额常量与错误文案矩阵
+
+| 常量（shared-62 @ `59,866`） | 观测值 | 语义（未导出命名，标 inferred） |
+| :--- | :--- | :--- |
+| `Uh` | `524288e3` = 524,288,000 B | 上传体量上限（≈500 MB） |
+| `Wh` | `15360` | `max_in_context_file_bytes` 配置默认值，单位未证实 |
+| `Hg` | `5,238,784` B | 编码后（base64）内容上限 |
+| `Ug` | `7,968` px | 图片宽/高上限 |
+| `Jh` | `3,670,016` | 图片重编码阈值 |
+| `Gh` / `Kh` / `qh` | `2000` / `2000` / `.85` | 尺寸与压缩质量 |
+| `Vg` / `hI` | `8000` / `60000` ms | handle 等待 / drop wait 超时 |
+| `Lh` | `Set([400,413,415,422])` | 上传不可重试错误码 |
+
+| i18n key | 场景 | 文案（英文原文摘要） |
+| :--- | :--- | :--- |
+| `8QkUkTTC9V` | drop overlay | `Drop files here`（简中「将文件拖放到此处」） |
+| `4HSAw8RtrC` | noFile | `Couldn’t get a file from that drag. Drag it from Finder instead.` |
+| `6EGIdzAtYH` / `FOKLVE1W08` | file_too_large | `… is over the {maxMb} MB limit … Try dragging it into the message box, which takes larger files.` / `Choose a smaller file.` |
+| `EPmeSzcXBt` | 打开失败 | `Couldn’t open “{fileName}” from here. Try dragging it into the message box.` |
+| `5DCXOAEmMl` | chat 切换竞态 | `… wasn’t added because the chat changed while it was loading. Drop it again …` |
+| `MbvF6K3PJd` | 项目知识库超限 | `Project knowledge exceeds maximum. Remove files to continue.` |
+| `LPNNW+cd/e` | 附件回注失败 | `Some attachments couldn’t return to the input and were dropped.` |
+| `wbySUq10o+` / `BoHuvCmEsS` | 进度与发送守卫 | `Uploading {current} of {total}…` / `Files are still uploading` |
+| `f00p/7iV78` / `9c7vGJDSo2` | 失败与重试 | `Upload failed` / `Try uploading {fileName} again` |
+
+#### 5.10.3 pending upload queue（`c20d9eece`，全文 967 B）
+
+```js
+{ pending: {}, drains: {}, stagingProbes: {},
+  registerDrain(key)          // +1 / -1 引用计数，标记正在排空
+  registerStagingProbe(k, fn) // 注册「能否立即暂存」探针
+  canStageNow(key)            // 无探针或任一探针通过
+  push(key, item)             // 消息发出但附件未传完 → 入队
+  take(key, n)                // 批量取出
+  restore(key, items)         // 失败时放回队首
+}
+```
+
+`c4a9ee384-BWj_BT12.js` 的附件区在 `pending` 态加 `animate-pulse motion-reduce:animate-none motion-reduce:opacity-60`；`c21f11e6d-Cyj5xu_D.js` 的 drain 负责发送侧排空。这与 5.7 已记录的 composer pending upload queue 是同一 store。
+
+---
+
+### 5.11 附件卡片入场 / 退场动效（View Transitions）
+
+#### 5.11.1 wrapper 与降级条件（`shared-2-CsjIBQD8.js` @ `8,922`）
+
+```js
+gm = "cds-attachments";         _m = "data-cds-attachment";
+vm = "data-cds-attachment-restored"; ym = "data-cds-composer-attachments";
+xm = "data-cds-composer-attachments-clip"; Sm = "data-cds-attachments-clipping";
+Tm = "--cds-attachment-vt-name";
+Em(doc) = typeof doc.startViewTransition === "function"
+        && CSS.supports("selector(:active-view-transition-type(cds-attachments))");
+Dm(doc) = CSS.supports("view-transition-group: contain")
+        && CSS.supports("selector(::view-transition-group-children(.x))");
+// 降级：visibilityState !== "visible" / reduced motion / !Em → 直接 update()，无动画
+// 有 clip 容器但 !Dm → 也直接 update()，避免高度塌陷
+// 执行：clip 容器打 data-cds-attachments-clipping + 锁 minBlockSize
+//       → doc.startViewTransition({ types: [gm], update })
+//       → finished.then(cleanup, cleanup); updateCallbackDone.catch(reportError)
+```
+
+受控重放（Chrome 157）中 `startViewTransition`、`:active-view-transition-type`、`view-transition-group: contain`、`::view-transition-group-children()`、`sibling-index()` 五项能力检测**全部 true**。
+
+#### 5.11.2 CSS 规格（`c6a992d55-_JRfOmTh.css` @ `1,120,187`，全文 1.83 MB）
+
+| 规则 | 值 |
+| :--- | :--- |
+| `[data-cds-composer-attachments]:has([data-cds-attachment])` | `transition: opacity .2s cubic-bezier(.215,.61,.355,1), transform .2s 同曲线` |
+| `[data-cds-attachment]` | `view-transition-class: cds-attachment`；`--cds-attachment-vt-name: none`；`transform-origin: 0`（RTL `100%`）；`transition: transform/opacity .18s` 同曲线 |
+| `:root:active-view-transition-type(cds-attachments)` | `view-transition-name: none`；卡片 `view-transition-name: var(--cds-attachment-vt-name)` |
+| `::view-transition-group(root)` | `animation-duration: 0s`（禁止整页 cross-fade） |
+| `::view-transition-group(.cds-attachment)` | `.18s cubic-bezier(.215,.61,.355,1)` |
+| 新 Chromium `@supports` 分支 | clip 容器 `view-transition-name: match-element` + `view-transition-class: cds-attachments-clip` + `view-transition-group: contain`；`::view-transition-group-children(.cds-attachments-clip){overflow:clip visible}`；group `.18s` 同曲线 |
+| `@starting-style` | 容器 `opacity:0; transform:translateY(-8px)`；卡片 `opacity:0; transform:scale(.92) translateY(4px)`；两者排除 `[data-cds-attachment-restored]`（重入不重播） |
+| 退场 | `@keyframes cds-attachment-out{to{opacity:0;transform:scale(.5)}}`；`::view-transition-old(.cds-attachment):only-child` 用 `.13s cubic-bezier(.55,.055,.675,.19) forwards` |
+| reduced motion | 容器与卡片 `transition:none` |
+
+#### 5.11.3 多文件同时放下：chip 错峰入场
+
+```css
+@keyframes cds-chip-in { 0% { opacity:0; filter:blur(2px); transform:scale(.8) } }
+.cds-chip-in {
+  animation: cds-chip-in var(--cds-dur-base) var(--cds-ease-out) backwards;
+  animation-delay: calc(var(--cds-chip-in-base-delay, 50ms) + min(sibling-index() - 1, 8) * 30ms);
+}
+```
+
+重放 4 个 chip 实测 delay = **50 / 80 / 110 / 140 ms**，duration `.2s`，timing `cubic-bezier(.165,.84,.44,1)`，fill `backwards`；第 n 个 = `50 + min(n-1,8)×30ms`，8 个后封顶 290ms。`prefers-reduced-motion` 下 `animation:none`。
+
+#### 5.11.4 drop 链路动效总表（全部 controlled-replay 验证）
+
+| 名称 | 0% / to 状态 | 时长 | 曲线 | 延迟 | fill | 载体 |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `animate-screen-drop-in` | fade | `.1s` | `ease-out` | 0 | — | A 全屏 overlay |
+| `cds-fade-in` | `opacity:0` | `.15s` / `.2s` / var(--cds-dur-base) | `cubic-bezier(.215,.61,.355,1)` / var(--cds-ease-out) | 0 / 80ms | backwards（部分） | badge、glow、dashed |
+| `cds-drop-ring-in` | `opacity:0; transform:scale(1.005)` | `.15s` | `cubic-bezier(.215,.61,.355,1)` | 0 | none | on-target ring |
+| `cds-drop-icon-rise` | `opacity:0; transform:translateY(12px)` | `.22s` | `cubic-bezier(.215,.61,.355,1)` | 0 / 60 / 120ms | backwards | 三图标 area |
+| `cds-chip-in` | `opacity:0; filter:blur(2px); transform:scale(.8)` | `.2s` | `cubic-bezier(.165,.84,.44,1)` | `50 + n×30ms` | backwards | 同时放下的多个 chip |
+| `cds-attachment-out` | `to{opacity:0; transform:scale(.5)}` | `.13s` | `cubic-bezier(.55,.055,.675,.19)` | 0 | forwards | 附件移除 |
+| badge 几何 transition | left/top/width/height/opacity | `.12s` | `cubic-bezier(.215,.61,.355,1)` | 0 | — | 分栏版 badge |
+
+> **与 AGENTS.md 四套弹簧预设的关系**：文件拖拽链路**完全不用 Framer Motion 弹簧**，全部是 CSS transition / keyframes；曲线集中在 `cubic-bezier(0.215, 0.61, 0.355, 1)`（即 --df-ease-out-cubic）与 var(--cds-ease-out) = `cubic-bezier(.165,.84,.44,1)`。复刻时不要给 drop overlay 加弹跳，也不要用 `linear`。
+
+#### 5.11.5 与仓库参考实现的对应
+
+- `code-examples/AttachmentCard.tsx` 已复刻 `withAttachmentTransition()`、`--cds-attachment-vt-name`、`@starting-style` 与 `cds-attachment-out`（见 CHANGELOG）；本节补齐官方原始参数、能力检测与降级条件。
+- `cds-drop-ring-in` / `cds-drop-icon-rise` / `cds-chip-in` / `dframe-drop-overlay-*` 属客户端专属，未在仓库 `cds-theme.css` 中登记；本次**只做取证，不新增或修改参考实现**，避免把客户端变量名混入复刻令牌体系。
+
+---
+
+### 5.12 证据索引（本篇）
 
 | 载体 | 偏移 | 事实 |
 | :--- | :--- | :--- |
@@ -1148,7 +1413,22 @@ bg-fill-secondary  |  tile: bg-surface-3  |  flat: bg-alpha-2
 | `…/c20d9eece-D9azS0jG.js` | 全文 967 B | pending upload queue |
 | `…/c21f11e6d-Cyj5xu_D.js` | `362,970` / `363,111` / `365,127` / `443,017` | drain / `cN` / `_N` / send |
 | `…/c0a74d72b-BELp4TMv.js` | `34,486` / `36,061` / `41,982` / `65,322` / `74,870` | `Yo` / `cs` / `ms` / `Pc` / `Xc` |
-| REA Evidence | `ev_e6f527fe2c…` / `ev_d40ebeb98f…` | 静态分析 |
+| `…/shared-9-BgdM6Y1f.js` | `32,995` / `35,496` / `36,766` / `37,350` | `DropZoneProvider` 四态 / `bh()` / `xh()` / 全屏 overlay 文案 |
+| `…/cc63499d2-BD7iFRH4.js` | 全文 2,653 B（`262` 起） | `useDragZone` Set 计数 + on/off-target ring |
+| `…/c4c113f6f-B-i6bpoH.js` | 全文 2,644 B；`485` / `1,116` | `__gb__` hint 键 / badge overlay / drop zone 容器 |
+| `…/cc17a11d9-B39REwC5.js` | 全文 2,447 B；`380` | 三图标 area overlay |
+| `…/cc43287c9-dzfX-J5i.js` | `1,165,971` | `fileHint:!0` 的会话/composer drop zone 挂载点 |
+| `…/shared-styles-C9nbzN1z.css` | `53,484`（全文 96,797 B） | badge / label 视觉规格、`data-hint`、RTL、reduced motion |
+| `…/c6a992d55-_JRfOmTh.css` | `1,120,187`（全文 1,831,545 B） | drop keyframes、chip 错峰、附件 view transitions、`@starting-style` |
+| `…/shared-2-CsjIBQD8.js` | `8,922` | `cds-attachments` wrapper、能力检测与降级 |
+| `…/shared-62-DoCqVpIq.js` | `59,866` / `62,809` / `63,173` / `65,845` | 限额常量、`yg` / `bg`(Ph) / 目录遍历 / handle 分支 |
+| `…/shared-4-C_EiQb9h.js` | `360,495` / `362,005` / `362,827` | `beginDropWait` / drop handler / 项目知识库上限 |
+| `…/shared-23-BRmsPtuN.js` | 全文 267,561 B | 分栏拖拽复用同名 badge 与几何过渡 |
+| `…/c4a9ee384-BWj_BT12.js` | 附件区 `pending` 脉冲 | 上传中视觉态 |
+| `i18n/en-US.json` / `resources/i18n/zh-Hans.json` | 41,771 / 823 条 | `8QkUkTTC9V` 与错误文案矩阵 |
+| controlled-replay | `/tmp/drop-replay.html` + Chrome 157 CDP（`/tmp/drop-replay-result.json`、`/tmp/drop-replay.png`） | computed style、动画时序、能力检测、像素对照 |
+| user-screenshot | 3618×1952（本轮用户提供） | 2px 蓝框 / 143×30 CSS px pill / 左 pane 限定 |
+| REA Evidence | `ev_e6f527fe2c…` / `ev_d40ebeb98f…` | 静态分析（前序取证；本轮 REA 静态图因会话保留容量耗尽未生成新 ID，改以字节偏移 + 受控重放标注） |
 
 ---
 
