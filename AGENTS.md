@@ -250,6 +250,7 @@ Refer to or import from [`code-examples/`](code-examples/) when composing UI:
 2. **Never commit binary assets**: Never introduce `.ttf`, `.otf`, `.mp3`, or `.wav` files into the repository.
 3. **Never bypass Sandbox Security**: Never add `allow-same-origin` to an iframe bridge running arbitrary LLM-generated HTML.
 4. **Never hijack scroll during streaming**: Do not force-scroll to bottom if `Date.now() - lastUserScrollTime < 150ms`.
+5. **Never open or update a Pull Request without explicit user approval**: Local edits, commits and branch pushes are fine on their own, but creating a PR, editing an existing PR's title/body, or pushing commits to a branch that already has an open PR requires the user to say so first. When the work is done, report the local state and wait; do not call `gh pr create` / `gh pr edit` / `gh pr comment` unprompted.
 
 ---
 

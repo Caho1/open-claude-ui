@@ -332,6 +332,141 @@ function h(e, t, n) {          // 纯函数重排：findIndex → clamp → spli
 
 checkbox / radio 均 `keepOpen:true`（点选不关菜单）。
 
+#### 2.5.1 动态默认浏览器名与菜单状态矩阵
+
+左上第一项不是固定文案。`c8ae173c6-BUQ9DHQT.js` @ `342` 维护一个外部 store：
+
+```js
+const messages = {
+  named:   { defaultMessage: "Open in {browserName}", id: "1WdokkZgcZ" },
+  generic: { defaultMessage: "Open in default browser", id: "1B2oJwBn8a" }
+};
+let cached = null, inFlight = false;
+const refresh = () => {
+  if (inFlight) return;
+  const p = bridge?.getDefaultBrowserName?.();      // shared-25 的 z_，native bridge
+  if (!p) return;
+  inFlight = true;
+  p.then(name => { const next = name || null;
+                   if (next !== cached) { cached = next; store.notify(); } },
+         () => {}).finally(() => { inFlight = false; });
+};
+window.addEventListener("focus", refresh);          // 每次窗口获得焦点重新探测
+```
+
+所以截图里的「**在 Dia 中打开**」是 `named` 分支（本机默认浏览器为 Dia）；`getDefaultBrowserName()` 返回空 / 失败 / 尚未探测完成时回退到 `generic` 的 `Open in default browser`（2.5 表格里记录的即回退文案）。`inFlight` 防并发，`cached` 变化才 `notify()` 重渲染，**窗口 focus 是唯一刷新时机**。
+
+**菜单项状态矩阵**（`cf550b864-BHVEoOWt.js`）：
+
+| 机制 | 出现次数 / 偏移 | 用途 |
+| :--- | :--- | :--- |
+| `checkedRole:"checkbox"` + `keepOpen:!0` | 3 处 @ `14,362` / `14,596` / `14,831` | 三个行为开关（截图里前两个蓝色 ✓） |
+| `checkedRole:"radio"` | 3 处 @ `15,208` / `15,350` / `16,264` | Keep cookies 三档 |
+| `hint:` | 3 处 @ `13,702` / `15,475` / `16,363` | 子菜单当前值（截图「响应式」「直到退出」） |
+| `disabledReason` | 3 处 @ `12,540` / `12,800` / `13,720` | 如 `Open a page first.` |
+| `variant:"danger"` | `16,516` | `Clear browsing data`（截图红字） |
+| `cookiesHeader` | `10,418` / `16,799`… | Cookie 分组灰色标题 |
+| `fe` 分隔线 | 多处 | 四组之间的 hairline |
+
+**截图逐项对照**（`⋯` 菜单展开态）：
+
+| 截图项 | 2.5 表格项 | 状态 |
+| :--- | :--- | :--- |
+| 在 Dia 中打开 | `Open in default browser` 的 named 变体 | 动态，见上文 |
+| 复制 URL / 保存截图 / 打开 HTML 文件… | `Copy URL` / `Save screenshot` / `Open HTML file…` | 常驻 |
+| 视口 › 响应式 | `Viewport` 子菜单 + `hint` | 当前预设显示于右侧 |
+| 在内建浏览器中打开链接 ✓ | `Open links in Browser panel` | checkbox 选中 |
+| 自动打开 Claude 写入的文件 ✓ | `Auto-open files Claude writes` | checkbox 选中 |
+| 自动验证更改 | `Auto-verify changes` | checkbox 未选中 |
+| 管理允许的网站… | `Manage allowed sites…` | 常驻 |
+| Cookie（灰） | `cookiesHeader` | 分组标题，不可点 |
+| 导入 Cookie… | `Import cookies…` | 见 4.5 |
+| 保留 Cookie › 直到退出 | `Keep cookies` 三档 radio + `hint` | 当前 `none`，见 4.6 |
+| 清除浏览数据 | `Clear browsing data` | `variant:"danger"`，见 4.6 |
+
+截图中**未出现** `Show annotation tools` / `Show dev server logs` / 本地网络 Allow·Block —— `xe()` 按传入 prop 是否存在决定渲染，当前上下文未提供这些 prop（inferred），不代表功能缺失。`Use cookies you already imported` 同样为条件项。
+
+#### 2.5.2 菜单实现方式：模型 / 组装 / 渲染器 / 原语四层
+
+设置菜单**不是**一个 React 组件直接写 JSX，而是「纯数据模型 → 通用渲染器」的协议式架构。这也解释了为什么 Preview / Browser / Artifact / Code 四种 pane 的 `⋯` 菜单长得一样。
+
+| 层 | 载体 | 职责 |
+| :--- | :--- | :--- |
+| ① 模型 | `cf550b864-BHVEoOWt.js` `xe()`（@ `11,162`，177 个 memo slot） | 接收回调 / 状态 / labels，**返回 `{sections}`，零 DOM** |
+| ② 组装 | `c58115fda-LR6i7rPD.js`（@ `92,262` / `92,731`） | 注入 `labels`、绑定回调、追加 dev-server section：`Dt ? [...Fd,{items:[Dt]}] : Fd` |
+| ③ 宿主 | `c4db265df-CHyZjtsm.js` `Tn()`（@ `24,636`，237 slots） | 通用 pane header，把 sections 作为 `menuSections` 传给 `Qe` |
+| ④ 渲染器 | `ca5db7aaf-C8dMH-IH.js` `H()`（导出 `i`，`c4db265df` 里别名 `Qe`） | `⋯` trigger + Popup + sections → items |
+| ⑤ 原语 | `shared-frame-CJdE5Ria.js` 的 `Vs`（内部 `UD`） | `Root / Trigger / TriggerButton / Popup / Group / GroupLabel / Item / Separator / Submenu / SubmenuTrigger` |
+
+**① 模型层协议**（`xe()` @ `17,2xx`）：
+
+```js
+// 四组；空组被过滤
+const X = [ {items:U}, {items:W}, {items:G}, {header:H.cookiesHeader, items:K} ]
+  .filter(s => s.items.length > 0);
+return { sections: X };
+```
+
+item 是 plain object，字段全集由 ④ 的 `Z()` 逐项展开（@ `8,0xx`）：
+
+```
+label, icon, ariaLabel, leading, trailing, shortcut,
+hint, description, descriptionDir, descriptionLines,
+disabled, disabledReason, variant ("danger"),
+checked, checkedRole ("checkbox" | "radio"), keepOpen,
+items (子菜单), separatorBefore, noSeparator, onSelect
+```
+
+- **条件渲染靠 prop 存在性**：`xe()` 开头把每个回调/状态转成布尔（`L=p!==void 0`、`R=ne!==void 0`、`B=ie!==void 0`…），只有为真的分支才 `U.push(item)`。截图里缺少的项不是 CSS 隐藏，而是模型层根本没生成。
+- **状态完全受控**：`checked` 取 `openLinksInPreview / autoOpenFiles / autoVerify / previewStorage` 等 props，`onSelect` 一律调 `onXChange(!value)`；模型层不读 store、不持久化。
+- **labels 注入**：`H = {...ve, ...labels}`，`ve` 是默认英文表，父组件覆盖本地化与动态文案（`Open in Dia` 即由此注入）。
+- **回调稳定化**：`m()` = `shared-0` 的 `FT` / `Ce`（@ `1,689`）—— `useRef` 保持最新回调、返回稳定引用，使 177 个 React Compiler memo slot 不因父组件重渲染而失效。
+- `p = shared-0` 的 `Bh` / `GO` = `globalThis["claude.web"]?.Launch`（@ `224,321`），即主进程能力桥的入口。
+
+**④ 渲染器 `H()`**（`ca5db7aaf` @ `3,2xx`–`4,6xx`）：
+
+```js
+const g = sections ?? [];
+if (g.every(s => s.items.length === 0)) return null;      // 全空 → 连 ⋯ 都不渲染
+const single = unroll ? ee(g) : null;                     // 单 item 折叠优化
+if (single) return <Button icon={single.icon} aria-label={single.ariaLabel}
+                           onClick={single.onSelect} />;  // 不弹菜单，直接一键
+const label = formatMessage("{pane} settings", {pane: paneName});   // 0v5PlsRKXz
+return <Vs.Root onOpenChange={onOpenChange}>
+  <Tooltip content={label}>
+    <Vs.Trigger disabled={disabled} render={
+      <Button variant="ghost" iconOnly icon="DotsHorizontal"
+              aria-label={label} tooltip={false} ref={triggerRef} />} />
+  </Tooltip>
+  <Vs.Popup side="bottom" align="end" container={portalContainer}
+            collisionPadding={...} onContextMenu={...}>
+    <U sections={g} portalContainer={...} />
+  </Vs.Popup>
+</Vs.Root>;
+```
+
+`U()`（@ `4,4xx`）遍历 sections：`idx>0 && !section.noSeparator` 插 `<Vs.Separator/>`，每组 `<Vs.Group>` 内先 `<Vs.GroupLabel>{header}</Vs.GroupLabel>`（截图里的灰色「Cookie」），再 `items.map(item => <Z …/>)`。`Z()` 对复杂 item 展开全部字段到 `<Vs.Item … onClick={item.onSelect}>`；只有 `label + onSelect (+icon)` 的简单 item 走快路径（转 `ariaLabel`，省掉一堆 prop 比较）；`items` 存在时渲染 `Submenu` / `SubmenuTrigger` + 嵌套 `Popup`；`separatorBefore` 前置分隔线。
+
+**⑤ 原语是全应用共用的**：`c23255574`（sketch 形状/颜色/线宽下拉，其 `h` = `Vs`）、`cf580efe9`（dev server 菜单）、`c4db265df`（pane layout popup，`g.Root` + `g.Trigger` + `g.Popup side=bottom align=end padding=xs`）都 import 同一个 `Vs`。它是 **Base UI 风格的自研封装**（`render` prop、`createHandle()`、`checkedRole`、`keepOpen`、`side/align/collisionPadding`、`initialFocus`），不是 Radix。截图里的蓝色 ✓、`hint`、红色 danger、分组标题、子菜单箭头全部由原语渲染 —— 模型只给数据。
+
+`keepOpen` 的语义也在原语里：checkbox / radio 点选后 `Root` 不关闭，所以截图能连续勾选。
+
+**onSelect 落点**（回调在 ② 父组件，部分链路标 inferred）：
+
+| 项 | 落点 |
+| :--- | :--- |
+| 复制 URL | `Ed` → clipboard / `onCopyUrl`（父组件 @ `92,442`） |
+| 保存截图 | `Od = () => kc("screenshot")`（@ `92,262`）→ `capturePreviewScreenshot`，见 6.4 |
+| 打开 HTML 文件… | `onOpenFile` → native file dialog（inferred，回调由父组件提供） |
+| 视口子菜单 | `viewportItems` → `setPreviewViewport`，见 2.4 / 第三篇 |
+| 三个 checkbox | `onOpenLinksInPreviewChange` / `onAutoOpenFilesChange` / `onAutoVerifyChange` → 父组件受控状态 + 设置持久化（inferred） |
+| 管理允许的网站… | `Nd = xt.menuSections?.[0]?.items[0]?.onSelect`（@ `92,635`）；单 item 时触发 ④ 的 `unroll` 直接按钮 |
+| 导入 Cookie… | 第四篇 4.5 的 native 导入流程 |
+| 保留 Cookie 三档 | `previewStorage` radio + `hint`，见 4.6 |
+| 清除浏览数据 | `variant:"danger"` → `Clear session data?` 确认 → `clearPreviewBrowsingData`，见 4.6 |
+
+**无障碍与动效**：`aria-label="{pane} settings"`、`role="menu"`（@ `5,083`）、`GroupLabel` 分组、`checkedRole` 映射选中语义、`disabledReason` 转 tooltip、键盘导航与 `initialFocus` 由 `Vs` 原语提供；Popup 统一 `side=bottom / align=end / collisionPadding`，同套原语的 tooltip 延迟 `700ms`（pane layout popup @ `13,0xx`）。
+
 ---
 
 ### 2.6 快捷键矩阵
@@ -368,6 +503,12 @@ checkbox / radio 均 `keepOpen:true`（点选不关菜单）。
 | `c518a31cc-DFyebqGe.js` | `21,464` / `25,666` / `32,222` | 快捷键表与 reload 绑定 |
 | `ca2ef848d-DA54buzo.js` | `562,094` | `S5=8 / mie=4 / hie=40` 拖拽物理 |
 | `app.asar/…/Du-Wqi0E.js` | `4,642,379` / `4,878,120` | DevTools 菜单与 `IWi()` 键盘处理 |
+| `cf550b864-BHVEoOWt.js` | `11,162` / `13,200` / `16,600` / `17,2xx` | `xe()` 纯数据菜单模型 `{sections}`、四组 item 构造 |
+| `c58115fda-LR6i7rPD.js` | `45,499` / `92,262` / `92,731` / `100,087` | labels / 回调绑定、`{sections}=Qt(Pd)`、`menuSections={Id}` 传给 `Vt` |
+| `c4db265df-CHyZjtsm.js` | `24,636` / `26,959` / `13,0xx` | 通用 pane header `Tn()`；`Qe` 渲染器挂载；`Vs` popup 定位 |
+| `ca5db7aaf-C8dMH-IH.js` | 全文 9,563 B；`3,2xx` / `4,4xx` / `5,083` / `8,0xx` | `H()` 通用菜单渲染器、`U()` sections→Group、`Z()` item 字段展开、`role="menu"` |
+| `c8ae173c6-BUQ9DHQT.js` | `342` | 默认浏览器名 store（2.5.1） |
+| `shared-frame-CJdE5Ria.js` | `Vs`(`UD`) 导出映射 | 全应用共用菜单原语集 |
 
 ---
 
@@ -1617,6 +1758,66 @@ w-max max-w-full transition-opacity ease-snap motion-reduce:transition-none
 
 活体工具按钮 aria-label（中文 locale）：`选择元素` / `画笔` / `形状` / `文本`，浮层里另有 `隐藏标注工具`，全部 `aria-pressed=false`。
 
+#### 6.1.1 工具条结构与状态机（截图逐项对应）
+
+截图里的 6 个元素不是 6 个平级工具，而是 **3 个按钮 + 1 个下拉 + 1 条分隔线 + 1 个关闭**：
+
+| 截图 | 实现 | 关键代码 |
+| :--- | :--- | :--- |
+| 箭头光标 | `select` | `Ce({tool})` 里 `t==="select" ? {icon:"CursorFilled"} : ve[t]` |
+| 铅笔 | `pen` | `we({tool:"pen", armed:t==="pen", disabled, onToolChange})` |
+| 方框 + ∨ | `Shapes` 下拉（默认 `rect`） | `N({label:"Shapes", current:bt, pinnedOpen:F==="shape", pressed:yt})` |
+| T | `text` | `we({tool:"text", armed:t==="text", ...})` |
+| 竖线 | `fe` 分隔线 | 与颜色/线宽区分组 |
+| X | 关闭 / 隐藏工具条 | `Ae({label,onHide})` = 分隔线 + `icon:"X"` 的 ghost 按钮 |
+
+**表与文案**（`c23255574` @ `1,400`–`2,634`）：
+
+```js
+ve = { pen:{icon:"Edit"}, line:{icon:"LineSegment"}, arrow:{icon:"ArrowLine"},
+       rect:{customIcon:k}, ellipse:{customIcon:A}, step:{customIcon:pe},
+       redact:{icon:"EyeSlash"}, text:{icon:"TextT"} };   // 8 个（不含 select）
+xe = new Set(["line","arrow","rect","ellipse","step","redact"]);   // 形状/非笔集合
+me = { pen:"Pen", line:"Line", arrow:"Arrow", rect:"Rectangle",
+       ellipse:"Ellipse", text:"Text", step:"Step", redact:"Redact" }; // i18n key 见 6.6
+Se = { 2:"Thin", 4:"Medium", 8:"Thick", 12:"Extra thick" };
+_e = 5 色；he = { solid:"Solid", mosaic:"Mosaic", noise:"Noise" };
+```
+
+**工具按钮 `we()`**（@ `2,900`）：`variant:"ghost" iconOnly` + `aria-label=formatMessage(me[t])` + `pressed=armed` + `onClick: () => onToolChange(armed ? "select" : t)` —— **再点一次已选中工具会回到 `select`**，这是活体全部 `aria-pressed=false` 之外唯一的切换路径。
+
+**形状下拉 `N()`**（@ `5,724`）：`TriggerButton variant="ghost"` 带 `aria-label=label` / `aria-description=current` / `pressed` / tooltip；`pinnedOpen` 由单一状态 `F` 控制（`"tool"` / `"shape"` / `"color"` / `"width"` 互斥）。下拉内部：
+
+- `useState("rect")`（@ `9,4xx`）**记住上次选过的形状，默认 `rect`** —— 这就是截图中方框图标的来源；切到别的形状后图标随 `bt` 变。
+- `gt = dt.filter(Ne)` 为当前可用工具子集，`xt = gt.map(pt)` 为下拉项；`yt = t!=="select" && xe.has(t)` 决定 pressed；若记住的形状已不在子集则回退 `gt[0]`。
+- `St = oe && (t==="redact" || w)`：选中 `redact` 时颜色面板整体换成 `Redaction style`（`ge = Object.keys(he)`），否则显示 `Ink color`（`_e` 5 色）。
+- 颜色 / 线宽各自也是 `N()` 下拉，`current` 分别是 `formatMessage(_e[color])` / `formatMessage(Se[width])`。
+
+**三档压缩的状态属性**（@ `14,7xx`）：容器上 `data-layout={B}`（`full|compact|minimal`）、`data-resting`、`data-concealed`、`inert`；`minimal` 下隐藏 Clear all（`Fe&&B==="minimal"?null`）并改用 `Ae()` 只留分隔线 + X。显隐动画仍是 `w-max max-w-full transition-opacity ease-snap`，隐藏 `duration-fast` / 显示 `duration-snap`，`motion-reduce:transition-none`。
+
+**文案**：分组 `aria-label` = `Annotation tool`（`nUFJ0sE5c9`）；下拉 `Shapes`（`2iWb7cRQGh`）/ `Ink color`（`k+yLsrlkhB`）/ `Line width`（`SdHvg9BQQO`）/ `Redaction style`（`tBKdfPJtGX`）；X 按钮 `Hide annotation tools`（`xZ87eA5X6R`）或 `Close`（`rbrahOGMC3`），反向入口 `Show annotation tools`（`WqLEIFNVU0`）。Undo / Redo / Clear all 的 `disabledReason` 分别是 `Nothing to undo yet`（`XFpgi7xuL0`）/ `Nothing to redo yet`（`jZhy9dr1Lm`）/ `Nothing to clear yet`（`ZRQqPcheUz`）。
+
+#### 6.1.2 文本工具与快捷键
+
+文本标签用 `autoFocus` 的 `<textarea aria-label="Text label">`，`Esc` 取消并把焦点还给画布、`Cmd/Ctrl+Enter` 提交，两者都先过 6.2 的 CJK IME 守卫；`rows` 按换行数自适应，`resize-none overflow-hidden bg-transparent p-0 border-0`。
+
+工具条 tooltip 的 `shortcut` 由外部传入（本 chunk 内变量 `de` / `k` / `c.shortcut`），与 2.6 注册表一致：`cmd+shift+x` 进入/退出标注、`cmd+z` / `cmd+shift+z` Undo / Redo。**具体字形未在 chunk 内硬编码**（标 inferred）。
+
+#### 6.1.3 下拉菜单与设置菜单共用同一套原语
+
+`c23255574` 的 `h` = `Vs`（`shared-frame-CJdE5Ria.js` 的 `UD` 导出），与 2.5.2 里设置菜单渲染器 `ca5db7aaf` 用的是**同一套**：
+
+| | sketch 下拉 | 设置菜单 |
+| :--- | :--- | :--- |
+| 挂载 | `N()` → `h.Root{open}` + `h.TriggerButton` + `h.Popup{side:"top",align:"start"}` | `H()` → `Vs.Root` + `Vs.Trigger` + `Vs.Popup{side:"bottom",align:"end",collisionPadding}` |
+| 选项 | `je()` → `h.Item{leading,checked,checkedRole:"radio"}` | `Z()` → `Vs.Item{checked,checkedRole,keepOpen,hint,variant,…}` |
+| 分组 | `h.Group` / `h.Separator` / `h.Submenu` + `h.SubmenuTrigger` | `U()` → `Vs.Group` / `Vs.GroupLabel{header}` / `Vs.Separator` / 嵌套 `Popup` |
+| 关闭策略 | 选完即关 | `keepOpen:!0` 的 checkbox / radio 点选不关 |
+
+方向差异来自锚点位置：工具条贴在预览底部 → `side="top"`；`⋯` 在 pane 右上角 → `side="bottom" align="end"`。`checkedRole:"radio"` 在 sketch 里服务颜色 / 涂黑样式 / 线宽选项，在设置菜单里服务 Keep cookies 三档。
+
+这套原语是 **Base UI 风格的自研封装**（`render` prop、`createHandle()`、`checkedRole`、`keepOpen`、`side/align/collisionPadding`、`initialFocus`），不是 Radix；因此「蓝色 ✓ / hint / danger 红字 / 分组标题 / 子菜单箭头」在所有菜单里天然一致。
+
 ---
 
 ### 6.2 Canvas 绘制物理
@@ -1735,7 +1936,9 @@ nUi()  = rotate((leanDeg*tanh(speed/leanAtPxPerMs)).toFixed(2)+"deg")  // 倾斜
 
 | 载体 | 偏移 | 事实 |
 | :--- | :--- | :--- |
-| `ion-dist.asar/…/c23255574-mtRCVDRk.js` | `2,104` / `12,773` / `51,089` | 工具/颜色/线宽、容器压缩、IME 守卫 |
+| `ion-dist.asar/…/c23255574-mtRCVDRk.js` | `1,400` / `2,250` / `2,900` / `5,724` / `9,4xx` / `10,300` / `12,700` / `51,089` | `me`/`ve`/`xe` 工具表、`we()` 按钮、`N()` 形状下拉、`data-layout` 三档、IME 守卫（6.1.1–6.1.3） |
+| `…/shared-frame-CJdE5Ria.js` | `Vs`(`UD`) 导出映射 | 与设置菜单共用的菜单原语集（6.1.3） |
+| `…/ca5db7aaf-C8dMH-IH.js` | 全文 9,563 B | 通用菜单渲染器 `H()`，见 2.5.2 |
 | `…/cda4f50bb-DJqs4vdA.js` | `912` / `5,353` | 覆盖层几何与 Add to chat |
 | `…/c194f2b35-JT2lp-xB.js` | 全文 5.6 KB | 图片标注保存 |
 | `…/c8f0a3c9d-DIux0sno.js` | `855` | preview-annotation-context |
