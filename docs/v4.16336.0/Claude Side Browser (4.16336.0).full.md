@@ -332,6 +332,141 @@ function h(e, t, n) {          // 纯函数重排：findIndex → clamp → spli
 
 checkbox / radio 均 `keepOpen:true`（点选不关菜单）。
 
+#### 2.5.1 动态默认浏览器名与菜单状态矩阵
+
+左上第一项不是固定文案。`c8ae173c6-BUQ9DHQT.js` @ `342` 维护一个外部 store：
+
+```js
+const messages = {
+  named:   { defaultMessage: "Open in {browserName}", id: "1WdokkZgcZ" },
+  generic: { defaultMessage: "Open in default browser", id: "1B2oJwBn8a" }
+};
+let cached = null, inFlight = false;
+const refresh = () => {
+  if (inFlight) return;
+  const p = bridge?.getDefaultBrowserName?.();      // shared-25 的 z_，native bridge
+  if (!p) return;
+  inFlight = true;
+  p.then(name => { const next = name || null;
+                   if (next !== cached) { cached = next; store.notify(); } },
+         () => {}).finally(() => { inFlight = false; });
+};
+window.addEventListener("focus", refresh);          // 每次窗口获得焦点重新探测
+```
+
+所以截图里的「**在 Dia 中打开**」是 `named` 分支（本机默认浏览器为 Dia）；`getDefaultBrowserName()` 返回空 / 失败 / 尚未探测完成时回退到 `generic` 的 `Open in default browser`（2.5 表格里记录的即回退文案）。`inFlight` 防并发，`cached` 变化才 `notify()` 重渲染，**窗口 focus 是唯一刷新时机**。
+
+**菜单项状态矩阵**（`cf550b864-BHVEoOWt.js`）：
+
+| 机制 | 出现次数 / 偏移 | 用途 |
+| :--- | :--- | :--- |
+| `checkedRole:"checkbox"` + `keepOpen:!0` | 3 处 @ `14,362` / `14,596` / `14,831` | 三个行为开关（截图里前两个蓝色 ✓） |
+| `checkedRole:"radio"` | 3 处 @ `15,208` / `15,350` / `16,264` | Keep cookies 三档 |
+| `hint:` | 3 处 @ `13,702` / `15,475` / `16,363` | 子菜单当前值（截图「响应式」「直到退出」） |
+| `disabledReason` | 3 处 @ `12,540` / `12,800` / `13,720` | 如 `Open a page first.` |
+| `variant:"danger"` | `16,516` | `Clear browsing data`（截图红字） |
+| `cookiesHeader` | `10,418` / `16,799`… | Cookie 分组灰色标题 |
+| `fe` 分隔线 | 多处 | 四组之间的 hairline |
+
+**截图逐项对照**（`⋯` 菜单展开态）：
+
+| 截图项 | 2.5 表格项 | 状态 |
+| :--- | :--- | :--- |
+| 在 Dia 中打开 | `Open in default browser` 的 named 变体 | 动态，见上文 |
+| 复制 URL / 保存截图 / 打开 HTML 文件… | `Copy URL` / `Save screenshot` / `Open HTML file…` | 常驻 |
+| 视口 › 响应式 | `Viewport` 子菜单 + `hint` | 当前预设显示于右侧 |
+| 在内建浏览器中打开链接 ✓ | `Open links in Browser panel` | checkbox 选中 |
+| 自动打开 Claude 写入的文件 ✓ | `Auto-open files Claude writes` | checkbox 选中 |
+| 自动验证更改 | `Auto-verify changes` | checkbox 未选中 |
+| 管理允许的网站… | `Manage allowed sites…` | 常驻 |
+| Cookie（灰） | `cookiesHeader` | 分组标题，不可点 |
+| 导入 Cookie… | `Import cookies…` | 见 4.5 |
+| 保留 Cookie › 直到退出 | `Keep cookies` 三档 radio + `hint` | 当前 `none`，见 4.6 |
+| 清除浏览数据 | `Clear browsing data` | `variant:"danger"`，见 4.6 |
+
+截图中**未出现** `Show annotation tools` / `Show dev server logs` / 本地网络 Allow·Block —— `xe()` 按传入 prop 是否存在决定渲染，当前上下文未提供这些 prop（inferred），不代表功能缺失。`Use cookies you already imported` 同样为条件项。
+
+#### 2.5.2 菜单实现方式：模型 / 组装 / 渲染器 / 原语四层
+
+设置菜单**不是**一个 React 组件直接写 JSX，而是「纯数据模型 → 通用渲染器」的协议式架构。这也解释了为什么 Preview / Browser / Artifact / Code 四种 pane 的 `⋯` 菜单长得一样。
+
+| 层 | 载体 | 职责 |
+| :--- | :--- | :--- |
+| ① 模型 | `cf550b864-BHVEoOWt.js` `xe()`（@ `11,162`，177 个 memo slot） | 接收回调 / 状态 / labels，**返回 `{sections}`，零 DOM** |
+| ② 组装 | `c58115fda-LR6i7rPD.js`（@ `92,262` / `92,731`） | 注入 `labels`、绑定回调、追加 dev-server section：`Dt ? [...Fd,{items:[Dt]}] : Fd` |
+| ③ 宿主 | `c4db265df-CHyZjtsm.js` `Tn()`（@ `24,636`，237 slots） | 通用 pane header，把 sections 作为 `menuSections` 传给 `Qe` |
+| ④ 渲染器 | `ca5db7aaf-C8dMH-IH.js` `H()`（导出 `i`，`c4db265df` 里别名 `Qe`） | `⋯` trigger + Popup + sections → items |
+| ⑤ 原语 | `shared-frame-CJdE5Ria.js` 的 `Vs`（内部 `UD`） | `Root / Trigger / TriggerButton / Popup / Group / GroupLabel / Item / Separator / Submenu / SubmenuTrigger` |
+
+**① 模型层协议**（`xe()` @ `17,2xx`）：
+
+```js
+// 四组；空组被过滤
+const X = [ {items:U}, {items:W}, {items:G}, {header:H.cookiesHeader, items:K} ]
+  .filter(s => s.items.length > 0);
+return { sections: X };
+```
+
+item 是 plain object，字段全集由 ④ 的 `Z()` 逐项展开（@ `8,0xx`）：
+
+```
+label, icon, ariaLabel, leading, trailing, shortcut,
+hint, description, descriptionDir, descriptionLines,
+disabled, disabledReason, variant ("danger"),
+checked, checkedRole ("checkbox" | "radio"), keepOpen,
+items (子菜单), separatorBefore, noSeparator, onSelect
+```
+
+- **条件渲染靠 prop 存在性**：`xe()` 开头把每个回调/状态转成布尔（`L=p!==void 0`、`R=ne!==void 0`、`B=ie!==void 0`…），只有为真的分支才 `U.push(item)`。截图里缺少的项不是 CSS 隐藏，而是模型层根本没生成。
+- **状态完全受控**：`checked` 取 `openLinksInPreview / autoOpenFiles / autoVerify / previewStorage` 等 props，`onSelect` 一律调 `onXChange(!value)`；模型层不读 store、不持久化。
+- **labels 注入**：`H = {...ve, ...labels}`，`ve` 是默认英文表，父组件覆盖本地化与动态文案（`Open in Dia` 即由此注入）。
+- **回调稳定化**：`m()` = `shared-0` 的 `FT` / `Ce`（@ `1,689`）—— `useRef` 保持最新回调、返回稳定引用，使 177 个 React Compiler memo slot 不因父组件重渲染而失效。
+- `p = shared-0` 的 `Bh` / `GO` = `globalThis["claude.web"]?.Launch`（@ `224,321`），即主进程能力桥的入口。
+
+**④ 渲染器 `H()`**（`ca5db7aaf` @ `3,2xx`–`4,6xx`）：
+
+```js
+const g = sections ?? [];
+if (g.every(s => s.items.length === 0)) return null;      // 全空 → 连 ⋯ 都不渲染
+const single = unroll ? ee(g) : null;                     // 单 item 折叠优化
+if (single) return <Button icon={single.icon} aria-label={single.ariaLabel}
+                           onClick={single.onSelect} />;  // 不弹菜单，直接一键
+const label = formatMessage("{pane} settings", {pane: paneName});   // 0v5PlsRKXz
+return <Vs.Root onOpenChange={onOpenChange}>
+  <Tooltip content={label}>
+    <Vs.Trigger disabled={disabled} render={
+      <Button variant="ghost" iconOnly icon="DotsHorizontal"
+              aria-label={label} tooltip={false} ref={triggerRef} />} />
+  </Tooltip>
+  <Vs.Popup side="bottom" align="end" container={portalContainer}
+            collisionPadding={...} onContextMenu={...}>
+    <U sections={g} portalContainer={...} />
+  </Vs.Popup>
+</Vs.Root>;
+```
+
+`U()`（@ `4,4xx`）遍历 sections：`idx>0 && !section.noSeparator` 插 `<Vs.Separator/>`，每组 `<Vs.Group>` 内先 `<Vs.GroupLabel>{header}</Vs.GroupLabel>`（截图里的灰色「Cookie」），再 `items.map(item => <Z …/>)`。`Z()` 对复杂 item 展开全部字段到 `<Vs.Item … onClick={item.onSelect}>`；只有 `label + onSelect (+icon)` 的简单 item 走快路径（转 `ariaLabel`，省掉一堆 prop 比较）；`items` 存在时渲染 `Submenu` / `SubmenuTrigger` + 嵌套 `Popup`；`separatorBefore` 前置分隔线。
+
+**⑤ 原语是全应用共用的**：`c23255574`（sketch 形状/颜色/线宽下拉，其 `h` = `Vs`）、`cf580efe9`（dev server 菜单）、`c4db265df`（pane layout popup，`g.Root` + `g.Trigger` + `g.Popup side=bottom align=end padding=xs`）都 import 同一个 `Vs`。它是 **Base UI 风格的自研封装**（`render` prop、`createHandle()`、`checkedRole`、`keepOpen`、`side/align/collisionPadding`、`initialFocus`），不是 Radix。截图里的蓝色 ✓、`hint`、红色 danger、分组标题、子菜单箭头全部由原语渲染 —— 模型只给数据。
+
+`keepOpen` 的语义也在原语里：checkbox / radio 点选后 `Root` 不关闭，所以截图能连续勾选。
+
+**onSelect 落点**（回调在 ② 父组件，部分链路标 inferred）：
+
+| 项 | 落点 |
+| :--- | :--- |
+| 复制 URL | `Ed` → clipboard / `onCopyUrl`（父组件 @ `92,442`） |
+| 保存截图 | `Od = () => kc("screenshot")`（@ `92,262`）→ `capturePreviewScreenshot`，见 6.4 |
+| 打开 HTML 文件… | `onOpenFile` → native file dialog（inferred，回调由父组件提供） |
+| 视口子菜单 | `viewportItems` → `setPreviewViewport`，见 2.4 / 第三篇 |
+| 三个 checkbox | `onOpenLinksInPreviewChange` / `onAutoOpenFilesChange` / `onAutoVerifyChange` → 父组件受控状态 + 设置持久化（inferred） |
+| 管理允许的网站… | `Nd = xt.menuSections?.[0]?.items[0]?.onSelect`（@ `92,635`）；单 item 时触发 ④ 的 `unroll` 直接按钮 |
+| 导入 Cookie… | 第四篇 4.5 的 native 导入流程 |
+| 保留 Cookie 三档 | `previewStorage` radio + `hint`，见 4.6 |
+| 清除浏览数据 | `variant:"danger"` → `Clear session data?` 确认 → `clearPreviewBrowsingData`，见 4.6 |
+
+**无障碍与动效**：`aria-label="{pane} settings"`、`role="menu"`（@ `5,083`）、`GroupLabel` 分组、`checkedRole` 映射选中语义、`disabledReason` 转 tooltip、键盘导航与 `initialFocus` 由 `Vs` 原语提供；Popup 统一 `side=bottom / align=end / collisionPadding`，同套原语的 tooltip 延迟 `700ms`（pane layout popup @ `13,0xx`）。
+
 ---
 
 ### 2.6 快捷键矩阵
@@ -368,6 +503,12 @@ checkbox / radio 均 `keepOpen:true`（点选不关菜单）。
 | `c518a31cc-DFyebqGe.js` | `21,464` / `25,666` / `32,222` | 快捷键表与 reload 绑定 |
 | `ca2ef848d-DA54buzo.js` | `562,094` | `S5=8 / mie=4 / hie=40` 拖拽物理 |
 | `app.asar/…/Du-Wqi0E.js` | `4,642,379` / `4,878,120` | DevTools 菜单与 `IWi()` 键盘处理 |
+| `cf550b864-BHVEoOWt.js` | `11,162` / `13,200` / `16,600` / `17,2xx` | `xe()` 纯数据菜单模型 `{sections}`、四组 item 构造 |
+| `c58115fda-LR6i7rPD.js` | `45,499` / `92,262` / `92,731` / `100,087` | labels / 回调绑定、`{sections}=Qt(Pd)`、`menuSections={Id}` 传给 `Vt` |
+| `c4db265df-CHyZjtsm.js` | `24,636` / `26,959` / `13,0xx` | 通用 pane header `Tn()`；`Qe` 渲染器挂载；`Vs` popup 定位 |
+| `ca5db7aaf-C8dMH-IH.js` | 全文 9,563 B；`3,2xx` / `4,4xx` / `5,083` / `8,0xx` | `H()` 通用菜单渲染器、`U()` sections→Group、`Z()` item 字段展开、`role="menu"` |
+| `c8ae173c6-BUQ9DHQT.js` | `342` | 默认浏览器名 store（2.5.1） |
+| `shared-frame-CJdE5Ria.js` | `Vs`(`UD`) 导出映射 | 全应用共用菜单原语集 |
 
 ---
 
@@ -1135,9 +1276,401 @@ bg-fill-secondary  |  tile: bg-surface-3  |  flat: bg-alpha-2
 
 **详情卡 `cs()`**（@ `36,061`）：`flex flex-col gap-sm max-w-full min-w-0 max-h-[360px] overflow-y-auto p-md text-body select-text text-start rounded-[inherit]`，头部 `Included with your message` + Cursor 图标，截图 `<img alt="Screenshot of the selected element" className="block max-h-[120px] max-w-full self-start rounded-sm shadow-card-ring">`，`unsafeDisplay` 时给隐藏/双向字符红字警告。simulator 变体 `ms()`（@ `41,982`）额外有 note 编辑器 `Your note for Claude about this element` / `Tell Claude what to change`（`No note` 子标签、`qc()` 空文本删 `instruction`）。
 
+#### 5.7.1 Hover 意图状态机：600ms 打开 / 200ms 关闭 / 预热锁 / pinned
+
+常量（`c0a74d72b` @ `64,591`）：`var _c=600, vc=200;`。状态定义集中在 `Xc()`（@ `75,500`–`86,100`）：
+
+| 状态 | 实现 | 含义 |
+| :--- | :--- | :--- |
+| `Be / Ve` | `useState(null)` | 当前打开 preview 的胶囊 id |
+| `et / X` | `useState(null)` | pinned（点击 / 菜单固定）的 id |
+| `rt / it` | `useState("hover")` | `openedVia`，传给详情卡埋点 |
+| `Pt` | `useRef(false)` | 本次交互中**是否已打开过任一 preview**（预热锁） |
+| `Ft` / `at` | `useRef(undefined)` | 打开 / 关闭 timer |
+| `Rt` | `useRef(false)` | 当前是否 pinned |
+
+`zt = onPreviewIntent(value, force?, pinned?, source?)`（@ `78,847`）：
+
+```js
+const zt = (e, t, n, r) => {
+  const force = t === true, pinned = n === true, source = r ?? "hover";
+  clearTimeout(Ft.current); clearTimeout(at.current);
+  if (e === null) {                       // 指针离开胶囊
+    if (Rt.current && !force) return;    // pinned 时不关闭
+    Rt.current = false; X(null); Ve(null); return;
+  }
+  if (!(Rt.current && !pinned)) {
+    Rt.current = pinned;
+    X(pinned ? e : null);
+    it(source);
+    if (force || Pt.current) {           // 已预热 → 立即切换
+      Pt.current = true; Ve(e); return;
+    }
+    Ft.current = setTimeout(() => { Pt.current = true; Ve(e) }, 600);
+  }
+};
+```
+
+- **首次 hover 需 600ms** 才出卡（防止扫过输入框时刷屏）；一旦本次交互打开过任一卡片，之后 hover 其它胶囊**零延迟切换**（`Pt.current` 预热锁，直到 `an()` 复位）。
+- `an(force)`（@ `80,423`）：`pinned && !force` 时不关；否则清两个 timer、复位预热，强制时立即 `Ve(null)`，普通离开则 `setTimeout(() => Ve(null), 200)` —— **200ms 宽限**让指针从胶囊移到浮层。
+- `sn`（`onPreviewEnter`）= `clearTimeout(at.current)`；`un`（`onPreviewLeave`）= `an()`。
+- 右键菜单 `Show what this sends`（`ZPKWqGjW88`）→ `onPreviewIntent(value, true, true, "menu")`：**立即打开 + pinned + `role="dialog"`**，hover 离开不再关闭。
+- 附件排外层 `onMouseEnter / onMouseLeave / onBlur`（@ `86,048`）：`onBlur` 检查 `relatedTarget.closest("[data-epitaxy-pill-preview]")`，焦点进入浮层则不关。
+- `cs({openedVia})` 里 `ss(a)` 只有 `click | keyboard | menu` 才触发 `kn(a)` 埋点；纯 hover 不埋点。
+
+#### 5.7.2 浮层定位与首帧守卫（`Pc` @ `65,462`，全文 153 个 memo slot）
+
+```js
+useFloating({
+  open: previewOpen,
+  placement: "top-start", strategy: "fixed", transform: false,
+  whileElementsMounted: Nc,                 // autoUpdate + ResizeObserver
+  middleware: [offset(8), flip(Bc), shift(zc)]
+});
+```
+
+| 细节 | 值 |
+| :--- | :--- |
+| `Nc` | `autoUpdate` + `ResizeObserver` 观察 `closest(".epitaxy-attachment-shelf")`（`jc` / `Mc`） |
+| `zc` | 把浮层 `maxWidth` clamp 到 `max(availableWidth, 160)`；`wc=160` 最小宽、`Sc=10` boundary 内边距、`Cc=16` 无 boundary 时 padding |
+| `Uc` | **320**（详情卡固定 width） |
+| zIndex | `30` |
+| 渲染条件 | `previewContent !== undefined && previewOpen` |
+| portal | `ke ?? document.body` |
+| 浮层 DOM | `div[data-epitaxy-pill-preview][data-surface="popover"]`，`epitaxy-root … rounded-card pointer-events-auto outline-none`，`tabIndex=-1`；pinned + hoverPeek 时 `role="dialog"` |
+| 首帧守卫 | `isPositioned === false` 时 `opacity:0; pointerEvents:"none"`，避免定位完成前闪在左上角 |
+| 事件守卫 | `onContextMenu / onPointerDown / onTouchStart` 全部 `stopPropagation`（`yc`）；`onBlur` 联合 reference（`K.current`）判断焦点是否真的离开 |
+
+`onMouseEnter` 挂在 trigger（`group/pill relative shrink-0 hover:z-10 focus-within:z-10`）上，回调即 `at = () => A?.(V ? value : null, false, false, "hover")`。
+
+#### 5.7.3 数据构造链：ctx → view → sections
+
+```
+captureElementContext (5.3) → contexts[sessionId] (5.6 链路 A)
+  → Xc() 遍历 elementContexts
+  → Pc({ previewContent: cs({ ctx, width: 320, scrollRegionLabel, openedVia }) })
+  → cs(): Xn(ctx) 生成 view → ko(view) → wo(主区) / To(rows) / Do(折叠)
+  → c06cf64bb: Gd(ctx) → Hd({...}) → sections[]
+```
+
+`Rd(ctx)`（`c06cf64bb` @ `63,435`）：优先取 `ctx.component{name,owners,props,definedIn,renderedAt}`，owners 去空后 `slice(0,8)`、各字段按 `Md` 截断；兼容旧格式 `reactComponent` 字符串 `Name (in A > B)` 与 `reactProps`。
+
+`Hd(...)`（@ `64,353`）按固定顺序 push sections：
+
+| section id | kind | 值来源 |
+| :--- | :--- | :--- |
+| `element` | text | `zd(tagName, classes, component)`：有组件 → `<AppNavigation />`；无组件 → `<tag class="c1 c2" />`（class 最多 2 个） |
+| `component` | text | `component.name`（渲染时再拼 owners） |
+| `props` | entries | `Bd(props)` = `Object.entries` → 字符串直出、其它 `JSON.stringify`；`Ld()` 取前 `Pd` 条并 `H(k,256)` 截断，超出追加 `["…","+N"]` |
+| `source` | text | `ctx.sourceFile` |
+| `definedIn` | text | `component.definedIn`（与去掉 `:\d+` 行号后的 source 不同才显示） |
+| `renderedAt` | text | `component.renderedAt` |
+| `text` | text | `innerText?.slice(0,200)` |
+| `attributes` | entries | `id` / `class` / `attributes` |
+| `path` | code | `parentPath` |
+| `styles` | entries | `computedStyles`（`Vd` 用 `String(v)`） |
+| `html` / `siblings` | code | `outerHTML` / `siblingHTML`，超长带 `cut{omitted,tail}` |
+| `raw` | code | `Exact text sent` |
+
+`Gd(ctx)`（@ `66,724`）用 `Wd()` 的 `display()`（`ad()` 检测隐藏字符 / 双向控制字符）过一遍所有字段，`Ud()`（@ `65,870`）再对 sections 逐条过滤；命中则 `unsafeDisplay:true` → 详情卡顶部红字警告（`/WQmF660Zr`）。这与 5.5 的提示注入防护是**同一套显示层过滤器**。
+
+#### 5.7.4 分区渲染：`ko` / `wo` / `mo` / `Do`
+
+- `ko(view)`（@ `29,423`）：`Co = Set(["element","component","props","source","definedIn","renderedAt","text"])` 是**主区 7 个**；其余（attributes / path / styles / html / siblings / raw）进 `Do()` 折叠面板，按钮 `Show {count} more details`（`zmi5t2SGo3`）/ `Hide details`（`X5Q310+ucD`），只有 raw 时用 `Show exact text sent`。simulator 变体额外 `To({rows})`。
+- `wo({sections,owners})`（@ `26,958`）：`<dl class="grid grid-cols-[auto_minmax(0,1fr)] gap-x-md gap-y-1 text-body">`，每行 `<dt class="text-muted-as-secondary">` 标题由 `So()` 本地化（`Element` / `Component` / `Props` / `Source` / `Defined in` / `Rendered at` / `Text` / `Selector` / `Computed styles` / `HTML` / `Siblings`），`<dd>` 交给 `mo()`。**这就是截图里「元素 / 组件 / Props / 来源」的两列布局**。
+- `mo(section)`（@ `20,983`）三种 kind：
+  - `entries` → 再一层 `<dl class="grid grid-cols-[auto_minmax(0,1fr)] gap-x-sm gap-y-0.5 text-code">`，`<dd class="min-w-0 text-primary whitespace-pre-wrap [overflow-wrap:anywhere]">`；`nested` 行按 `depth * var(--cds-gap-md)` 缩进。**截图里 `[functio n]` 的断行不是数据被截断，是 `overflow-wrap:anywhere` 在窄列里的折行**，原值仍是 `[function]`。
+  - `code` → `<pre dir="ltr" class="text-code … whitespace-pre-wrap [overflow-wrap:anywhere]">`，超长附 `{n} characters not shown here` + 尾部。
+  - `text` → `id==="component"` 时 `<code>` 组件名 + `<span class="text-secondary">` + `formatMessage("in {owners}", {owners: owners.join(" › ")})`（key `3exxNrWVG9`，简中译作「在 … 中」）；`source`/`definedIn`/`renderedAt` 用 `<code dir="ltr">`；`element` 用 `<span dir="ltr">`。
+- `Do()` 的展开动效：`bo()` 用 `clipPath: inset(...)` + 子元素 `translateX` 的 Web Animations（`element.animate(..., {duration, easing, fill})`），切换前先 `cancel()` 旧动画，避免快速连点产生跳帧。
+
+#### 5.7.5 截图字段逐项对照
+
+| 截图行 | section / 组件 | 数据来源 | 渲染 |
+| :--- | :--- | :--- | :--- |
+| 「已包含在您的消息中」+ Cursor 图标 | `cs()` 头部 | `/kf//7IggN` | `flex items-center gap-1 text-secondary` + `truncate` |
+| 页面缩略图 | `as(ctx.screenshot)` | 5.3 采集的 base64 PNG | `<img src="data:image/png;base64,…" max-h-[120px] rounded-sm shadow-card-ring>`（`b/youTcrTC`） |
+| 元素 `<AppNavigation />` | `element` | `zd()` + 5.4 `yLi` 反射名 | `<span dir="ltr">` |
+| 组件 `AppNavigation 在 HomeWorkspace › AuthGate › Page › ClientPageRoot 中` | `component` | `component.name` + `owners.join(" › ")` | `<code>` + `in {owners}`；4 个 owner 与 5.4 的 `MAX_OWNERS=4` 一致 |
+| Props `active chat` / `identity [object]` / `onLogout [function]` / `onWorkspaceChange [function]` / `workspaceQuery tab=chat` | `props` | `Bd(component.props)` | `[object]` / `[function]` 正是 5.4 `summarizeProp` 的产出；`overflow-wrap:anywhere` 造成 `[functio n]` 折行 |
+| 来源 `/components/layout/app-…` | `source` / `definedIn` | `ctx.sourceFile`（5.4 VLQ sourcemap 反查） | `<code dir="ltr" class="text-code …">` |
+| 卡片整体 | `cs()` | — | `max-h-[360px] overflow-y-auto p-md select-text text-start rounded-[inherit]`，`width:320` |
+
+#### 5.7.6 无障碍与边界
+
+- 详情卡不是 `aria-hidden`：滚动区有 `role="group"` + `aria-label={scrollRegionLabel}` + `tabIndex=0`，并允许 `select-text` 复制；pinned 时浮层升级为 `role="dialog"`。
+- `No(e)`：浮层内已有焦点，或胶囊 `aria-expanded="true"` 时不抢焦点；`Lo()` / `Po()` 在删除胶囊后按环序 `[n+1.., 0..n-1].reverse()` 把焦点交给相邻附件。
+- `restored` 标记的胶囊不重播入场；`code-element-context-chip` coachmark（`us()`）只在首次发现该能力时出现。
+- `unsafeDisplay` 红字警告（`data-testid="element-context-unsafe-notice"`）在文本含隐藏/双向字符时出现 —— 详情卡显示给用户的内容与 5.5 注入 prompt 的过滤口径一致。
+
 ---
 
-### 5.8 证据索引（本篇）
+### 5.8 文件拖拽上传：三套 drop overlay 与视觉规格
+
+> **技术领域与英文指代**：`File Drag & Drop / Drop Zone Overlay`
+> **证据类型**：`user-screenshot`（用户提供，3618×1952）+ `shipped-artifact`（字节偏移）+ `controlled-replay`（Chrome 157 CDP，注入客户端原始 CSS 后读 computed style / 动画时序）
+> **术语说明**：本节出现的 --cds-* / --df-* 均为 **4.16336.0 客户端运行时变量**（shipped-artifact 观测），不是本仓库 `cds-theme.css` 的复刻令牌；按 `check:tokens` 门禁要求，一律以 var(...) 形式或代码块书写，不登记为仓库令牌。
+
+#### 5.8.1 截图判读与像素证据
+
+| 观测项 | 原图实测 | 结论 |
+| :--- | :--- | :--- |
+| 亮蓝内描边 | 左边界 `x=20..24`、上边界 `y=20..24`，5 device px @2x ≈ **2 CSS px**，RGB `(31,101,216)` | 对应 `inset 0 0 0 2px var(--cds-fill-accent)` |
+| 蓝色胶囊包围盒 | `(423,946) → (709,1006)` = 286×60 device px → **143×30 CSS px** | 对应 `padding:4px 10px` + `border-radius:9999px` 的 8 字标签 |
+| pill 与边框同色 | 两者像素同为 `(31,101,216)` | 同一 accent 变量，而非两套色 |
+| 背景内容 | 会话文字被淡化、轻微模糊 | badge 的 surface-0 40% 覆盖 + `backdrop-filter:blur(2px)` |
+| 右侧 Browser/Preview pane | 完全无蓝框、无遮罩 | 该 pane 未注册同一 drop zone（截图实证 + 源码推断） |
+
+中文文案「将文件拖放到此处」对应 `i18n/en-US.json` 的 `8QkUkTTC9V = "Drop files here"`。`app.asar/resources/i18n/zh-Hans.json` 仅 823 条（主进程/原生菜单文案）且不含该 key，前端简中由运行时语言包提供 —— 这一层为 **inferred**，不作为 shipped-artifact 结论。
+
+#### 5.8.2 三套 overlay 在 4.16336.0 并存
+
+| # | 体系 | 载体 | 触发条件 | 视觉 | 动效 |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| A | 全局屏幕级 `DropZoneProvider` | `shared-9-BgdM6Y1f.js` `xh()` @ `36,766` | `dragState` 为 OFF/ON_TARGET | `fixed inset-0` + `bg-bg-100/90` + 居中 `ObjectDocumentAdd` 图标 + 文案，portal 到 `document.body`，zIndex `ve` | `animate-screen-drop-in` = `.1s ease-out fade`，`motion-reduce:animate-none` |
+| B | dframe badge（**截图同款**） | `c4c113f6f-B-i6bpoH.js` `_()` @ `1,116` + `shared-styles-C9nbzN1z.css` @ `53,484` | `isDragOver && fileHint && Files && localStorage 未关闭` | 2px accent 内描边 + surface-0 40% + blur(2px) + 蓝色 pill 标签 | `cds-fade-in` var(--cds-dur-base) var(--cds-ease-out)（0.2s / cubic-bezier(.165,.84,.44,1)） |
+| C | 区域 ring / dashed / 三图标 area | `cc63499d2-BD7iFRH4.js` `l()` @ `262`；`cc17a11d9-B39REwC5.js` @ `380` | `isDragOver`（无 hint）/ 空状态 area | on-target 2px ring + 24px glow；off-target 1px dashed；area 版三图标 + 文案 | `cds-drop-ring-in` .15s；`cds-fade-in` .2s / 80ms；`cds-drop-icon-rise` .22s 交错 0/60/120ms |
+
+A 属于旧主 App 的 provider 体系，B/C 属于 dframe（桌面框架 / 会话 pane / 侧边浏览器）体系；三套共用同一个 i18n key 与同一个 accent 变量。截图是 **B**，不是 A（A 会盖住整个窗口且为白色遮罩）也不是 C（C 没有蓝色 pill）。
+
+#### 5.8.3 badge / label 的完整样式规格（controlled-replay computed）
+
+| 元素 | 属性 | computed 值 | 来源 |
+| :--- | :--- | :--- | :--- |
+| badge | position / inset | `absolute` / `inset:0`（`c4c113f6f` 传 `inset-0`；分栏版改用 inline left/top/width/height） | `shared-styles` |
+| badge | border-radius | `8px`（var(--df-radius-card,8px) 回退） | 同上 |
+| badge | border | `1px solid hsl(none 0% 4.31% / .2)`（var(--cds-border-strong)） | 同上 |
+| badge | background | `color(srgb .976 .976 .969 / .4)` = color-mix(in srgb, var(--cds-surface-0) 40%, transparent) | 同上 |
+| badge | backdrop-filter | `blur(2px)` | 同上 |
+| badge | box-shadow | `rgb(42,120,214) 0 0 0 2px inset` | var(--cds-fill-accent) |
+| badge | ::before | `inset 0 0 24px 0 color-mix(in srgb, var(--cds-fill-accent) 20%, transparent)` | 同上 |
+| badge | transition | left / top / width / height / opacity 各 `.12s cubic-bezier(.215,.61,.355,1)`（RTL 用 right） | var(--df-ease-out-cubic) |
+| badge | 其它 | font 14px / 500，`pointer-events:none`，`aria-hidden:true`，zIndex 40 | `a(40)` / `i(40)` |
+| label | background / color | `rgb(42,120,214)` / `#fff` | var(--cds-fill-accent) / var(--cds-gray-0) |
+| label | border-radius / padding | `9999px` / `4px 10px` | 同上 |
+| label | font / transition | 14px / 500；background-color + color `.12s` 同曲线 | 同上 |
+| label | 实测尺寸 | 重放 `132×29 CSS px`（8 个汉字）；截图 `143×30 CSS px` | 两者高度一致，宽度差来自字体/色域换算 |
+
+**颜色核对**：客户端 CSS 定义 `--cds-blue-450: #2a78d6`（另一处 `#257de0`），`--cds-fill-accent` 经 var(--cds-role-accent-fill) / var(--cds-role-accent-450) 链路解析为 `#2a78d6`（重放 computed `rgb(42,120,214)`）；截图采样 `(31,101,216)` 与之同色系，差异来自 JPEG 压缩与 macOS 截屏色彩配置 —— 属像素级**一致**，不视为另一套色。窗口失焦时 `:root[data-window-active=false]` 把 accent 回落到 var(--cds-blue-450)。
+
+**变体**：`[data-hint]` 时 badge `opacity:.45`、label 改 var(--cds-neutral-30) 底 / var(--cds-neutral-700) 字（分栏拖拽的「预览态」）；`prefers-reduced-motion: reduce` 与 `[data-reduce-motion=true]` 下 badge/label/::before 全部 `transition:none`。
+
+#### 5.8.4 ring / glow / area overlay 与 badge 复用
+
+```css
+/* cc63499d2 l() · on-target */
+.pointer-events-none.absolute.inset-0.rounded {
+  box-shadow: inset 0 0 0 2px var(--cds-fill-accent);
+  animation: .15s cubic-bezier(.215,.61,.355,1) cds-drop-ring-in;
+}
+/* 内层 glow：.2s / cubic-bezier(.215,.61,.355,1) / 80ms / backwards cds-fade-in */
+/* off-target：border border-dashed border-accent + .15s cds-fade-in */
+```
+
+- `shared-9` 的 `bh()` 不是卸载重挂，而是**同节点 opacity 交叉淡入**：OFF 态 `border-dashed` opacity 100、ON 态 2px ring + glow opacity 100，靠 `transition-opacity duration-fast` 切换，避免 drag 目标切换时闪一下。
+- `cc17a11d9` 的 area 版：三图标 Image / Files / Folder 初始为 `-rotate-[14deg]` / `-translate-y-3` / `rotate-[14deg]`，用 `cds-drop-icon-rise .22s` 以 **60ms / 0ms / 120ms** 错峰浮起；`area=true` 用 `inset-0 rounded-[inherit]`、icons `lg`、无 backdrop-blur；`area=false` 用 `inset-3.5 rounded-card` + `backdrop-blur-[12px]` + icons `xl`；容器统一 `bg-page opacity-60`。
+- `shared-23-BRmsPtuN.js` 把**同名** `dframe-drop-overlay-badge` / `-label` 复用于会话分栏拖拽（Move here / Swap / Open here / Split view），按 col/row 权重用 `calc(...% - 16px)` 计算几何，并启用 badge 的 left/top/width/height 过渡 —— 证明这是**通用 drop 目标徽章**，不是文件上传专用组件。
+
+---
+
+### 5.9 拖拽状态机与事件契约
+
+#### 5.9.1 架构一：DropZoneProvider 四态（`shared-9` @ `32,995`）
+
+```js
+ph = { IDLE, DRAGGING_OFF_TARGET, DRAGGING_ON_TARGET, DROPPED }
+gh(e) = e.dataTransfer?.types.includes("Files") ?? false   // 唯一准入
+```
+
+事件全部挂在 `f.current.ownerDocument.body`，capture 与 bubble 混合：
+
+| 事件 | 阶段 | 行为 |
+| :--- | :--- | :--- |
+| dragenter / dragover | capture | `p.current = e.composedPath()[0]`（记住最后进入的节点） |
+| dragover | bubble | `f.current.contains(e.target) ? DRAGGING_ON_TARGET : DRAGGING_OFF_TARGET` |
+| dragleave | bubble | 三重条件（last target 相同 && 不含 relatedTarget && (target===currentTarget 或 relatedTarget===null)）→ `IDLE` |
+| drop | capture | 目标不在 zone → `IDLE`（兜底清理） |
+| drop | bubble | zone 内执行 `b(e)`；zone 外且 `enableScreenDrop` 也执行（全窗口投放），否则 preventDefault + `IDLE` |
+
+`b(e)` → `onDrop(e)` → `DROPPED` → `setTimeout(() => IDLE, 500)`：**成功态停留 500ms**，让退场动画播完。`vh()` 在 `disableFileAttachments` / `fileAttachmentsUnsupported` / `fileAttachmentsUnsupportedReasonAtEveryEntry` 或三个 feature flag 命中时禁用整个 zone；`yh()` 按 `enableScreenDrop` 选择 `xh()`（全屏）或 `bh()`（区域）。
+
+#### 5.9.2 架构二：useDragZone 的 Set 计数法（`cc63499d2` @ `262`，全文 2,653 B）
+
+```js
+function c({ accepts, dropEffect, claim, disabled, onDrop }) {
+  const [d, f] = useState(false);
+  const seen = useRef(new Set());   // 已进入过的 target 集合
+  const root = useRef(null);        // Gp(e.currentTarget) → 根/文档
+  // dragenter: accepts(e) → preventDefault + claim && stopPropagation
+  //            + seen.add(a(e.target)) + root.current = s(e.currentTarget) + f(true)
+  // dragleave: seen.delete(target) + 清理所有已不在 currentTarget 子树的元素
+  //            seen.size === 0 才 f(false)
+  // 捕获阶段监听 dragend / drop / pointerdown → g() 清空，避免 overlay 卡住
+  // dragover : dataTransfer.dropEffect = disabled ? "none" : dropEffect（默认 "copy"）
+  // drop     : 先记 e.isDefaultPrevented() → preventDefault → claim && stopPropagation
+  //            → 清理 → !disabled && onDrop(e, wasDefaultPrevented)
+  return { isDragOver: d && !disabled, handlers: {...} };
+}
+```
+
+两套架构的防抖策略不同：A 用 composedPath + 三重条件，B 用 Set&lt;Element&gt; 引用计数 + 捕获兜底；但准入（dataTransfer.types 含 Files）、`preventDefault()` 与 `claim` 的 `stopPropagation()` 完全一致 —— 多个 drop zone 嵌套时由最内层独占，不会冒泡重复响应。
+
+#### 5.9.3 drop zone 容器与 hint 分支（`c4c113f6f`，全文 2,644 B）
+
+| prop | 作用 |
+| :--- | :--- |
+| `onFilesDropped` / `onNonImageFilesDropped` | 按 `c98ab6e79` 的图片 MIME 列表切分两路回调 |
+| `onEntriesDropped` | `webkitGetAsEntry()` 目录条目优先（`g(e)`） |
+| `onDropped` | 拿到 `Ph`（shared-62 导出的 `bg()`）归一化结果 |
+| `appDrag` | 非文件类（会话/分栏）拖拽的 accepts / onDrop |
+| `filesElsewhere` | 允许其它 drop zone 抢走本次文件拖拽 |
+| `fileHint` | 决定渲染 **badge 版**还是 **ring 版** |
+| `overlayClassName` / `zoneRef` / `disabled` / `onContextMenu` | 布局、引用与禁用 |
+
+内部 `h()` 注册 `{accepts, dropEffect:"copy", claim:true, disabled, onDrop}`；`m(e)` = `dataTransfer?.types?.includes("Files") ?? false`。hint 分支：
+
+```js
+const [P, F] = useState(false);
+const onDragEnter = e => { F(fileHint && m(e) && s("__gb__4088364908") !== false); I(e); };
+// 渲染：M && t(P ? _ : f, { className: overlayClassName })
+//   P = true  → _()  badge（蓝色 pill，截图同款）
+//   P = false → cc63499d2 l()  on-target ring
+```
+
+`__gb__4088364908` 是 localStorage 键（`s()` 来自 shared-0 的 `Rx`）。shipped artifact 中只找到读取点、未找到写入点；从键名前缀 `__gb__`（ghost badge）与「未写入即 `!== false` 恒真」的行为**推断**为一次性引导标已读标记，语义标记为 **inferred**，不作强结论。
+
+**挂载点**：`cc43287c9-dzfX-J5i.js` @ `1,165,971` —— `<Vz onDropped={…} appDrag={…} fileHint:!0 overlayClassName={…} disabled={…} …>` 包住会话列 + composer。这是截图里唯一被蓝框圈住的区域。
+
+#### 5.9.4 截图为什么只有左侧 pane 有蓝框
+
+- badge 是 `inset-0` 覆盖其 drop zone，几何等于会话/composer 列（`c4c113f6f._()`）。
+- 右侧 Browser / Preview pane 是另一套 pane 容器，没有注册这个 `Vz` drop zone，因此不显示遮罩（截图实证；此因果为源码推断）。
+- badge 与 label 带 `aria-hidden:true` + `pointer-events:none`：不拦截拖放事件，也不进入无障碍树。
+
+---
+
+### 5.10 放下之后：归一化、校验与上传队列
+
+#### 5.10.1 dataTransfer → File[] 的四条路径
+
+- `yg(e)`（shared-62 @ `62,809`）：优先遍历 `dataTransfer.items`，逐项 `kind === "file"` → `getAsFile()`；无 items 或结果为空时回落 `Array.from(dataTransfer.files)`。
+- `bg(e,t)`（**导出别名 `Ph`**，@ `63,173`）：用 `webkitGetAsEntry()?.isDirectory` 把项拆成 folders / files，供目录拖拽。
+- 目录递归：`createReader().readEntries()` → `Sg` / `Cg`（`FileSystemEntry.file()` Promise）→ `Tg({limit, skipDirectory})`。
+- File System Access API 分支（shared-4 @ `360,495`）：`getAsFileSystemHandle()` 异步解析（8s handle 等待），`beginDropWait` 60s 兜底，`maxFiles` 限额，`onFolderDropped` 处理目录，`Co()` 关联 extracted_content，`CI()` 以 `new Blob([extracted_content]).size / 4` 校验项目知识库上限。
+- `c4c113f6f` 的分发顺序：`onEntriesDropped`（目录条目）→ `onDropped`（原始归一化结果）→ 否则 `onFilesDropped` / `onNonImageFilesDropped`（图片 vs 非图片）。
+
+#### 5.10.2 限额常量与错误文案矩阵
+
+| 常量（shared-62 @ `59,866`） | 观测值 | 语义（未导出命名，标 inferred） |
+| :--- | :--- | :--- |
+| `Uh` | `524288e3` = 524,288,000 B | 上传体量上限（≈500 MB） |
+| `Wh` | `15360` | `max_in_context_file_bytes` 配置默认值，单位未证实 |
+| `Hg` | `5,238,784` B | 编码后（base64）内容上限 |
+| `Ug` | `7,968` px | 图片宽/高上限 |
+| `Jh` | `3,670,016` | 图片重编码阈值 |
+| `Gh` / `Kh` / `qh` | `2000` / `2000` / `.85` | 尺寸与压缩质量 |
+| `Vg` / `hI` | `8000` / `60000` ms | handle 等待 / drop wait 超时 |
+| `Lh` | `Set([400,413,415,422])` | 上传不可重试错误码 |
+
+| i18n key | 场景 | 文案（英文原文摘要） |
+| :--- | :--- | :--- |
+| `8QkUkTTC9V` | drop overlay | `Drop files here`（简中「将文件拖放到此处」） |
+| `4HSAw8RtrC` | noFile | `Couldn’t get a file from that drag. Drag it from Finder instead.` |
+| `6EGIdzAtYH` / `FOKLVE1W08` | file_too_large | `… is over the {maxMb} MB limit … Try dragging it into the message box, which takes larger files.` / `Choose a smaller file.` |
+| `EPmeSzcXBt` | 打开失败 | `Couldn’t open “{fileName}” from here. Try dragging it into the message box.` |
+| `5DCXOAEmMl` | chat 切换竞态 | `… wasn’t added because the chat changed while it was loading. Drop it again …` |
+| `MbvF6K3PJd` | 项目知识库超限 | `Project knowledge exceeds maximum. Remove files to continue.` |
+| `LPNNW+cd/e` | 附件回注失败 | `Some attachments couldn’t return to the input and were dropped.` |
+| `wbySUq10o+` / `BoHuvCmEsS` | 进度与发送守卫 | `Uploading {current} of {total}…` / `Files are still uploading` |
+| `f00p/7iV78` / `9c7vGJDSo2` | 失败与重试 | `Upload failed` / `Try uploading {fileName} again` |
+
+#### 5.10.3 pending upload queue（`c20d9eece`，全文 967 B）
+
+```js
+{ pending: {}, drains: {}, stagingProbes: {},
+  registerDrain(key)          // +1 / -1 引用计数，标记正在排空
+  registerStagingProbe(k, fn) // 注册「能否立即暂存」探针
+  canStageNow(key)            // 无探针或任一探针通过
+  push(key, item)             // 消息发出但附件未传完 → 入队
+  take(key, n)                // 批量取出
+  restore(key, items)         // 失败时放回队首
+}
+```
+
+`c4a9ee384-BWj_BT12.js` 的附件区在 `pending` 态加 `animate-pulse motion-reduce:animate-none motion-reduce:opacity-60`；`c21f11e6d-Cyj5xu_D.js` 的 drain 负责发送侧排空。这与 5.7 已记录的 composer pending upload queue 是同一 store。
+
+---
+
+### 5.11 附件卡片入场 / 退场动效（View Transitions）
+
+#### 5.11.1 wrapper 与降级条件（`shared-2-CsjIBQD8.js` @ `8,922`）
+
+```js
+gm = "cds-attachments";         _m = "data-cds-attachment";
+vm = "data-cds-attachment-restored"; ym = "data-cds-composer-attachments";
+xm = "data-cds-composer-attachments-clip"; Sm = "data-cds-attachments-clipping";
+Tm = "--cds-attachment-vt-name";
+Em(doc) = typeof doc.startViewTransition === "function"
+        && CSS.supports("selector(:active-view-transition-type(cds-attachments))");
+Dm(doc) = CSS.supports("view-transition-group: contain")
+        && CSS.supports("selector(::view-transition-group-children(.x))");
+// 降级：visibilityState !== "visible" / reduced motion / !Em → 直接 update()，无动画
+// 有 clip 容器但 !Dm → 也直接 update()，避免高度塌陷
+// 执行：clip 容器打 data-cds-attachments-clipping + 锁 minBlockSize
+//       → doc.startViewTransition({ types: [gm], update })
+//       → finished.then(cleanup, cleanup); updateCallbackDone.catch(reportError)
+```
+
+受控重放（Chrome 157）中 `startViewTransition`、`:active-view-transition-type`、`view-transition-group: contain`、`::view-transition-group-children()`、`sibling-index()` 五项能力检测**全部 true**。
+
+#### 5.11.2 CSS 规格（`c6a992d55-_JRfOmTh.css` @ `1,120,187`，全文 1.83 MB）
+
+| 规则 | 值 |
+| :--- | :--- |
+| `[data-cds-composer-attachments]:has([data-cds-attachment])` | `transition: opacity .2s cubic-bezier(.215,.61,.355,1), transform .2s 同曲线` |
+| `[data-cds-attachment]` | `view-transition-class: cds-attachment`；`--cds-attachment-vt-name: none`；`transform-origin: 0`（RTL `100%`）；`transition: transform/opacity .18s` 同曲线 |
+| `:root:active-view-transition-type(cds-attachments)` | `view-transition-name: none`；卡片 `view-transition-name: var(--cds-attachment-vt-name)` |
+| `::view-transition-group(root)` | `animation-duration: 0s`（禁止整页 cross-fade） |
+| `::view-transition-group(.cds-attachment)` | `.18s cubic-bezier(.215,.61,.355,1)` |
+| 新 Chromium `@supports` 分支 | clip 容器 `view-transition-name: match-element` + `view-transition-class: cds-attachments-clip` + `view-transition-group: contain`；`::view-transition-group-children(.cds-attachments-clip){overflow:clip visible}`；group `.18s` 同曲线 |
+| `@starting-style` | 容器 `opacity:0; transform:translateY(-8px)`；卡片 `opacity:0; transform:scale(.92) translateY(4px)`；两者排除 `[data-cds-attachment-restored]`（重入不重播） |
+| 退场 | `@keyframes cds-attachment-out{to{opacity:0;transform:scale(.5)}}`；`::view-transition-old(.cds-attachment):only-child` 用 `.13s cubic-bezier(.55,.055,.675,.19) forwards` |
+| reduced motion | 容器与卡片 `transition:none` |
+
+#### 5.11.3 多文件同时放下：chip 错峰入场
+
+```css
+@keyframes cds-chip-in { 0% { opacity:0; filter:blur(2px); transform:scale(.8) } }
+.cds-chip-in {
+  animation: cds-chip-in var(--cds-dur-base) var(--cds-ease-out) backwards;
+  animation-delay: calc(var(--cds-chip-in-base-delay, 50ms) + min(sibling-index() - 1, 8) * 30ms);
+}
+```
+
+重放 4 个 chip 实测 delay = **50 / 80 / 110 / 140 ms**，duration `.2s`，timing `cubic-bezier(.165,.84,.44,1)`，fill `backwards`；第 n 个 = `50 + min(n-1,8)×30ms`，8 个后封顶 290ms。`prefers-reduced-motion` 下 `animation:none`。
+
+#### 5.11.4 drop 链路动效总表（全部 controlled-replay 验证）
+
+| 名称 | 0% / to 状态 | 时长 | 曲线 | 延迟 | fill | 载体 |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `animate-screen-drop-in` | fade | `.1s` | `ease-out` | 0 | — | A 全屏 overlay |
+| `cds-fade-in` | `opacity:0` | `.15s` / `.2s` / var(--cds-dur-base) | `cubic-bezier(.215,.61,.355,1)` / var(--cds-ease-out) | 0 / 80ms | backwards（部分） | badge、glow、dashed |
+| `cds-drop-ring-in` | `opacity:0; transform:scale(1.005)` | `.15s` | `cubic-bezier(.215,.61,.355,1)` | 0 | none | on-target ring |
+| `cds-drop-icon-rise` | `opacity:0; transform:translateY(12px)` | `.22s` | `cubic-bezier(.215,.61,.355,1)` | 0 / 60 / 120ms | backwards | 三图标 area |
+| `cds-chip-in` | `opacity:0; filter:blur(2px); transform:scale(.8)` | `.2s` | `cubic-bezier(.165,.84,.44,1)` | `50 + n×30ms` | backwards | 同时放下的多个 chip |
+| `cds-attachment-out` | `to{opacity:0; transform:scale(.5)}` | `.13s` | `cubic-bezier(.55,.055,.675,.19)` | 0 | forwards | 附件移除 |
+| badge 几何 transition | left/top/width/height/opacity | `.12s` | `cubic-bezier(.215,.61,.355,1)` | 0 | — | 分栏版 badge |
+
+> **与 AGENTS.md 四套弹簧预设的关系**：文件拖拽链路**完全不用 Framer Motion 弹簧**，全部是 CSS transition / keyframes；曲线集中在 `cubic-bezier(0.215, 0.61, 0.355, 1)`（即 --df-ease-out-cubic）与 var(--cds-ease-out) = `cubic-bezier(.165,.84,.44,1)`。复刻时不要给 drop overlay 加弹跳，也不要用 `linear`。
+
+#### 5.11.5 与仓库参考实现的对应
+
+- `code-examples/AttachmentCard.tsx` 已复刻 `withAttachmentTransition()`、`--cds-attachment-vt-name`、`@starting-style` 与 `cds-attachment-out`（见 CHANGELOG）；本节补齐官方原始参数、能力检测与降级条件。
+- `cds-drop-ring-in` / `cds-drop-icon-rise` / `cds-chip-in` / `dframe-drop-overlay-*` 属客户端专属，未在仓库 `cds-theme.css` 中登记；本次**只做取证，不新增或修改参考实现**，避免把客户端变量名混入复刻令牌体系。
+
+---
+
+### 5.12 证据索引（本篇）
 
 | 载体 | 偏移 | 事实 |
 | :--- | :--- | :--- |
@@ -1147,8 +1680,25 @@ bg-fill-secondary  |  tile: bg-surface-3  |  flat: bg-alpha-2
 | `…/c9ab8b233-CGQgXdb4.js` | 全文 1,951 B | element context store |
 | `…/c20d9eece-D9azS0jG.js` | 全文 967 B | pending upload queue |
 | `…/c21f11e6d-Cyj5xu_D.js` | `362,970` / `363,111` / `365,127` / `443,017` | drain / `cN` / `_N` / send |
-| `…/c0a74d72b-BELp4TMv.js` | `34,486` / `36,061` / `41,982` / `65,322` / `74,870` | `Yo` / `cs` / `ms` / `Pc` / `Xc` |
-| REA Evidence | `ev_e6f527fe2c…` / `ev_d40ebeb98f…` | 静态分析 |
+| `…/c0a74d72b-BELp4TMv.js` | `20,983` / `26,958` / `29,423` / `34,486` / `36,061` / `41,982` / `64,591` / `65,322` / `65,462` / `74,870` / `78,847` / `80,423` / `86,048` | `mo` / `wo` / `ko` / `Yo` / `cs` / `ms` / `_c=600,vc=200` / `Pc` / floating-ui / `Xc` / `zt` / `an` / 胶囊挂载；5.7 hover 详情卡全链路 |
+| `…/c06cf64bb-CoZso5N4.js` | `63,435` / `64,353` / `65,870` / `66,724` | `Rd` / `Hd` / `Ud` / `Gd`：`ctx → view.sections` 构造链（5.7.3） |
+| `…/shared-9-BgdM6Y1f.js` | `32,995` / `35,496` / `36,766` / `37,350` | `DropZoneProvider` 四态 / `bh()` / `xh()` / 全屏 overlay 文案 |
+| `…/cc63499d2-BD7iFRH4.js` | 全文 2,653 B（`262` 起） | `useDragZone` Set 计数 + on/off-target ring |
+| `…/c4c113f6f-B-i6bpoH.js` | 全文 2,644 B；`485` / `1,116` | `__gb__` hint 键 / badge overlay / drop zone 容器 |
+| `…/cc17a11d9-B39REwC5.js` | 全文 2,447 B；`380` | 三图标 area overlay |
+| `…/cc43287c9-dzfX-J5i.js` | `1,165,971` | `fileHint:!0` 的会话/composer drop zone 挂载点 |
+| `…/shared-styles-C9nbzN1z.css` | `53,484`（全文 96,797 B） | badge / label 视觉规格、`data-hint`、RTL、reduced motion |
+| `…/c6a992d55-_JRfOmTh.css` | `1,120,187`（全文 1,831,545 B） | drop keyframes、chip 错峰、附件 view transitions、`@starting-style` |
+| `…/shared-2-CsjIBQD8.js` | `8,922` | `cds-attachments` wrapper、能力检测与降级 |
+| `…/shared-62-DoCqVpIq.js` | `59,866` / `62,809` / `63,173` / `65,845` | 限额常量、`yg` / `bg`(Ph) / 目录遍历 / handle 分支 |
+| `…/shared-4-C_EiQb9h.js` | `360,495` / `362,005` / `362,827` | `beginDropWait` / drop handler / 项目知识库上限 |
+| `…/shared-23-BRmsPtuN.js` | 全文 267,561 B | 分栏拖拽复用同名 badge 与几何过渡 |
+| `…/c4a9ee384-BWj_BT12.js` | 附件区 `pending` 脉冲 | 上传中视觉态 |
+| `i18n/en-US.json` / `resources/i18n/zh-Hans.json` | 41,771 / 823 条 | `8QkUkTTC9V` 与错误文案矩阵 |
+| controlled-replay | `/tmp/drop-replay.html` + Chrome 157 CDP（`/tmp/drop-replay-result.json`、`/tmp/drop-replay.png`） | computed style、动画时序、能力检测、像素对照 |
+| user-screenshot（drop） | 3618×1952 | 2px 蓝框 / 143×30 CSS px pill / 左 pane 限定 |
+| user-screenshot（hover 详情卡） | 3844×1986 | 「已包含在您的消息中」+ 截图缩略图 + 元素/组件/Props/来源 四区，5.7.5 逐项对照 |
+| REA Evidence | `ev_e6f527fe2c…` / `ev_d40ebeb98f…` | 静态分析（前序取证；本轮 REA 静态图因会话保留容量耗尽未生成新 ID，改以字节偏移 + 受控重放标注） |
 
 ---
 
@@ -1207,6 +1757,66 @@ w-max max-w-full transition-opacity ease-snap motion-reduce:transition-none
 `duration-fast` / `duration-snap` / `ease-snap` 分别对应 `--cds-dur-fast` / `--cds-dur-snap` / `--cds-ease-snap`。活体 `[data-resting]` 实测：`transition: opacity 0.12s cubic-bezier(0.32, 0.72, 0, 1)`、`radius 12px`、`bg rgb(255,255,255)`。
 
 活体工具按钮 aria-label（中文 locale）：`选择元素` / `画笔` / `形状` / `文本`，浮层里另有 `隐藏标注工具`，全部 `aria-pressed=false`。
+
+#### 6.1.1 工具条结构与状态机（截图逐项对应）
+
+截图里的 6 个元素不是 6 个平级工具，而是 **3 个按钮 + 1 个下拉 + 1 条分隔线 + 1 个关闭**：
+
+| 截图 | 实现 | 关键代码 |
+| :--- | :--- | :--- |
+| 箭头光标 | `select` | `Ce({tool})` 里 `t==="select" ? {icon:"CursorFilled"} : ve[t]` |
+| 铅笔 | `pen` | `we({tool:"pen", armed:t==="pen", disabled, onToolChange})` |
+| 方框 + ∨ | `Shapes` 下拉（默认 `rect`） | `N({label:"Shapes", current:bt, pinnedOpen:F==="shape", pressed:yt})` |
+| T | `text` | `we({tool:"text", armed:t==="text", ...})` |
+| 竖线 | `fe` 分隔线 | 与颜色/线宽区分组 |
+| X | 关闭 / 隐藏工具条 | `Ae({label,onHide})` = 分隔线 + `icon:"X"` 的 ghost 按钮 |
+
+**表与文案**（`c23255574` @ `1,400`–`2,634`）：
+
+```js
+ve = { pen:{icon:"Edit"}, line:{icon:"LineSegment"}, arrow:{icon:"ArrowLine"},
+       rect:{customIcon:k}, ellipse:{customIcon:A}, step:{customIcon:pe},
+       redact:{icon:"EyeSlash"}, text:{icon:"TextT"} };   // 8 个（不含 select）
+xe = new Set(["line","arrow","rect","ellipse","step","redact"]);   // 形状/非笔集合
+me = { pen:"Pen", line:"Line", arrow:"Arrow", rect:"Rectangle",
+       ellipse:"Ellipse", text:"Text", step:"Step", redact:"Redact" }; // i18n key 见 6.6
+Se = { 2:"Thin", 4:"Medium", 8:"Thick", 12:"Extra thick" };
+_e = 5 色；he = { solid:"Solid", mosaic:"Mosaic", noise:"Noise" };
+```
+
+**工具按钮 `we()`**（@ `2,900`）：`variant:"ghost" iconOnly` + `aria-label=formatMessage(me[t])` + `pressed=armed` + `onClick: () => onToolChange(armed ? "select" : t)` —— **再点一次已选中工具会回到 `select`**，这是活体全部 `aria-pressed=false` 之外唯一的切换路径。
+
+**形状下拉 `N()`**（@ `5,724`）：`TriggerButton variant="ghost"` 带 `aria-label=label` / `aria-description=current` / `pressed` / tooltip；`pinnedOpen` 由单一状态 `F` 控制（`"tool"` / `"shape"` / `"color"` / `"width"` 互斥）。下拉内部：
+
+- `useState("rect")`（@ `9,4xx`）**记住上次选过的形状，默认 `rect`** —— 这就是截图中方框图标的来源；切到别的形状后图标随 `bt` 变。
+- `gt = dt.filter(Ne)` 为当前可用工具子集，`xt = gt.map(pt)` 为下拉项；`yt = t!=="select" && xe.has(t)` 决定 pressed；若记住的形状已不在子集则回退 `gt[0]`。
+- `St = oe && (t==="redact" || w)`：选中 `redact` 时颜色面板整体换成 `Redaction style`（`ge = Object.keys(he)`），否则显示 `Ink color`（`_e` 5 色）。
+- 颜色 / 线宽各自也是 `N()` 下拉，`current` 分别是 `formatMessage(_e[color])` / `formatMessage(Se[width])`。
+
+**三档压缩的状态属性**（@ `14,7xx`）：容器上 `data-layout={B}`（`full|compact|minimal`）、`data-resting`、`data-concealed`、`inert`；`minimal` 下隐藏 Clear all（`Fe&&B==="minimal"?null`）并改用 `Ae()` 只留分隔线 + X。显隐动画仍是 `w-max max-w-full transition-opacity ease-snap`，隐藏 `duration-fast` / 显示 `duration-snap`，`motion-reduce:transition-none`。
+
+**文案**：分组 `aria-label` = `Annotation tool`（`nUFJ0sE5c9`）；下拉 `Shapes`（`2iWb7cRQGh`）/ `Ink color`（`k+yLsrlkhB`）/ `Line width`（`SdHvg9BQQO`）/ `Redaction style`（`tBKdfPJtGX`）；X 按钮 `Hide annotation tools`（`xZ87eA5X6R`）或 `Close`（`rbrahOGMC3`），反向入口 `Show annotation tools`（`WqLEIFNVU0`）。Undo / Redo / Clear all 的 `disabledReason` 分别是 `Nothing to undo yet`（`XFpgi7xuL0`）/ `Nothing to redo yet`（`jZhy9dr1Lm`）/ `Nothing to clear yet`（`ZRQqPcheUz`）。
+
+#### 6.1.2 文本工具与快捷键
+
+文本标签用 `autoFocus` 的 `<textarea aria-label="Text label">`，`Esc` 取消并把焦点还给画布、`Cmd/Ctrl+Enter` 提交，两者都先过 6.2 的 CJK IME 守卫；`rows` 按换行数自适应，`resize-none overflow-hidden bg-transparent p-0 border-0`。
+
+工具条 tooltip 的 `shortcut` 由外部传入（本 chunk 内变量 `de` / `k` / `c.shortcut`），与 2.6 注册表一致：`cmd+shift+x` 进入/退出标注、`cmd+z` / `cmd+shift+z` Undo / Redo。**具体字形未在 chunk 内硬编码**（标 inferred）。
+
+#### 6.1.3 下拉菜单与设置菜单共用同一套原语
+
+`c23255574` 的 `h` = `Vs`（`shared-frame-CJdE5Ria.js` 的 `UD` 导出），与 2.5.2 里设置菜单渲染器 `ca5db7aaf` 用的是**同一套**：
+
+| | sketch 下拉 | 设置菜单 |
+| :--- | :--- | :--- |
+| 挂载 | `N()` → `h.Root{open}` + `h.TriggerButton` + `h.Popup{side:"top",align:"start"}` | `H()` → `Vs.Root` + `Vs.Trigger` + `Vs.Popup{side:"bottom",align:"end",collisionPadding}` |
+| 选项 | `je()` → `h.Item{leading,checked,checkedRole:"radio"}` | `Z()` → `Vs.Item{checked,checkedRole,keepOpen,hint,variant,…}` |
+| 分组 | `h.Group` / `h.Separator` / `h.Submenu` + `h.SubmenuTrigger` | `U()` → `Vs.Group` / `Vs.GroupLabel{header}` / `Vs.Separator` / 嵌套 `Popup` |
+| 关闭策略 | 选完即关 | `keepOpen:!0` 的 checkbox / radio 点选不关 |
+
+方向差异来自锚点位置：工具条贴在预览底部 → `side="top"`；`⋯` 在 pane 右上角 → `side="bottom" align="end"`。`checkedRole:"radio"` 在 sketch 里服务颜色 / 涂黑样式 / 线宽选项，在设置菜单里服务 Keep cookies 三档。
+
+这套原语是 **Base UI 风格的自研封装**（`render` prop、`createHandle()`、`checkedRole`、`keepOpen`、`side/align/collisionPadding`、`initialFocus`），不是 Radix；因此「蓝色 ✓ / hint / danger 红字 / 分组标题 / 子菜单箭头」在所有菜单里天然一致。
 
 ---
 
@@ -1326,7 +1936,9 @@ nUi()  = rotate((leanDeg*tanh(speed/leanAtPxPerMs)).toFixed(2)+"deg")  // 倾斜
 
 | 载体 | 偏移 | 事实 |
 | :--- | :--- | :--- |
-| `ion-dist.asar/…/c23255574-mtRCVDRk.js` | `2,104` / `12,773` / `51,089` | 工具/颜色/线宽、容器压缩、IME 守卫 |
+| `ion-dist.asar/…/c23255574-mtRCVDRk.js` | `1,400` / `2,250` / `2,900` / `5,724` / `9,4xx` / `10,300` / `12,700` / `51,089` | `me`/`ve`/`xe` 工具表、`we()` 按钮、`N()` 形状下拉、`data-layout` 三档、IME 守卫（6.1.1–6.1.3） |
+| `…/shared-frame-CJdE5Ria.js` | `Vs`(`UD`) 导出映射 | 与设置菜单共用的菜单原语集（6.1.3） |
+| `…/ca5db7aaf-C8dMH-IH.js` | 全文 9,563 B | 通用菜单渲染器 `H()`，见 2.5.2 |
 | `…/cda4f50bb-DJqs4vdA.js` | `912` / `5,353` | 覆盖层几何与 Add to chat |
 | `…/c194f2b35-JT2lp-xB.js` | 全文 5.6 KB | 图片标注保存 |
 | `…/c8f0a3c9d-DIux0sno.js` | `855` | preview-annotation-context |
