@@ -38,6 +38,8 @@ jE(name, url,  flag, enabled)      // 远程：StreamableHTTPClientTransport(new
 | `claudeai_visualize_remote_web` | 在 web 端禁用本地注册 |
 
 > `go(name, t, "renderer")` 把传输来源记成 `"renderer"`，所以从运行时的 MCP 列表就能看出这一台是**进程内**的。
+>
+> **承载视图是锁死的**：`index.chunk-DuW48wq0.js` 为 MCP App 建独立 session，`setPermissionRequestHandler(cb(false))` + `setPermissionCheckHandler(() => false)` + `will-download → preventDefault()`，`webRequest.onBeforeRequest` 只放行"该视图自身的一次加载"，并注册 `claude-mcp-app` 自定义协议。详见第十五篇 15.4。
 
 ---
 

@@ -1,6 +1,6 @@
 # Claude Desktop 5.11492.5 · CDS 与 Artifact 运行时（合并阅读版）
 
-> 本文件由本卷 14 篇按功能点顺序合并生成，供离线全文档阅读；分篇导航见 [README.md](README.md)。
+> 本文件由本卷 15 篇按功能点顺序合并生成，供离线全文档阅读；分篇导航见 [README.md](README.md)。
 
 > 载体：`app.asar` 88,833,670 B / SHA-256 `2c515441d5d0504a96ac3e49bcc4c1244085c0e76ad23ae58ddd8f736100479e`；`ion-dist.asar` 208,001,845 B / SHA-256 `1d55d633d14aede748af3cb22c244f4ddc2f795d9b1153b175b993ae5d46aa1b`。Electron `45.2.1`。
 
@@ -3120,4 +3120,190 @@ PGPASSWORD · SSHPASS
 | E14-7 | 观测 | `app.asar:.vite/build/index.chunk-D76LincQ.js` | 29 个密钥字段关键词 |
 
 <p align="center"><a href="13-系统提示词解剖.md">← 第十三篇</a> · <a href="README.md">📚 本卷索引</a></p>
+
+
+
+---
+
+---
+title: 运行时本体：Agent VM、权限模型与钩子转发
+part: 15
+category: 运行时
+domain: 宿主与运行时
+---
+
+<p align="center"><a href="14-工具与钩子面.md">← 第十四篇</a> · <a href="README.md">📚 本卷索引</a></p>
+
+# 第十五篇：运行时本体：Agent VM、权限模型与钩子转发
+
+> **技术领域与英文指代**：运行时载体（runtime carrier）、虚拟机（Virtualization.framework / VZ）、SDK 版本（`.sdk-version`）、会话分区（session partition）、权限处理器（permission handler）、按源分类（origin classification）、钩子转发（hook relay）。
+
+前十四篇讲的都在 `app.asar` 与 `ion-dist.asar` 里。本篇补上**第三层**：不在安装包内、而是运行时下载到用户目录的 **agent 运行时本体**，以及它周边的 VM、权限与钩子转发。
+
+---
+
+## 15.1 运行时在用户目录，不在 App 包里
+
+```
+~/Library/Application Support/Claude/
+├── claude-code/
+│   ├── 2.1.325/<hash>/claude.app/        337 MB（macOS 版，CFBundleShortVersionString = 2.1.326）
+│   └── 2.1.326/<hash>/claude.app/        337 MB
+├── claude-code-vm/
+│   ├── .sdk-version                      "2.1.165"
+│   └── 2.1.165/claude                    244,823,688 B
+└── claude-code-sessions/                 1.1 MB
+```
+
+| 载体 | 类型 | 说明 |
+| :--- | :--- | :--- |
+| `claude-code/<ver>/…/claude.app` | macOS App 包 | 宿主侧的 Claude Code |
+| `claude-code-vm/<ver>/claude` | **ELF 64-bit ARM aarch64**（`/lib/ld-linux-aarch64.so.1`，**未 strip**） | 在 Linux VM 里跑的 agent |
+| `.sdk-version` | 文本 | `2.1.165` |
+
+> **这就是提示词里"implemented on top of Claude Code and the Claude Agent SDK"的落地**：`app.asar` 只负责**拉起与转发**，真正的 agent 逻辑在两个可下载的二进制里。所以第十四篇找不到工具 schema——它们在 `claude-code-vm/2.1.165/claude` 内部。
+
+---
+
+## 15.2 沙箱是一台真 VM（Virtualization.framework）
+
+`app.asar:.vite/build/index.chunk-xV3fJhc7.js` 里有 VM 诊断代码：
+
+```js
+Z.info("[vmDiagnostics] Capturing host memory diagnostics...");
+let [t,n,r] = await Promise.all([i$i(), a$i(), o$i()]),
+    i = { jetsamPressureLevel: n, vzFootprintBytes: r.bytes };
+```
+
+| 线索 | 含义 |
+| :--- | :--- |
+| `vzFootprintBytes` | **VZ** = macOS Virtualization.framework 的内存足迹 |
+| `jetsamPressureLevel` | 系统内存压力等级（jetsam） |
+| 日志前缀 `[vmDiagnostics]` | 应用会周期性采集宿主机与 VM 的内存状态 |
+
+> **与提示词的对应**：`<high_level_computer_use_explanation>` 说 Bash 在 "isolated Linux sandbox (Ubuntu 22)"。宿主侧证据表明那不是进程级沙箱，而是**一台 macOS 原生虚拟化的 Linux 虚拟机**，并配了内存压力监控。
+
+---
+
+## 15.3 工具 schema 在二进制里
+
+在 `claude-code-vm/2.1.165/claude` 上做字符串检索，可以直接命中工具名与 schema 片段：
+
+```
+AskUserQuestion   39 次
+TaskCreate / ToolSearch / TodoWrite   均命中
+```
+
+`AskUserQuestion` 的入参形状（从权限请求处理代码反推，原文变量）：
+
+```js
+T6.tool_name === vY                    // vY = AskUserQuestion
+  && Array.isArray(T6.input?.questions)
+  && u8 = N8[0]                        // 第一题
+  && o8 = u8?.header || u8?.question   // 标题优先，其次题干
+```
+
+| 字段 | 观测到的用法 |
+| :--- | :--- |
+| `questions[]` | 数组，可多题（提示里显示 `(+N more)`） |
+| `questions[i].question` | 题干 |
+| `questions[i].header` | 短标题（优先用于展示） |
+| `multiSelect` | 存在；**预览仅支持单选**（工具描述原文：`previews are only supported for single-select questions (not multiSelect)`） |
+
+> **仍未完全取得**：`options` 的具体结构、`header` 的字符上限等，需要完整 schema 而非片段。本卷只记录**可观测的字段名与语义**。
+
+---
+
+## 15.4 权限模型：9 个会话，默认全拒
+
+`app.asar` 里有 **9 处** `setPermissionRequestHandler` + 9 处 `setPermissionCheckHandler`，各自对应一个独立的 Electron session：
+
+| 会话 | 策略 | 证据位置 |
+| :--- | :--- | :--- |
+| **MCP App（widget）** | 全部拒绝；禁下载；只允许自身加载；自定义协议 + 一次性放行表 | `index.chunk-DuW48wq0.js` |
+| **文件预览** | 全部拒绝；下载仅允许「用户手势」或预览源 PDF | `index.chunk-xV3fJhc7.js` |
+| **剪贴板** | 只放行 `clipboard-sanitized-write`，且要求主 frame + 守卫校验 | 同上 |
+| **Artifact（严格档）** | 全部拒绝；只允许 `cowork-artifact://` | 同上 |
+| **Artifact（策略档）** | 走 `q8o()` 策略（见 15.5） | 同上 |
+| **Artifact（预览）** | 全部拒绝；`will-download` 直接 `preventDefault` | 同上 |
+| **外部链接** | 拒绝 `openExternal` 类请求并记录被拦 scheme | 同上 |
+| **OAuth 回调** | 全部拒绝，仅允许 `allowedOrigins` | `index.chunk-C_qjIyUF.js` |
+| **Computer-use 覆盖层** | 全部拒绝 + `setWindowOpenHandler` 拒绝 + 禁止导航 | `index.chunk-DLKdYlrC.js` |
+
+> **统一姿势**：`setPermissionRequestHandler((…, cb) => cb(false))` + `setPermissionCheckHandler(() => false)` + `will-download → preventDefault()`。**默认拒绝，按需白名单**。
+
+---
+
+## 15.5 `q8o()`：唯一会放行的策略函数
+
+```js
+function q8o(permission, url, isMainFrame, session) {
+  const kind = W8o(url ?? "", session);          // 按来源把 URL 分成 content / page / shell …
+  return permission === "clipboard-sanitized-write"
+    ? kind === "content" || (isMainFrame && (kind === "page" || kind === "shell"))
+    : permission === "fullscreen" && kind === "content" && oTo(session) === "shown" && V6(session);
+}
+```
+
+| 放行的权限 | 条件 |
+| :--- | :--- |
+| `clipboard-sanitized-write` | 来源是 `content`，**或**主 frame 且来源是 `page`/`shell` |
+| `fullscreen` | 来源是 `content` **且**视图已显示 |
+
+**其余权限一律不通过**——包括摄像头、麦克风、地理位置、通知、剪贴板读取等。
+
+> **与第十四篇的对照**：提示词用文字要求模型"不要用 curl/requests 绕过 WebFetch 的限制"；宿主侧则用**结构性拒绝**兜底——就算模型想用浏览器面板取内容，面板本身也只放行两个权限。**两条防线互不依赖**。
+
+---
+
+## 15.6 钩子：CLI 产生，桌面转发
+
+`HookEvent` 在 `app.asar` 里只出现在**参数拼装**处：
+
+```js
+this.options.includeHookEvents && M.push("--include-hook-events")
+…
+O && M.push("--include-partial-messages")
+this.options.sessionMirror && M.push("--session-mirror")
+```
+
+| 事实 | 含义 |
+| :--- | :--- |
+| 桌面把 `--include-hook-events` 传给 CLI | 钩子**由 CLI 触发** |
+| 33 个事件名是 CLI 的契约 | 桌面只做白名单校验与展示 |
+| `ion-dist` 里出现 `hook_event` / `hook_response` / `PreToolUse` | 渲染层负责**呈现**钩子结果 |
+| `--session-mirror` | 会话镜像（与 Remote Control 相关） |
+
+> 所以第十四篇那张 33 个事件的表，**桌面端只"认识"它们，不"实现"它们**。真正的执行点在 `claude-code-vm/…/claude`。
+
+---
+
+## 15.7 三层职责，终于对齐
+
+| 层 | 载体 | 负责 |
+| :--- | :--- | :--- |
+| **壳**（`app.asar`） | 主进程 + preload | 窗口、IPC、session 权限、MCP 宿主、拉起 CLI、转发钩子 |
+| **UI**（`ion-dist.asar`） | 渲染层 | 产品界面、widget 运行时、CDS、预览/元素选择 |
+| **运行时**（用户目录） | `claude-code*.app` / `claude`(ELF) | agent 循环、工具实现、钩子执行、工具 schema |
+
+> **这也是为什么本卷有些问题"在包里找不到答案"**：工具 schema、钩子实现、agent 循环都在第三层，而第三层是**运行时下载**的、版本独立（`2.1.326` / `2.1.165`），不随 `5.11492.5` 打包。
+
+---
+
+## 15.8 证据索引（本篇）
+
+| ID | 类型 | 位置 | 支撑结论 |
+| :--- | :--- | :--- | :--- |
+| E15-1 | 观测 | `~/Library/Application Support/Claude/{claude-code,claude-code-vm,claude-code-sessions}` | 运行时在用户目录，含 2 个版本 + VM 版 |
+| E15-2 | 观测 | `claude-code-vm/2.1.165/claude`（`file` 输出） | ELF aarch64、未 strip、244,823,688 B |
+| E15-3 | 观测 | `claude-code-vm/.sdk-version` = `2.1.165` | SDK 版本独立于 app 版本 |
+| E15-4 | 观测 | `app.asar:.vite/build/index.chunk-xV3fJhc7.js`（`[vmDiagnostics]` / `vzFootprintBytes`） | 沙箱是 Virtualization.framework VM |
+| E15-5 | 观测 | `claude` 二进制字符串检索 | `AskUserQuestion` 39 次、`TaskCreate`/`ToolSearch`/`TodoWrite` 命中 |
+| E15-6 | 观测 | 同上（权限请求处理段） | `questions[]` / `question` / `header` / `multiSelect` 语义 |
+| E15-7 | 观测 | `app.asar` 9 处 `setPermissionRequestHandler` | 9 个 session 全部默认拒绝 |
+| E15-8 | 观测 | 同上（`q8o()` / `W8o()`） | 只放行 clipboard-write 与 fullscreen |
+| E15-9 | 观测 | 同上（`--include-hook-events` / `--session-mirror`） | 钩子由 CLI 执行，桌面转发 |
+| E15-10 | 观测 | `ion-dist.asar:assets/v1`（`hook_event` / `hook_response`） | 渲染层呈现钩子结果 |
+
+<p align="center"><a href="14-工具与钩子面.md">← 第十四篇</a> · <a href="README.md">📚 本卷索引</a></p>
 
