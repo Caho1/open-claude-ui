@@ -4,8 +4,6 @@
 
 > 载体：`app.asar` 88,833,670 B / SHA-256 `2c515441d5d0504a96ac3e49bcc4c1244085c0e76ad23ae58ddd8f736100479e`；`ion-dist.asar` 208,001,845 B / SHA-256 `1d55d633d14aede748af3cb22c244f4ddc2f795d9b1153b175b993ae5d46aa1b`。Electron `45.2.1`。
 
-> 整包静态图谱：Craft Anything `js_app_map`（app.asar 779 源文件，证据 `ev_01432a4f…`；ion-dist.asar 5749 源文件，证据 `ev_a9611d24…`）+ `js_electron_fuses_show`（证据 `ev_ba0b520c…`）。
-
 ---
 
 ---
@@ -822,7 +820,36 @@ animation: cds-pill-dip-down calc((var(--cds-dur-snap) + 40ms) / 2) var(--cds-ea
 
 ---
 
-## 4.7 证据索引（本篇）
+## 4.7 5.x 弹簧全量清单（22 组）
+
+对 `ion-dist.asar:assets/v1` 全量正则提取 `stiffness/damping/mass`，剔除 framer-motion vendor 自带默认值（`100/10`、`500/25`）后，客户端共有 **22 组**独立弹簧配置（2.42304.2 时代记录为 14 组）。
+
+| 配置 | 命中 | 首个出现位置 | 上下文信号（观测） |
+| :--- | ---: | :--- | :--- |
+| `320/30` | 4 | `caa5bd1d0` | `initial:{opacity:0,x:32}` → 表单/列表横向滑入 |
+| `300/35/mass 1` | 3 | `c4167c038` | `hidden→show translateY 32→0` → 交错列表入场 |
+| `300/30` | 2 | `c4a1e6da6` | `p/2` 居中量 → 滑动指示器 |
+| `600/30` | 1 | `shared-8` | `micStream` / `isMuted` → **麦克风与语音条** |
+| `400/40` | 1 | `c71dee58b` | 宽高比钳制（`w/h`）→ 媒体尺寸过渡 |
+| `100/30` | 1 | `cf8e2003d` | 百分比进度（`pct`）→ 进度条 |
+| `260/32` | 1 | `c85d5a1f8` | 问答示例（question/answer）→ 表单展开 |
+| `1200/70/mass 1` | 1 | `ca2ef848d` | `fromY/toY/velocity` → 手势驱动的回弹 |
+| `950/55/mass .85` | 1 | `cddbfc1b6` | `data-emphasized` 文本 span → 强调弹动 |
+| `300/20/mass .5` · `150/15/mass .8` · `200/25/mass .5` | 各 1 | `c4a1e6da6` | 同一模块三连 → 轮播/拖拽子系统 |
+| `500/46` | 1 | `c9543da06` | `children.slice` 重排 → 拖拽排序落位 |
+| `500/50` | 1 | `ce28369f9` | 随机 `rotateZ ±360` + `delay` → 庆祝粒子 |
+| `500/30/mass .7` | 1 | `c04e7453f` | `flex-wrap` chips → 胶囊布局 |
+| `320/28` | 1 | `c427176b2` | `e.top-t.top` 排序 → **拖拽释放回弹** |
+| `1200/80/mass .1` | 1 | `cc705195d` | 同文件常量 `320 / 480 / 384` → **file_viewer 面板宽度** |
+| `300/22` | 1 | `c0447db9a` | `swingIn` + `rotate -90/0` → 手柄摆动 |
+| `260/16` | 1 | `c0447db9a` | `rotate:-90` + `exit scale:.6` → **捕获选择手柄** |
+| `420/28` | 1 | `c0447db9a` | `drag` + `dragElastic:.05` + `scale .25→1` → **捕获浮层** |
+
+> **四套预设的调用点在本版未变**：`600/30` 仍是麦克风、`320/28` 仍是拖拽回弹、`420/28` 仍是捕获浮层、`1200/80/0.1` 仍是 `file_viewer` 面板宽度（同文件还带着 `320 / 480 / 384` 三个宽度常量）。AGENTS.md §2 的调用点表对 5.11492.5 **仍然成立**。
+>
+> **新增的是"外围"弹簧**：22 组里只有 6 组属于 AGENTS.md 记录的规范集，其余 16 组是业务侧自建（表单、进度、庆祝、轮播、chips）。复刻时不应把它们当 CDS 规范照抄。
+
+## 4.8 证据索引（本篇）
 
 | ID | 类型 | 位置 | 支撑结论 |
 | :--- | :--- | :--- | :--- |
@@ -833,6 +860,7 @@ animation: cds-pill-dip-down calc((var(--cds-dur-snap) + 40ms) / 2) var(--cds-ea
 | E4-5 | 观测 | 同上，`@property --cds-scroll-fade-*` ×18 | 滚动渐隐实现 |
 | E4-6 | 观测 | 同上，`prefers-reduced-motion` + `[data-reduce-motion]` | 双通道降级 |
 | E4-7 | 推断 | 由 E4-2 峰值 1.0915 反解 | ζ ≈ 0.594 |
+| E4-8 | 观测 | `ion-dist.asar:assets/v1/*.js` 全量 `stiffness/damping/mass` 提取 | 22 组弹簧及其上下文信号 |
 
 <p align="center"><a href="03-作用域与组件属性契约.md">← 第三篇</a> · <a href="README.md">📚 本卷索引</a> · <a href="05-Artifact类型系统与契约协商.md">第五篇 →</a></p>
 
@@ -2235,7 +2263,7 @@ domain: 设计系统
 
 前几篇是从**产物**（CSS/JS）反推出来的模型。这一篇不一样：`ion-dist.asar` 里随包分发着一份 **CDS 官方规范文档**，是设计系统团队写给自己、也写给模型看的源文档。它直接给出了层模型、令牌词汇、角色映射与使用规则——**优先级高于任何反推**。
 
-本篇把它完整摘录并标注与前面各篇的差异。
+本篇把它完整摘录并标注与前面各篇的差异。**逐字原文见 [`appendix/CDS-tokens-vanilla.md`](appendix/CDS-tokens-vanilla.md)**（23,443 字符 / 288 行，未删节）；同批下发的上层总纲见 [`appendix/Imagine-visual-creation-suite.md`](appendix/Imagine-visual-creation-suite.md)（10,702 字符 / 92 行）。
 
 ---
 

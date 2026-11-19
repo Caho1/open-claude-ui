@@ -169,6 +169,10 @@ from the preset file and are worth knowing about:
 Two more appear as timing variants rather than reusable presets: `320 / 30`
 (`delay: 1`, credits controls row) and `500 / 30 / mass .7`.
 
+### v5.11492.5 复核（2026-11）
+
+在 5.11492.5 上重新提取：客户端共 **22 组**独立弹簧（2.42304.2 为 14 组），但**四套预设的调用点未变** —— `600/30` 仍是麦克风与语音条、`320/28` 仍是拖拽释放回弹、`420/28` 仍是捕获浮层（`scale .25→1`、`dragElastic .05`）、`1200/80/mass .1` 仍是 `file_viewer` 面板宽度（同文件常量 `320/480/384`）。新增的 16 组属于业务侧自建（表单滑入、进度、庆祝粒子、轮播、chips），**不应当作 CDS 规范**。完整清单见 `docs/v5.11492.5/04` §4.7。
+
 ### Version caveat
 
 `docs/v1` records the matrix as it appeared in client **v1.28**, labelling
