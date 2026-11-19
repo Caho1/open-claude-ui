@@ -1,6 +1,6 @@
 # Claude Desktop 5.11492.5 · CDS 与 Artifact 运行时（合并阅读版）
 
-> 本文件由本卷 18 篇按功能点顺序合并生成，供离线全文档阅读；分篇导航见 [README.md](README.md)。
+> 本文件由本卷 19 篇按功能点顺序合并生成，供离线全文档阅读；分篇导航见 [README.md](README.md)。
 
 > 载体：`app.asar` 88,833,670 B / SHA-256 `2c515441d5d0504a96ac3e49bcc4c1244085c0e76ad23ae58ddd8f736100479e`；`ion-dist.asar` 208,001,845 B / SHA-256 `1d55d633d14aede748af3cb22c244f4ddc2f795d9b1153b175b993ae5d46aa1b`。Electron `45.2.1`。
 
@@ -4075,4 +4075,223 @@ tn = "stacks:ms-outset stacks:max-w-[calc(100%_+_var(--cds-outset-x))]"
 | E18-8 | 观测 | 同上，`[data-cds-row-toggle]:focus-visible:after` | 透明 outline 的焦点策略 |
 
 <p align="center"><a href="17-输入条dock布局仲裁.md">← 第十七篇</a> · <a href="README.md">📚 本卷索引</a></p>
+
+
+
+---
+
+---
+title: 引导、暂存与短语：四个小机制
+part: 19
+category: 交互设计
+domain: UI 与交互
+---
+
+<p align="center"><a href="18-TurnStatus与row原语.md">← 第十八篇</a> · <a href="README.md">📚 本卷索引</a></p>
+
+# 第十九篇：引导、暂存与短语：四个小机制
+
+> **技术领域与英文指代**：新用户引导（NUX）、单槽队列（single-slot queue）、优先级（priority）、让位（`showAfterOthersDismiss`）、暂存（stash）、草稿恢复（draft restore）、短语座位（phrase seat）。
+
+第十八篇是"一个组件怎么工作"。本篇是**四个跨组件的小机制**，每个都很小，但都在解决一类具体问题：引导不能一起冒出来、发送中不能丢附件、引用的呈现要能切换、轮播文案不能把布局挤跳。
+
+---
+
+## 19.1 NUX 队列：一次只显示一个
+
+引导提示（coach mark / tooltip / nux）如果各自独立显示，会同时冒出四五个。这里的解法是一个**单槽队列**：
+
+```js
+function useNux(key, { dateAdded, priority, showAfterOthersDismiss }, { enabled }) {
+  let provider = useContext(NuxProvider);
+  if (!provider) throw Error("useNux must be used within a NuxProvider");
+  let { registerNux, unregisterNux, currentlyShowing } = provider;
+
+  useEffect(() => {
+    registerNux(key, { dateAdded, priority, showAfterOthersDismiss }, …);
+    return () => unregisterNux(key, …);
+  });
+
+  let dismiss = () => {
+    provider.dismiss(key);
+    unregisterNux(key);
+    localStorage.removeItem(key);     // ← 记住"已看过"
+  };
+
+  let shouldShow = enabled && !isDismissed(key) && currentlyShowing === key;
+  return { shouldShow, dismiss };
+}
+```
+
+| 参数 | 作用 |
+| :--- | :--- |
+| `key` | 引导位标识，同时是 localStorage 键 |
+| `dateAdded` | 新鲜度，用于排序（新引导优先/靠后） |
+| `priority` | 显式优先级 |
+| `showAfterOthersDismiss` | **让位**：不抢当前槽，等别人关掉再上 |
+| `currentlyShowing` | provider 决定"现在轮到谁" |
+
+> **这是本卷见过的最实用的 UX 基础设施之一**：组件不需要知道"有没有别的引导在显示"，只声明自己的优先级与让位意愿，队列由 provider 统一裁决。否则每个引导位都要自己写"如果 A 没关就别显示我"。
+
+---
+
+## 19.2 22 个命名的引导位
+
+`shared-33` 里有一张注册表（原文键名）：
+
+```
+ef_coachmark · ef_chat_tooltip · ef_admin_capability_tooltip · ef_usage_menu_banner
+chorus_onboarding_tour · hub_preview_tour · hub_preview_panel_callout · verdant_coach
+epitaxy_simulator_nux · epitaxy_files_tree_nux · epitaxy_diff_file_list_nux · epitaxy_thimble_nux
+first_skill_nux · ema_setup_coach_mark · routine_code_surface_coachmark
+cheeky_fountain_intro · cowork_tamarin_coachmark · fancy_lollipop_callout
+scheduled_run_settings_tip · hub_optout_reset_notice · cedar_wren_unread_callout
+github_setup_coach_mark
+```
+
+| 观察 | 含义 |
+| :--- | :--- |
+| 键名混用功能名（`github_setup_coach_mark`）与**代号**（`chorus` / `hub` / `verdant` / `epitaxy` / `cheeky_fountain` / `fancy_lollipop` / `cedar_wren` / `cowork_tamarin`） | 代号是内部项目名，对外不可读——**说明这张表是工程内部清单，不是产品文案表** |
+| 22 个里 12 个带代号 | 引导位与实验/新功能强绑定，功能下线后键名仍会残留 |
+
+> **工程含义**：引导位是**永久标识**（写进用户 localStorage），所以命名一旦上线就不能改——这也是为什么会出现 `cheeky_fountain_intro` 这种"看不懂但改不得"的键。
+
+---
+
+## 19.3 生命周期：注册 → 轮次 → 关闭 → 记账
+
+```
+mount          → registerNux(key, {dateAdded, priority, showAfterOthersDismiss})
+provider 裁决  → currentlyShowing === key  → shouldShow = true
+用户关闭       → dismiss(key) + unregisterNux + localStorage.removeItem(key)
+              → telemetry: "<area>.coachmark.displayed" / "<area>.coachmark.dismissed"
+```
+
+遥测是成对的（原文）：
+
+```js
+{ event_key: "chorus.nux.surface_select_coachmark.displayed" }
+{ event_key: "chorus.nux.surface_select_coachmark.dismissed" }
+```
+
+> **设计要点**：`displayed` 与 `dismissed` 分开记，才能算出"看到但没关"的比例——只用 dismissed 会漏掉所有还在看的用户。
+
+---
+
+## 19.4 `startedAt`：引导的"第一次被看到"打点
+
+```js
+function A(entry) { return entry.startedAt ??= performance.now(), entry.startedAt }
+function useStartedAt() {
+  let c = useContext(ctx);
+  return useState(useMemo(() => c === null ? undefined : A(c), [c]))[0];
+}
+```
+
+| 细节 | 为什么 |
+| :--- | :--- |
+| `??=` 惰性赋值 | 第一次读取时才打点，避免"挂载但没显示"被算作开始 |
+| 存在 context 上而不是组件 state | 同一次引导的多个子节点读到**同一个**时间戳 |
+| 作用域变化即重置 | `if (state.scope !== scope) setState({ scope, reset })` —— 换了引导位就是新的一轮 |
+
+---
+
+## 19.5 `holdStash`：发送中"扣住"附件
+
+输入条的附件钩子有一组开关：
+
+```js
+{ maxFiles, holdStash, uploadOnAttach, maxImageSide, storeAsIs,
+  pdfTextFallback, maxTotalBytes, attachTiming, fateVariant, takeUnfit }
+```
+
+`holdStash` 的来源（调用处原文）：
+
+```js
+let holdStash = useMemo(() => machine.current?.machineSendActive() === true);
+…
+{ persistKey, agent, getLiveText, getLiveTypedText, holdStash, onStashed, maxImages, maxImageAdds }
+```
+
+| 事实 | 含义 |
+| :--- | :--- |
+| `holdStash` 由 `machineSendActive()` 推导 | **正在发送/流式时自动为真** |
+| 配套回调 `onStashed` 与 `stashed(e)` | 被扣住的附件进入暂存区，有回调通知 |
+| 与 `uploadOnAttach` / `storeAsIs` 并列 | 是同一层"附件命运"策略的一个分支 |
+
+> **UX 意图**：发送进行中时，用户拖进来的文件**不会被丢弃、也不会硬塞进正在发送的消息**，而是先暂存，等这一轮结束再决定去处。这是"输入条在忙"这个状态下的正确处理方式——比禁用整个输入条友好。
+
+---
+
+## 19.6 `quotesAsRows` 与 `restoredIds`：输入条实体的两个开关
+
+输入条附件区接受一组实体，其中两个标志位值得记录：
+
+```js
+{ images, fileAttachments, uploads, snippets, annotations, elementContexts,
+  agent, issue, restoredIds, quotesAsRows, draftOnThisComputer, … }
+```
+
+| 标志 | 观测到的形态 | 解读 |
+| :--- | :--- | :--- |
+| `quotesAsRows` | 布尔 prop，贯穿附件列表渲染 | 同一批引用可在**胶囊**与**行**两种形态间切换（行形态能显示来源/行号，胶囊只显示摘要） |
+| `restoredIds` | 一组 id | 标记"本次由草稿恢复的条目"，供列表区分"新加的"与"恢复的" |
+
+> **置信度**：`quotesAsRows` 的切换语义是**推断**（只观测到 prop 贯穿渲染层）；`restoredIds` 的用途是**观测**（与 `draftOnThisComputer` 同时出现，且附件区有 `restored` 相关分支）。
+
+---
+
+## 19.7 `Phrases`：短语轮播的"座位"模型
+
+`TurnStatus.Phrases` 不用绝对定位，而用**座位**：
+
+```js
+var seatDefault = { "data-cds-phrases-seat": "" };              // 默认座位
+var seatAfterMark = { "data-cds-phrases-seat": "after-mark" };  // 标记之后
+
+function seatFor(hasMark) { return hasMark ? seatAfterMark : seatDefault }
+
+// 占位器：零高、可伸缩，用来预留宽度
+<span aria-hidden data-cds-phrases-spare
+      className="-ms-xs h-0 min-w-0 flex-1" />
+```
+
+| 机制 | 作用 |
+| :--- | :--- |
+| `data-cds-phrases-seat` | 声明短语放在**标记前**还是**标记后** |
+| `data-cds-phrases-spare` | `h-0 min-w-0 flex-1` 的空占位器：高度 0 不占纵向，但 `flex-1` 吃掉剩余横向空间 |
+| 无 `setInterval` | 轮播不是定时器驱动（未观测到 `setInterval`），而是由状态变化驱动 |
+
+> **解决的问题**：状态文案长短不一（"Thinking…" vs "Running a simulator action"），如果短语区宽度随文字变化，右侧的耗时/按钮会左右跳动。用 `flex-1` 的零高占位器把横向空间**先占住**，文字在其中轮换，布局就不动。
+
+---
+
+## 19.8 复刻要点
+
+| 机制 | 最小实现 |
+| :--- | :--- |
+| 引导不撞车 | NUX provider 单槽 + `priority` + `showAfterOthersDismiss` |
+| 引导可记住 | `key` 即 localStorage 键，dismiss 时 `removeItem` |
+| 引导可度量 | `displayed` / `dismissed` 成对遥测 + 惰性 `startedAt` |
+| 忙时不丢附件 | `holdStash` 由"发送中"推导 + 暂存回调 |
+| 引用双形态 | `quotesAsRows` 在胶囊/行之间切换 |
+| 草稿可区分 | `restoredIds` 标记恢复来源 |
+| 轮播不跳动 | `flex-1` 零高占位器 + `seat` 属性决定位置 |
+
+---
+
+## 19.9 证据索引（本篇）
+
+| ID | 类型 | 位置 | 支撑结论 |
+| :--- | :--- | :--- | :--- |
+| E19-1 | 观测 | `ion-dist.asar:assets/v1/shared-33-CTzZG30c.js`（`useNux` / `NuxProvider`） | 单槽队列、`priority`、`showAfterOthersDismiss`、`currentlyShowing` |
+| E19-2 | 观测 | 同上（`MA` 注册表，22 项） | 引导位键名与代号风格 |
+| E19-3 | 观测 | 同上（`dismiss` 分支 `localStorage.removeItem`） | 永久记忆 |
+| E19-4 | 观测 | 同上（`chorus.nux.surface_select_coachmark.displayed/dismissed`） | 成对遥测 |
+| E19-5 | 观测 | `ce187ccc8-Bit_gHq6.js`（`A` / `useStartedAt` / scope 重置） | 惰性打点与作用域重置 |
+| E19-6 | 观测 | `c54bf5722-Dc304oLm.js` / `c10f0af0c-CBU3MLHE.js`（`holdStash` / `machineSendActive()`） | 发送中扣住附件 |
+| E19-7 | 观测 | `c82492f2c-ClkNDsFq.js`（`restoredIds` / `quotesAsRows` 解构） | 输入条实体开关 |
+| E19-8 | 观测 | `c734f318c-DVbhpVUM.js`（`data-cds-phrases-seat` / `-spare`） | 短语座位与零高占位器 |
+
+<p align="center"><a href="18-TurnStatus与row原语.md">← 第十八篇</a> · <a href="README.md">📚 本卷索引</a></p>
 
