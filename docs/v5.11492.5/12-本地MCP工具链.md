@@ -22,7 +22,7 @@ domain: 工具与运行时
 | 服务器 | 工厂 | UI 资源 | 工具 |
 | :--- | :--- | :--- | :--- |
 | `visualize` | `getMcpVisualizeServerInstance` | `ui://imagine/show-widget.html` | `read_me`、`show_widget` |
-| `mcpAppsExample` | `getMcpAppsExampleServerInstance` | `ui://mcp-apps-example/{counter,hello-world,sticky-notes}.html` | 示例用途 |
+| `mcpAppsExample` | `getMcpAppsExampleServerInstance` | `ui://mcp-apps-example/{counter,hello-world,sticky-notes}.html` | 三个演示工具（`mcp_apps_hello` / `_counter` / `_sticky_notes`），**无自带文档**，只有一段 `sendRequest({method, params})` 的最小 MCP Apps 客户端垫片 |
 
 注册走两条互斥路径（`shared-21`）：
 
@@ -98,7 +98,7 @@ function z(n){ return t.n() ? (R || (R = !0, log.info(`[imagine] ${n} refused �
 
 ## 12.4 widget 运行时：41 个可读的 `src/scripts` 模块
 
-`D92FUleA` 内联了完整的 widget 运行时，且**保留了源码注释与模块边界**（未压缩）：
+`D92FUleA` 内联了完整的 widget 运行时，且**保留了源码注释与模块边界**（未压缩）：解码后共 **9,155 行 / 302 KB**，逐模块行数与首行见[附录 D](appendix/widget-runtime-modules.md)。
 
 | 类别 | 模块 |
 | :--- | :--- |
