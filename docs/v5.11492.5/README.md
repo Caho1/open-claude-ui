@@ -170,4 +170,26 @@
 4. **宿主面已可枚举**：`js_app_map` 整包图谱给出 779 个源文件、18 `BrowserWindow` + 16 `WebContentsView`、19 个 IPC 接口 / 95 个方法、65 个 `contextBridge` 暴露；9 条 fuse 中 6/7 已硬化，**`--inspect` 被关闭**，4.x 的 9229 活体方法在 5.x 不可复现。
 5. **侧边浏览器没有退场，但换了一套回路**：`.claude/launch.json` / `preview_start` / `__reactFiber$` 元素反射 / `annotation` / `Sketch` 全部在位，并新增"自动启动 → 验证改动 → share proof"闭环；启动占位则升级为**可自校准**（`swap_*` 遥测上报骨架与真实布局的偏差）。
 
+
+---
+
+## 🧭 后续分析入口（本卷已知的未解问题）
+
+下面每一项都写清了**去哪看**和**能得出什么结论**，下次接着做时不用重新定位。
+
+| # | 问题 | 去哪看 | 判据 / 产出 |
+| ---: | :--- | :--- | :--- |
+| 1 | `AskUserQuestion` 的完整 schema（`options` 结构、`header` 上限） | `~/Library/Application Support/Claude/claude-code-vm/2.1.165/claude`（ELF，未 strip） | 目前只确认 `{questions:[{question,header,options?,multiSelect?}]}`；补出 options 与长度限制即可写进第十四篇 |
+| 2 | 33 个钩子事件里 CLI **实际发出**哪几个 | 同上 ELF：搜 `PreToolUse` 等事件名的**派发点**（不是白名单） | 得到"声明 33 / 实现 N"的对照表，补进第十五篇 15.6 |
+| 3 | `q8o()` 依赖的来源分类器 `W8o()` 值域 | `app.asar:.vite/build/index.chunk-xV3fJhc7.js` | 目前只见 `content` / `page` / `shell`；补全后能说明"哪些来源算可信" |
+| 4 | 桌面端系统提示词的**跨版本差异** | 旧版 `app.asar`（本机只有 5.11492.5） | 拿到旧包即可 diff 附录 C；CLI 侧则用 `claude-code/2.1.325` vs `2.1.326` |
+| 5 | `visualize` / `read_me` 的**引入版本** | 旧版 `ion-dist.asar` 的 `assets/v1` | 查 `cde7c3a92-*` 是否存在；三种命中组合即可定代 |
+| 6 | 侧边浏览器在 5.x 的**状态机复检** | `ion-dist.asar` + `docs/v4.16336.0/` §5.1–5.11 | 第八篇只确认机制在位，未逐条验证选择器与状态迁移 |
+| 7 | `--inspect` 被 fuse 关闭后的**活体观测通道** | `js_electron_pages_list` / `js_runtime_watch`（Craft Anything） | 找到可用通道才能验证动效与滚动钉住的运行时行为 |
+| 8 | 附录 A 的 "36-stop grid" vs 实测 **35 档** | `MainWindowPage-lhEHjHfd.css@147224` 计数 | 确认是文档口径还是少一档；目前按观测记录并标为冲突 |
+| 9 | 18 处**运行时计算的 `webPreferences`** | `.vite/build/index.chunk-*.js` 的窗口工厂 | 聚合姿态已知安全（全包 0 处 `nodeIntegration:true` / `sandbox:false`），逐窗口值仍未知 |
+| 10 | 1803 个**运行时拼装**的 IPC 通道名 | `.vite/build`（拼接点）+ 已知 19 个接口 | 只有 11 条是完整字面量，其余靠前缀拼接 |
+
+> 卷内所有结论都标注了 observed / derived / inferred；上表是**明确未完成**的部分，不要在后续分析里当作已解决。
+
 > ⚠️ 未解项：`EnableNodeCliInspectArguments` 已禁用，本轮**无法**做活体逐帧录制，第 4 篇的动效结论均为**静态样式表观测**；另有 18 处窗口的 `webPreferences`、1803 个 IPC 调用点的通道名、视口预设表是否存在，均未取得证据。
