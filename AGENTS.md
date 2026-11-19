@@ -20,7 +20,7 @@ When assisting users with building, modifying, or reviewing frontend components,
    - Use the 4 calibrated Framer Motion spring presets from [`code-examples/ClaudeMotionPresets.ts`](code-examples/ClaudeMotionPresets.ts).
 4. **Pure Code & Zero Copyright Violations**:
    - Zero proprietary binary fonts (`.otf`/`.ttf`) or audio files (`.mp3`/`.wav`).
-   - Use the calibrated system fallback font stacks and procedural Web Audio API oscillator synthesis.
+   - Use the calibrated font stacks and procedural Web Audio API oscillator synthesis. **v5.11492.5 实测**：CDS 语义层把 `--cds-font-sans` 覆盖为 `var(--font-anthropic-sans, …)`，即 Anthropic Sans 优先、系统字体兜底；`--cds-font-voice` 为 Anthropic Serif 优先。品牌物料另有一套（`'Anthropic Sans', system-ui, …` + 七档字号），见 `docs/v5.11492.5/09` §9.2–9.3。
 5. **Strict Edge-Case Guards**:
    - Always guard chat/composer inputs against CJK IME composition accidents (`!(e.nativeEvent.isComposing || e.keyCode === 229)`).
    - Latch scroll pinning with a 150ms cooldown timestamp to prevent LLM streaming from hijacking manual user scrolling.
@@ -74,7 +74,8 @@ All tokens are defined in [`code-examples/cds-theme.css`](code-examples/cds-them
 > 卷内权威清单：[`docs/v5.11492.5/02-CDS设计令牌总谱.md`](docs/v5.11492.5/02-CDS设计令牌总谱.md) 与 [`03-作用域与组件属性契约.md`](docs/v5.11492.5/03-作用域与组件属性契约.md)。
 
 ### Brand Clay Palette
-* `--brand`: `#c6613f` (Official desktop brand primary color)
+* `--brand`: `#c6613f` (Official desktop brand primary color; = `--cds-clay-emphasized` = 品牌页 `clay-emphasized`)
+* **品牌物料色板（v5.11492.5 随包 `brand-colors.md` 实证）**：Ivory `#FAF9F5`、Slate `#141413`、Clay `#D97757`、Oat `#E3DACC`、Blue `#2A78D6`；棱镜色 Fig `#C46686` / Sky `#6A9BCC` / Olive `#788C5D` / Coral `#EBCECE` / Heather `#CBCADB` / Cactus `#BCD1CA`；21 阶暖灰 `#000000 → #FAF9F5 → #FFFFFF`。产品 UI 用 CDS 35 阶灰，品牌物料用这 21 阶，**两套不可互换**（见 `docs/v5.11492.5/09` §9.1、§9.4）。
 * `--cds-clay`: `#d97757` (Light / pulse indicator) / `#cc6b49` (Dark)
 * **官方佐证 (v3 取证)**：Claude 桌面端 3.6556.2 内置的官方 `frontend-design` skill 原文确认 #D97757 为 "Anthropic's own Claude-interaction accent"（见 `docs/v4.29.0-4.4212.0/06` §6.10.4），与 REA 运行时实测一致
 * 角色区分 (运行时实证 3.6556.2)：`brand`=陶土（Claude 发起的动作，如发送/生成）；`accent`=**蓝色**（`--cds-text-accent: #184f95`、`--cds-border-accent: #86b6ef`）——二者是不同角色，不可互换

@@ -1,6 +1,6 @@
 # Claude Desktop 5.11492.5 · CDS 与 Artifact 运行时（合并阅读版）
 
-> 本文件由本卷 8 篇按功能点顺序合并生成，供离线全文档阅读；分篇导航见 [README.md](README.md)。
+> 本文件由本卷 9 篇按功能点顺序合并生成，供离线全文档阅读；分篇导航见 [README.md](README.md)。
 
 > 载体：`app.asar` 88,833,670 B / SHA-256 `2c515441d5d0504a96ac3e49bcc4c1244085c0e76ad23ae58ddd8f736100479e`；`ion-dist.asar` 208,001,845 B / SHA-256 `1d55d633d14aede748af3cb22c244f4ddc2f795d9b1153b175b993ae5d46aa1b`。Electron `45.2.1`。
 
@@ -1110,10 +1110,10 @@ domain: 工程实践
 | :--- | :--- | :--- | :--- |
 | 品牌强调（发起的动作） | `#D97757` Clay | `--cds-clay: #d97757` | **完全一致** |
 | 品牌主色（按钮填充） | `#C6613F`（`clay-emphasized`） | `--brand: #c6613f` | **完全一致** |
-| 画布 Ivory | `#FAF9F5` | 未收录（CDS `surface-0` 为 `#f9f9f7`） | 近似但不同 |
-| 墨色 Slate | `#141413` | 未收录（CDS `text-primary` 为 `#0b0b0b`） | 近似但不同 |
+| 画布 Ivory | `#FAF9F5` | `--cds-surface-0` = `#f9f9f7`（产品值） | 近似但不同（品牌 21 阶 vs CDS 35 阶，见第九篇 9.4） |
+| 墨色 Slate | `#141413` | `--cds-text-primary` = `#0b0b0b`（产品值） | 近似但不同 |
 
-> **结论**：CDS 运行时的 `#f9f9f7` / `#0b0b0b` 与品牌物料的 `#FAF9F5` / `#141413` 是**两套近似但不同的值**。做产品 UI 用 CDS 值，做品牌物料用 Ivory/Slate 值，不可互换。
+> **结论**：CDS 运行时的 `#f9f9f7` / `#0b0b0b` 与品牌物料的 `#FAF9F5` / `#141413` 是**两套近似但不同的值**。做产品 UI 用 CDS 值，做品牌物料用 Ivory/Slate 值，不可互换。完整品牌色板（含 21 阶暖灰与棱镜色）、品牌字号阶梯与 `.dc.html` 产物格式见**第九篇**。
 
 ---
 
@@ -1683,4 +1683,279 @@ if (!Object.hasOwn(i, a)) return kS(i);
 | E8-7 | 观测 | 全量特征串检索（`Select an element` 1 / `Add to chat` 4 / `annotation` 185 / `Sketch` 9 / `vlq` 3） | 元素选择与标注链路仍在 |
 
 <p align="center"><a href="07-窗口、IPC与上下文桥全量清单.md">← 第七篇</a> · <a href="README.md">📚 本卷索引</a></p>
+
+
+---
+
+---
+title: 官方品牌规范与画布产物契约
+part: 9
+category: 品牌与产物
+domain: 品牌系统
+---
+
+<p align="center"><a href="08-预览面板、元素选择与占位校准.md">← 第八篇</a> · <a href="README.md">📚 本卷索引</a></p>
+
+# 第九篇：官方品牌规范与画布产物契约
+
+> **技术领域与英文指代**：品牌色板（brand palette）、暖灰阶梯（warm grayscale）、字号阶梯（type scale）、可变字重（variable weight）、设计系统安装（design-system install）、画布产物格式（artboard format）、语法卡（syntax card）、运行时 pin（runtime pin）。
+
+前八篇讲的是**产品 UI**（CDS）。本篇讲的是随包分发的**品牌物料规范**与**画布产物格式**——它们和 CDS 是两套并行、且**数值不同**的系统。这部分内容此前完全没被记录过，属于本次补检的主要收获。
+
+---
+
+## 9.1 官方品牌色板
+
+来源：`app.asar:resources/frame/types/design/artifact-type/reference/brand-colors.md`（2,234 B），文件头注明来自设计团队的 `anthropic-design` skill `colors.css`（2025-12-11）。
+
+### 基色（两种就够）
+
+| 名称 | 值 | 用途 |
+| :--- | :--- | :--- |
+| Ivory | `#FAF9F5` | 页面 / 画板底色。**整页背景永不用纯白** |
+| Slate | `#141413` | 文字、暗色表面 |
+
+内容面（卡片、面板）用 `#FFFFFF` 压在 Ivory 上；悬停/选中用 `rgba(115,114,108,0.1)`；**结构边框永不使用彩色**：默认 `0.5px solid rgba(31,30,29,0.15)`，强调 `rgba(31,30,29,0.3)`。
+
+### Claude 系统
+
+| 令牌 | 值 | 说明 |
+| :--- | :--- | :--- |
+| Claude primary（Clay，Spark 的颜色） | `#D97757` | 强调色，Claude 表面上唯一的强调色 |
+| Claude background（Ivory） | `#FAF9F5` | — |
+| Claude text（Slate） | `#141413` | — |
+| Claude accent（Oat） | `#E3DACC` | 弱填充、分隔线 |
+| Main accent（Blue） | `#2A78D6` | **非 Claude 动作的主强调色** |
+
+### 棱镜色（Prismatic，仅插画与构图，不进 UI 骨架）
+
+| 强度 | 名称与值 |
+| :--- | :--- |
+| Strong | Fig `#C46686` · Sky `#6A9BCC` · Olive `#788C5D` · Clay `#D97757` |
+| Subtle | Coral `#EBCECE` · Heather `#CBCADB` · Cactus `#BCD1CA` · Oat `#E3DACC` |
+
+> `Heather` / `Cactus` 与 CDS 的 `--cds-heather: #cbcadb`、`--cds-cactus: #bcd1ca` **完全一致**；`Clay` `#D97757` 与 `--cds-clay` 一致。这三条是品牌与产品唯一严格对齐的颜色。
+
+### 21 阶暖灰
+
+| 档 | 值 | 档 | 值 |
+| ---: | :--- | ---: | :--- |
+| 1000 | `#000000` | 450 | `#9C9A92` |
+| 950 | `#141413`（Slate） | 400 | `#B0AEA5` |
+| 900 | `#1A1918` | 350 | `#C2C0B6` |
+| 850 | `#1F1E1D` | 300 | `#D1CFC5` |
+| 800 | `#262624` | 250 | `#DEDCD1` |
+| 750 | `#30302E` | 200 | `#E8E6DC` |
+| 700 | `#3D3D3A` | 150 | `#F0EEE6` |
+| 650 | `#4D4C48` | 100 | `#F5F4ED` |
+| 600 | `#5E5D59` | 050 | `#FAF9F5`（Ivory） |
+| 550 | `#73726C` | 000 | `#FFFFFF` |
+| 500 | `#87867F` | | |
+
+> 原文强调：`These are WARM grays — never substitute cool grays`。档位是**反向**的（数字越大越深），与 CDS 的 `gray-0`→`gray-900`（数字越大越深）方向相同但档数与取值不同。
+
+---
+
+## 9.2 官方品牌字体与字号阶梯
+
+来源：`…/reference/brand-typography.md`（1,534 B），同样来自 `anthropic-design` skill `typography.css`（2025-12-11）。
+
+### 字体栈（要求逐字使用）
+
+| 角色 | 栈 |
+| :--- | :--- |
+| Sans（UI 文字、标签、正文） | `'Anthropic Sans', system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif` |
+| Serif（展示标题、编辑语气） | `'Anthropic Serif', Georgia, 'Times New Roman', Times, serif` |
+| Mono（代码） | `'Anthropic Mono', 'JetBrains Mono', 'SF Mono', Monaco, 'Courier New', monospace` |
+
+Anthropic Sans 与 Serif 均为 **可变字重 300–800**。
+
+### 七档字号
+
+| 角色 | 字族 | 字号 | 字重 | 行高 |
+| :--- | :--- | ---: | ---: | ---: |
+| Display（hero） | Serif | 38px | 330 | 1.2 |
+| Title | Serif | 28px | 500 | 1.3 |
+| Heading | Serif | 24px | 500 | 1.3 |
+| UI XL | Sans | 20px | 400 | 1.4 |
+| Body | Sans | 16px | 400 | 1.5 |
+| Small / labels | Sans | 14px | 400 | 1.4 |
+| Caption | Sans | 12px | 400 | 1.35 |
+
+**字距恒为 0**。原文：品牌感来自暖色板、留白与"衬线标题 + 无衬线正文"，不靠 tracking 技巧；标题用 Serif 的 330–500 中等字重，**永不 faux-bold**；并把 `Inter` / `Roboto` / `Arial` / `Fraunces` 列为"要避免的 AI 默认字族"（Arial/Helvetica 只允许出现在 fallback 栈里）。
+
+---
+
+## 9.3 CDS 产品层的真实字体栈（修正）
+
+此前（含本仓库 AGENTS.md）把 CDS 的字体描述为"系统字体回退栈优先"。**实测不是**：语义层把 `--cds-font-sans` 覆盖成了 Anthropic 字族优先。
+
+```css
+--cds-font-sans:         var(--font-anthropic-sans, var(--cds-font-system)), var(--cds-font-system);
+--cds-font-sans-display: var(--font-anthropic-sans-display, var(--cds-font-sans)), var(--cds-font-sans);
+--cds-font-voice:        var(--font-anthropic-serif, ui-serif), ui-serif, Georgia, "Times New Roman", serif;
+--cds-font-mono:         var(--cds-font-mono-override,) var(--font-anthropic-mono, "SF Mono"), "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+```
+
+`:root` 里的 `--cds-font-system: ui-sans-serif, system-ui, …` 只是**兜底默认值**，一旦 `--font-anthropic-*` 存在就被顶到最前。
+
+### 七个 `@font-face`（`MainWindowPage-lhEHjHfd.css`）
+
+| 字族 | 样式 | 字重 | 文件 | `font-feature-settings` |
+| :--- | :--- | :--- | :--- | :--- |
+| `anthropic-sans` | normal | 300–800 | `AnthropicSansMicro-Text-Variable-yAna2Le1.woff2` | `"dlig" 0, "ss01" 1, "ss02" 1` |
+| `anthropic-sans-roman-fallback` | normal | 300–800 | `AnthropicSans-Roman-Variable-DDVos-BJ.woff2` | `"dlig" 0` |
+| `anthropic-sans` | italic | 300–800 | `AnthropicSans-Italic-Variable-CJtkx3-S.woff2` | `"dlig" 0` |
+| `anthropic-sans-display` | normal | 300–800 | `AnthropicSansMicro-Display-Variable-Mpj_akWA.woff2` | `"dlig" 0, "ss01" 1, "ss02" 1` |
+| `anthropic-sans-display` | italic | 300–800 | `AnthropicSans-Italic-Variable-CJtkx3-S.woff2` | `"dlig" 0` |
+| `anthropic-serif` | normal | 300–800 | `AnthropicSerif-Roman-Variable-2VcCjn5t.woff2` | `"dlig" 0` |
+| `anthropic-serif` | italic | 300–800 | `AnthropicSerif-Italic-Variable-Dcb-9NUS.woff2` | `"dlig" 0` |
+
+> **三个可复刻细节**：
+> 1. 正文与展示用**两个不同的 Micro 字体文件**（Text / Display），不是同一文件缩放。
+> 2. `ss01` / `ss02` 只开在 Text 与 Display 上，斜体与 Serif 都关掉。
+> 3. `dlig`（连字）全局关闭——品牌字体默认连字会破坏代码与数字排版。
+
+### 多书写系统回退链
+
+`--font-anthropic-sans` 在 `ui-sans-serif` 之后挂了一长串**按脚本排布**的回退：Devanagari、Bengali、Telugu、Tamil、Gujarati、Kannada、Malayalam、Thai（Thonburi / Leelawadee UI / Noto Sans Thai）、Ethiopic（Kefa / Ebrima / Noto Sans Ethiopic / Abyssinica SIL）。这是"同一套 UI 覆盖南亚与东南亚文字"的工程实现，不能简化成 `sans-serif`。
+
+---
+
+## 9.4 两套暖灰的对照
+
+| 维度 | 品牌（brand-colors） | CDS 产品（`--cds-gray-*`） |
+| :--- | :--- | :--- |
+| 档数 | **21** | **35** |
+| 最深 | `950 #141413` | `900 #0b0b0b` |
+| 最浅 | `000 #FFFFFF` | `0 #fff` |
+| 页面底色 | `050 #FAF9F5` | `20 #f9f9f7` |
+| 中间调 | `500 #87867F` | `400 #898781` |
+| 暗面 | `850 #1F1E1D` | `850 #151515` |
+| 边框 | `rgba(31,30,29,.15)` / `.3` | `hsl(from neutral-900 … / 10% / 20%)` |
+
+> **结论**：两者**不能互相换算**。品牌物料用 Ivory/Slate 21 阶；产品 UI 用 CDS 35 阶 + 反相别名。本仓库的 `--cds-gray-*` 是产品值，**不是**品牌值——AGENTS.md 里"#FAF9F5 未收录"的说法需要按此理解，不是缺失而是分层。
+
+---
+
+## 9.5 设计系统在画布上的安装契约
+
+来源：`…/reference/design-system-components.md`（12,348 B）。它是第五篇 `project/ds/<folder>` 的**权威细节**：
+
+| 规则 | 内容 |
+| :--- | :--- |
+| 生效条件 | `project/ds/<folder>/` 下的文件 **且** `canvas.json` 的 `designSystems` 记录**同时存在**，编辑器的色板/文字样式/组件才可用 |
+| 上限 | **4 个**设计系统 |
+| 冲突 | 同 `namespace` 指向另一 `artifact` id 或另一宿主 → **停下并告知用户**，由用户决定换名或保留哪个 |
+| 复制范围 | 文件按系统内路径落到 `project/ds/<folder>/`；必须连带复制它引用的图片、样式、字体、数据文件 |
+| 必需文件 | `project/tokens.json`（色板与文字菜单读它）；README 点名时还需 `tokens.css` |
+| React | 画板已内置 React 18，系统自带的 React 副本**不会**被采用 |
+| 拒绝路径 | 含 `\`、`%`、`:`、`;` 或 `..` 的路径 → **什么都不装**，并说明它指向什么 |
+| 发送方式 | 一次 Artifact 调用带齐；只有"系统按 id 保存的文件"或"工具无法作为文件发送的字体/图片"才走 upload |
+
+> **与第六篇的关系**：6.1 的 `tokens.json` 是**数据契约**，本节是**安装契约**。两者缺一，画布上就只剩裸十六进制色值。
+
+---
+
+## 9.6 `.dc.html` 语法卡
+
+来源：`…/reference/format.md`（11,295 B）。画板是"一个自包含 HTML 文件"，由编辑器与 `dc-runtime.js` 解释。
+
+| 语法 | 规则 |
+| :--- | :--- |
+| 结构 | `<x-dc>` 根 + `<helmet>`（仅字体 `<link>`、`@font-face`、`body{margin:0}`）+ 模板 |
+| 洞 | `{{ path }}` **只做点路径查值**（`{{ user.name }}`、`{{ $index }}`、`{{ true }}`）；表达式 `{{ a + b }}`、`{{ fn() }}` **静默失败** |
+| 属性 | `x="literal"` → 字符串；`x="{{ path }}"` → 原始值（数字/函数/ref）；`x="a {{p}} b"` → 插值字符串；`class`/`for` 自动映射 `className`/`htmlFor` |
+| 事件 | 支持，JSX 驼峰：`onClick="{{ pick }}"`，`pick` 来自 `renderVals()` |
+| 分支 | `<sc-if value="{{ cond }}" hint-placeholder-val="{{ true }}">` |
+| 循环 | `<sc-for list="{{ items }}" as="item" hint-placeholder-count="3">`，作用域内可用 `{{ item.x }}`、`{{ $index }}` |
+| 跳转 | `<a href="Cart.dc.html">` 在 Play 模式切画板；`/sub/Cart.dc.html` 从画布根算；`#id` 画板内滚动；`https://` 开新标签 |
+| 状态 | 每个画板**各自持有** `state`；跨屏共享状态必须做成**同一画板** + 多个 `<sc-if>` |
+| 逻辑类 | 纯 classic JS（无 TS、无 import/export），必须 `class Component extends DCLogic`；有 `props` / `state` / `setState` / `forceUpdate` / 生命周期，**没有** `render()` |
+| 可调参数 | `<script type="text/x-dc" data-dc-script>` 上的 `data-props`：`editor` ∈ text/color/int/float/range/boolean/enum/null，`default` 只种编辑器值，需在 `renderVals()` 里 `this.props.x ?? …` 兜底 |
+| 预览尺寸 | `$preview: {"width","height"}`；PAGE 用画板 `w`×`h` |
+
+> **设计含义**：模板里不做计算，一切派生值在 `renderVals()` 里算好再暴露。这是"逻辑与模板分离"的硬约束，也让流式渲染（`hint-*` 占位）成为可能。
+
+---
+
+## 9.7 画布产物规格
+
+| 文档 | 覆盖 | 关键点 |
+| :--- | :--- | :--- |
+| `print.md`（5,827 B） | 海报 / 传单 / 手册 / PDF | 以 **96 px/in** 的 CSS px 为单位；固定页 vs 流式文档（`print:"flow"` 由 PDF 分页）；`paper` 支持 `letter` / `a4` |
+| `diagrams.md`（9,638 B） | 流程图 / 组织图 / 泳道 / 时序图 / 时间线 | 连线锚在"相对边的三分之一"处；有明确的数值规范章节 |
+| `view-state.md`（8,779 B） | 观看者视角 | 消息可能带 `<artifact-view-context artifact="…">` JSON（该观看者的实时 room 在场信息）；"这张/这两张/左边那个"必须据此解析，**不能猜**；没有该块时要反问 |
+| `craft.md`（16,105 B） | 设计方法论 | 品牌化 Anthropic 工作用 Ivory/Slate/Clay + 衬线标题；Claude Spark 每面只出现一次，不旋转、不变形、不做 lockup；Logo 深底浅字/浅底深字，保持留白与原始比例；两个标记**按序出现，永不合成** |
+| `questions.md`（4,419 B） | 建画布前要问的问题 | — |
+| `make-from-this.md`（2,014 B） | 从画布再产出别的东西 | — |
+
+> `craft.md` 还写了一条对复刻很重要的判断：**好的 hi-fi 设计植根于既有上下文**（代码库、品牌资产、产品截图、已附设计系统），"从零凭空造整个产品"是最后手段；没有图标/组件时**画占位**，不要画一个糟糕的真东西。
+
+---
+
+## 9.8 frame 的三个 UI 窗口与运行时 pin
+
+`ion-dist.asar` 根目录有 5 个 HTML 入口，其中三个属于 frame 运行时：
+
+| 文件 | `<title>` | 作用 |
+| :--- | :--- | :--- |
+| `frame-shell.html`（32,089 B） | **Artifact** | 承载单个 artifact（含内联 probe 与 `frame-runtime-pin`） |
+| `frame-connect.html`（1,635 B） | **Connect** | 连接握手 |
+| `frame-manage.html`（1,632 B） | **Share** | 分享 / 管理 |
+| `index.html`（52,618 B） | — | 产品主页面 |
+| `client-shell-v1.html`（2,529 B） | — | **锁定壳**：CSP `default-src 'none'`，仅 `script-src 'unsafe-inline' blob:`，`connect/img/style/font/media/frame/worker/object/form/base` 全 `none`，`webrtc 'block'` |
+
+**构建元数据**（三个 frame 页一致）：
+
+```html
+<meta name="build-timestamp" content="1794603257">   <!-- ≈ 2026-11-13 -->
+<meta name="build-git-hash" content="local">
+<meta name="frame-runtime-pin" content="manifest.d7fc1ed70d427533.json">
+```
+
+> ⚠️ **已观测到的不一致**：`frame-shell.html` 钉住的 `manifest.d7fc1ed70d427533.json` 在包内**不存在**；实际随包的是 `resources/frame/runtime/_runtime/manifest.10ae6c9474227def.json`。可能是运行时由宿主另行提供，也可能是构建残留。本卷**无法判定**属于哪一种，列为未解项。
+
+---
+
+## 9.9 随包库与构建杂项
+
+### artifact 运行时随包库（`resources/artifact-libs/`，3.7 MB）
+
+| 文件 | 用途 |
+| :--- | :--- |
+| `npm_chart.js@4.5.0_dist_chart.umd.js` | Chart.js 4.5.0（UMD） |
+| `npm_gridjs@5.0.2_dist_gridjs.umd.js` + `…theme_mermaid.min.css` | Grid.js 5.0.2 表格 |
+| `npm_mermaid@11.17.2_dist_mermaid.min.js` | Mermaid 11.17.2 图表 |
+
+> 这三者以 `npm_<pkg>@<ver>_dist_…` 命名，说明 artifact 运行时给生成物提供**离线可用的图表/表格/流程图**能力，不需要联网。
+
+### 构建与完整性
+
+| 项 | 观测 | 说明 |
+| :--- | :--- | :--- |
+| `app.asar:compile-cache/` | 3 个 `.jsc`（`index.js.arm64.jsc`、`index.chunk-xV3fJhc7.js.arm64.jsc`、`index.chunk-B2zFLoEJ.js.arm64.jsc`） | **V8 字节码缓存**，按 arm64 预编译主进程 chunk；对应 preload 暴露的 `desktopNoFlushBytecode` |
+| `ion-dist.asar:scc.json` | `chunks:4780, edges:69841, multiChunkSccs:0, sccs:[]` | 构建期强连通分量分析：**4780 个 chunk、69,841 条边、零跨 chunk 环** |
+| `ion-dist.asar:custom-3p-gated-imports.json` | `buildId:"spa-dev"`，`imports.cai_vast_rain` 含 `secret` / `hash` / 8 个 preload 文件 | 第三方"门控导入"机制：按构建 id 注入一组 preload；**含密钥，本卷不复制其值** |
+| `resources/quick-actions/document.wflow` + `Info.plist` | macOS Automator 工作流（`AMDocumentVersion`） | 系统级"快速操作"集成面 |
+
+---
+
+## 9.10 证据索引（本篇）
+
+| ID | 类型 | 位置 | 支撑结论 |
+| :--- | :--- | :--- | :--- |
+| E9-1 | 观测 | `app.asar:resources/frame/types/design/artifact-type/reference/brand-colors.md` | 品牌色板、21 阶暖灰、边框规则 |
+| E9-2 | 观测 | `…/reference/brand-typography.md` | 三套字体栈、七档字号、反 AI 默认字族 |
+| E9-3 | 观测 | `MainWindowPage-lhEHjHfd.css` 语义层 `--cds-font-*` | Anthropic 字族优先（修正 6.x 说法） |
+| E9-4 | 观测 | 同上，7 个 `@font-face` | 可变字重 300–800、`ss01/ss02`、`dlig 0` |
+| E9-5 | 观测 | `…/reference/design-system-components.md` | 安装契约：4 个上限、冲突停手、拒绝路径 |
+| E9-6 | 观测 | `…/reference/format.md` | `.dc.html` 语法卡全表 |
+| E9-7 | 观测 | `…/reference/{print,diagrams,view-state,craft}.md` | 96 px/in、连线三分点、view-context、品牌使用规则 |
+| E9-8 | 观测 | `ion-dist.asar:{frame-shell,frame-connect,frame-manage,client-shell-v1}.html` | 三个 frame 窗口 + 锁定壳 CSP |
+| E9-9 | 观测 | `ion-dist.asar:frame-shell.html` 的 `frame-runtime-pin` vs `resources/frame/runtime/_runtime/manifest.10ae6c9474227def.json` | pin 指向的清单不在包内（未解） |
+| E9-10 | 观测 | `app.asar:resources/artifact-libs/` | Chart.js 4.5.0 / Grid.js 5.0.2 / Mermaid 11.17.2 |
+| E9-11 | 观测 | `app.asar:compile-cache/`、`ion-dist.asar:scc.json`、`custom-3p-gated-imports.json` | V8 字节码缓存、SCC 统计、门控导入 |
+
+<p align="center"><a href="08-预览面板、元素选择与占位校准.md">← 第八篇</a> · <a href="README.md">📚 本卷索引</a></p>
 

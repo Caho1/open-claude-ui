@@ -1573,3 +1573,34 @@
   inherits: false;
   initial-value: 577.8;
 }
+
+/* V5.11 字体层（5.11492.5 语义层实测覆盖）
+   语义层把 :root 的系统字体默认值顶到后面，改为 Anthropic 字族优先。
+   --font-anthropic-* 由 @font-face 提供（可变字重 300–800）。 */
+:root {
+  --font-anthropic-sans: "anthropic-sans", "anthropic-sans-roman-fallback", ui-sans-serif, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", "PingFang SC", "PingFang TC", "Hiragino Sans", "Apple SD Gothic Neo",
+    "Kohinoor Devanagari", "Kohinoor Bangla", "Kohinoor Telugu", "Tamil Sangam MN", "Kohinoor Gujarati",
+    "Malayalam Sangam MN", "Nirmala UI", "Noto Sans Devanagari UI", "Noto Sans Devanagari",
+    "Noto Sans Bengali UI", "Noto Sans Bengali", "Noto Sans Telugu UI", "Noto Sans Telugu",
+    "Noto Sans Tamil UI", "Noto Sans Tamil", "Noto Sans Gujarati UI", "Noto Sans Gujarati",
+    "Noto Sans Kannada UI", "Noto Sans Kannada", "Noto Sans Malayalam UI", "Noto Sans Malayalam",
+    Thonburi, "Leelawadee UI", "Noto Sans Thai UI", "Noto Sans Thai", Kefa, Ebrima,
+    "Noto Sans Ethiopic", "Abyssinica SIL", sans-serif;
+  --font-anthropic-sans-display: "anthropic-sans-display", var(--font-anthropic-sans);
+  --font-anthropic-serif: "anthropic-serif", ui-serif, Georgia, "Times New Roman", "Kohinoor Devanagari",
+    "Kohinoor Bangla", "Kohinoor Telugu", "Tamil Sangam MN", "Kohinoor Gujarati", "Malayalam Sangam MN",
+    "Nirmala UI", "Noto Sans Devanagari UI", "Noto Sans Devanagari", "Noto Sans Bengali UI",
+    "Noto Sans Bengali", "Noto Sans Telugu UI", "Noto Sans Telugu", "Noto Sans Tamil UI",
+    "Noto Sans Tamil", "Noto Sans Gujarati UI", "Noto Sans Gujarati", "Noto Sans Kannada UI",
+    "Noto Sans Kannada", "Noto Sans Malayalam UI", "Noto Sans Malayalam", Thonburi,
+    "Leelawadee UI", "Noto Sans Thai UI", "Noto Sans Thai", Kefa, Ebrima, "Noto Sans Ethiopic",
+    "Abyssinica SIL", serif;
+  --font-anthropic-mono: "anthropic-mono", "SF Mono";
+
+  /* 语义层覆盖：Anthropic 优先、系统兜底 */
+  --cds-font-sans: var(--font-anthropic-sans, var(--cds-font-system)), var(--cds-font-system);
+  --cds-font-sans-display: var(--font-anthropic-sans-display, var(--cds-font-sans)), var(--cds-font-sans);
+  --cds-font-voice: var(--font-anthropic-serif, ui-serif), ui-serif, Georgia, "Times New Roman", serif;
+  --cds-font-mono-ui: var(--font-anthropic-mono, "SF Mono"), "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+}
