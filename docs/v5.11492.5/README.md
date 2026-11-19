@@ -5,7 +5,7 @@
 > **构建戳**：`commitHash 1403e2cf44abfb23809c8ae11238d5e9704a41c2` / `commitTimestamp 2026-11-13T20:47:10.000Z` / `buildType prod`（`app.asar:.vite/build/mainWindow.js@88439`）
 > **逆向框架**：REA（Reverse Engineer Anything）静态图谱 + ASAR 逐字节定位；Craft Anything 维护本次迭代的 brief / plan / handoff。
 > **版本沿革**：`1.x` → `2.37337.1` → `3.6556.2` → `4.29.0` → `4.4212.0` → `4.16336.0`（上一卷）→ **`5.11492.5`**（本卷）。
-> **定位**：按**功能点**分 17 篇，记录 5.x 相对 4.x 的**真实变化**：CDS 令牌从"约定"变成"带 `--cds-theme-api: 1` 的四层契约"，新增 `data-density` / `data-size` / `data-step` 三维作用域、48 个 `data-cds` 组件属性、CSS `linear()` 弹簧，全新的 `frame` artifact 运行时（129 个契约版本、26 个 capability、`design` / `slides` 两个 artifact 类型），整包可枚举的窗口 / IPC / 桥接口清单，预览面板与元素选择的 5.x 复检结果，此前未记录的**官方品牌色板 / 字体规范**与画布产物格式，**iOS Simulator / Android emulator** 移动模拟器面，以及随包分发的 **CDS 官方规范文档**（六层模型、角色内部接线、六条使用规则），以及支撑这些规范的**本地 MCP 工具链**（进程内服务器、widget 运行时、隐私与策略闸门），以及**系统提示词的分段解剖**（skills / computer_use / 包管理），以及**工具与钩子面**（提问、待办、验证、33 个钩子事件、29 个密钥关键词），以及**运行时本体**（用户目录里的 Claude Code + Linux VM、9 个默认全拒的会话、钩子转发），以及**六个此前没见过的 UI/UX 做法**（滚动贴边阴影、阶梯翻页、作用域级联、失焦令牌中和、dock 六态掩码、步骤化提问表单），并把**输入条 dock 的布局仲裁**（七属性、共享观察器、三条排除规则、输入竞速闸门）完整拆开。
+> **定位**：按**功能点**分 18 篇，记录 5.x 相对 4.x 的**真实变化**：CDS 令牌从"约定"变成"带 `--cds-theme-api: 1` 的四层契约"，新增 `data-density` / `data-size` / `data-step` 三维作用域、48 个 `data-cds` 组件属性、CSS `linear()` 弹簧，全新的 `frame` artifact 运行时（129 个契约版本、26 个 capability、`design` / `slides` 两个 artifact 类型），整包可枚举的窗口 / IPC / 桥接口清单，预览面板与元素选择的 5.x 复检结果，此前未记录的**官方品牌色板 / 字体规范**与画布产物格式，**iOS Simulator / Android emulator** 移动模拟器面，以及随包分发的 **CDS 官方规范文档**（六层模型、角色内部接线、六条使用规则），以及支撑这些规范的**本地 MCP 工具链**（进程内服务器、widget 运行时、隐私与策略闸门），以及**系统提示词的分段解剖**（skills / computer_use / 包管理），以及**工具与钩子面**（提问、待办、验证、33 个钩子事件、29 个密钥关键词），以及**运行时本体**（用户目录里的 Claude Code + Linux VM、9 个默认全拒的会话、钩子转发），以及**六个此前没见过的 UI/UX 做法**（滚动贴边阴影、阶梯翻页、作用域级联、失焦令牌中和、dock 六态掩码、步骤化提问表单），并把**输入条 dock 的布局仲裁**（七属性、共享观察器、三条排除规则、输入竞速闸门）完整拆开，以及 **TurnStatus 与 row 原语**（折叠内容仍可被浏览器查找、`beforematch` 自动展开、实验门控的工具类）。
 
 ---
 
@@ -176,6 +176,17 @@
 * [17.9 "能不能马上打字"：一个竞速闸门](17-输入条dock布局仲裁.md#179-能不能马上打字一个竞速闸门)
 * [17.10 复刻要点](17-输入条dock布局仲裁.md#1710-复刻要点)
 * [17.11 证据索引（本篇）](17-输入条dock布局仲裁.md#1711-证据索引本篇)
+
+### 🧾 [第十八篇：TurnStatus 与 row 原语：折叠、查找与实验门控](18-TurnStatus与row原语.md)
+* [18.1 结构：一个可折叠的状态行](18-TurnStatus与row原语.md#181-结构一个可折叠的状态行)
+* [18.2 row 原语：10 个 `data-cds-row-*` 属性](18-TurnStatus与row原语.md#182-row-原语10-个-data-cds-row--属性)
+* [18.3 状态：`data-state="busy"` 与去重键](18-TurnStatus与row原语.md#183-状态data-statebusy-与去重键)
+* [18.4 折叠 + 浏览器查找：`hidden="until-found"` + `beforematch`](18-TurnStatus与row原语.md#184-折叠--浏览器查找hiddenuntil-found--beforematch)
+* [18.5 嵌套隔离与焦点跟踪](18-TurnStatus与row原语.md#185-嵌套隔离与焦点跟踪)
+* [18.6 `stacks:`：被实验开关门控的 Tailwind 变体](18-TurnStatus与row原语.md#186-stacks被实验开关门控的-tailwind-变体)
+* [18.7 `--cds-outset-x`：行的出血量](18-TurnStatus与row原语.md#187---cds-outset-x行的出血量)
+* [18.8 复刻要点](18-TurnStatus与row原语.md#188-复刻要点)
+* [18.9 证据索引（本篇）](18-TurnStatus与row原语.md#189-证据索引本篇)
 
 ### 📎 附录
 * **[附录 A：随包 CDS 规范原文（逐字提取）](appendix/CDS-tokens-vanilla.md)**：23,443 字符 / 288 行，从 `cde7c3a92-xkWT1TxN.js` 的字符串常量 `u` 解码，未删节；含六条规则、四条原则、六层模型、角色五件套、背景 vs 填充、CDS 文案规范。

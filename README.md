@@ -51,7 +51,7 @@
 * **高阶视听与系统架构 (Audiovisual & Architecture)**：基于原生 Web Audio API 的零延迟合成提示音、以光标为锚点的画廊跑道平移缩放、macOS 桌面毛玻璃透明融合与 Cowork 多代理协同拓扑。
 
 > 💡 **架构分层说明 (Architecture & Portability)**：  
-> 本项目的 **令牌层 (Tokens) 与纯 CSS 表现层可脱离 React 与 Tailwind 单独使用**。无论是自研桌面 Harness（如 DSH、各类 Agent 桌面容器）、传统 Web 页面还是 Vue/Svelte 宿主，只需引入 `@import "open-claude-ui/tokens.css";` 或 `@import "open-claude-ui/pure.css";`，即可直接消费全量 303 个设计令牌（初测于 3.6556.2，现以 docs/v5.11492.5 卷实测为准；桌面端 5.11492.5 主窗口样式表内共 934 个 `--cds-*` 定义）、Zero-JS 原生滚动消隐遮罩（`[data-cds-scroll-fade]`）与核心动效类，详情见下文快速上手。
+> 本项目的 **令牌层 (Tokens) 与纯 CSS 表现层可脱离 React 与 Tailwind 单独使用**。无论是自研桌面 Harness（如 DSH、各类 Agent 桌面容器）、传统 Web 页面还是 Vue/Svelte 宿主，只需引入 `@import "open-claude-ui/tokens.css";` 或 `@import "open-claude-ui/pure.css";`，即可直接消费全量 308 个设计令牌（初测于 3.6556.2，现以 docs/v5.11492.5 卷实测为准；桌面端 5.11492.5 主窗口样式表内共 934 个 `--cds-*` 定义）、Zero-JS 原生滚动消隐遮罩（`[data-cds-scroll-fade]`）与核心动效类，详情见下文快速上手。
 
 > ⚖️ **版权与合规声明 (DMCA & Assets Policy)**：  
 > 本开源项目**不公开分发任何专有二进制资产**（包括商业字体 `.ttf` 与录音 `.mp3`）。本项目提供原生系统级字体回退栈与 Web Audio API 纯代码合成音效，完全自包含、合规安全。详情参见 [assets/README.md](assets/README.md)。
@@ -141,9 +141,9 @@ graph TD
 * **[v2/README.md 综述、新增特性、架构重构、底座解密与参考实现](docs/v2/README.md)**：全量划分为 6 大独立章节，深度解析 2.0 桌面端架构大跃迁。**（历史快照：取值以 docs/v5.11492.5 卷为准）**
 
 ### 🧬 Claude Desktop 5.11492.5 全量分析（当前版本卷）
-* **[v5.11492.5/README.md CDS 与 Artifact 运行时技术文档库](docs/v5.11492.5/README.md)**：**按功能点分 17 篇** + 合并阅读版。基于 REA 静态图谱与 ASAR 逐字节定位，记录 5.x 的真实变化：`--cds-theme-api: 1` 四层令牌契约、`data-density`/`data-size`/`data-step` 三维作用域、48 个 `data-cds` 组件属性、CSS `linear()` 弹簧、`frame` artifact 运行时（129 个契约版本 / 26 个 capability / `design` + `slides` 两种类型）与启动占位协议。
+* **[v5.11492.5/README.md CDS 与 Artifact 运行时技术文档库](docs/v5.11492.5/README.md)**：**按功能点分 18 篇** + 合并阅读版。基于 REA 静态图谱与 ASAR 逐字节定位，记录 5.x 的真实变化：`--cds-theme-api: 1` 四层令牌契约、`data-density`/`data-size`/`data-step` 三维作用域、48 个 `data-cds` 组件属性、CSS `linear()` 弹簧、`frame` artifact 运行时（129 个契约版本 / 26 个 capability / `design` + `slides` 两种类型）与启动占位协议。
   - 版本实测依据：`Info.plist` `CFBundleShortVersionString` / `app.asar/package.json` / 构建戳 `appVersion` 均为 `5.11492.5`
-  - 十七篇：版本边界与三层架构 / CDS 设计令牌总谱 / 作用域与组件属性契约 / 动效令牌与弹簧线性化 / Artifact 类型系统与契约协商 / 设计系统技能与复刻工程 / 窗口、IPC 与上下文桥全量清单 / 预览面板、元素选择与占位校准 / 官方品牌规范与画布产物契约 / 移动模拟器、元素上下文与托管策略 / CDS 官方规范文档 / 本地 MCP 工具链 / 系统提示词解剖 / 工具与钩子面 / 运行时本体 / 六个没见过的 UI/UX 做法 / 输入条 dock 布局仲裁
+  - 十八篇：版本边界与三层架构 / CDS 设计令牌总谱 / 作用域与组件属性契约 / 动效令牌与弹簧线性化 / Artifact 类型系统与契约协商 / 设计系统技能与复刻工程 / 窗口、IPC 与上下文桥全量清单 / 预览面板、元素选择与占位校准 / 官方品牌规范与画布产物契约 / 移动模拟器、元素上下文与托管策略 / CDS 官方规范文档 / 本地 MCP 工具链 / 系统提示词解剖 / 工具与钩子面 / 运行时本体 / 六个没见过的 UI/UX 做法 / 输入条 dock 布局仲裁 / TurnStatus 与 row 原语
 
 ### 🧬 Claude Desktop 4.16336.0 全量分析（历史基线）
 * **[v4.16336.0/README.md 侧边浏览器全量技术文档库](docs/v4.16336.0/README.md)**：与 v1 体例一致，**按功能点分 8 篇** + 合并阅读版。基于 REA 静态取证、9229 主进程 inspector 只读活体观测、519 帧逐帧与像素级验证；参考实现 [`code-examples/ElementInspectHighlight.ts`](code-examples/ElementInspectHighlight.ts)。
@@ -268,7 +268,7 @@ open-claude-ui/
 │   ├── v2/                            # 2.37337.1 历史快照：6 章
 │   ├── v4.29.0-4.4212.0/             # 3.6556.2 → 4.4212.0 历史基线：7 章 + 合并版
 │   ├── v4.16336.0/                   # 历史基线：侧边浏览器 8 篇 + README 索引 + .full.md
-│   ├── v5.11492.5/                   # 当前版本卷：17 篇按功能点 + README 索引 + .full.md
+│   ├── v5.11492.5/                   # 当前版本卷：18 篇按功能点 + README 索引 + .full.md
 │   └── claude-components-storybook.html # 离线可视化故事书（双击即可体验）
 ├── scripts/
 │   └── check-tokens.mjs               # 设计令牌 / keyframe 消费门禁

@@ -1604,3 +1604,24 @@
   --cds-font-voice: var(--font-anthropic-serif, ui-serif), ui-serif, Georgia, "Times New Roman", serif;
   --cds-font-mono-ui: var(--font-anthropic-mono, "SF Mono"), "SF Mono", ui-monospace, Menlo, Consolas, monospace;
 }
+
+/* V5.12 行出血量（TurnStatus / row 原语，5.11492.5 实测）
+   行可以按 --cds-outset-x 向两侧"出血"，与消息正文缩进对齐；
+   两个值都用 @property 注册为 <length>，因此可参与过渡。 */
+@property --cds-outset-x {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+@property --cds-outset-y {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 0px;
+}
+:root {
+  --cds-outset-x: 0px;                 /* 默认无出血 */
+  --cds-outset-y: 0px;
+  --cds-outset-x-sm: .25rem;           /* 轻出血 */
+  --cds-outset-x-lg: 1rem;             /* 重出血 */
+  --cds-outset-x-xl: calc(var(--spacing, .25rem) * 2);
+}
