@@ -1,6 +1,6 @@
 # Claude Desktop 5.11492.5 · CDS 与 Artifact 运行时（合并阅读版）
 
-> 本文件由本卷 12 篇按功能点顺序合并生成，供离线全文档阅读；分篇导航见 [README.md](README.md)。
+> 本文件由本卷 13 篇按功能点顺序合并生成，供离线全文档阅读；分篇导航见 [README.md](README.md)。
 
 > 载体：`app.asar` 88,833,670 B / SHA-256 `2c515441d5d0504a96ac3e49bcc4c1244085c0e76ad23ae58ddd8f736100479e`；`ion-dist.asar` 208,001,845 B / SHA-256 `1d55d633d14aede748af3cb22c244f4ddc2f795d9b1153b175b993ae5d46aa1b`。Electron `45.2.1`。
 
@@ -2478,7 +2478,7 @@ domain: 工具与运行时
 | 服务器 | 工厂 | UI 资源 | 工具 |
 | :--- | :--- | :--- | :--- |
 | `visualize` | `getMcpVisualizeServerInstance` | `ui://imagine/show-widget.html` | `read_me`、`show_widget` |
-| `mcpAppsExample` | `getMcpAppsExampleServerInstance` | `ui://mcp-apps-example/{counter,hello-world,sticky-notes}.html` | 示例用途 |
+| `mcpAppsExample` | `getMcpAppsExampleServerInstance` | `ui://mcp-apps-example/{counter,hello-world,sticky-notes}.html` | 三个演示工具（`mcp_apps_hello` / `_counter` / `_sticky_notes`），**无自带文档**，只有一段 `sendRequest({method, params})` 的最小 MCP Apps 客户端垫片 |
 
 注册走两条互斥路径（`shared-21`）：
 
@@ -2554,7 +2554,7 @@ function z(n){ return t.n() ? (R || (R = !0, log.info(`[imagine] ${n} refused �
 
 ## 12.4 widget 运行时：41 个可读的 `src/scripts` 模块
 
-`D92FUleA` 内联了完整的 widget 运行时，且**保留了源码注释与模块边界**（未压缩）：
+`D92FUleA` 内联了完整的 widget 运行时，且**保留了源码注释与模块边界**（未压缩）：解码后共 **9,155 行 / 302 KB**，逐模块行数与首行见[附录 D](appendix/widget-runtime-modules.md)。
 
 | 类别 | 模块 |
 | :--- | :--- |
@@ -2688,4 +2688,235 @@ widget 运行时把第三方库换成了**同源本地镜像**，并在失败时
 | E12-9 | 观测 | 同上，`share-edits` / `elicit-design-system` 常量 | 回传与表单的白名单约束 |
 
 <p align="center"><a href="11-CDS官方规范文档.md">← 第十一篇</a> · <a href="README.md">📚 本卷索引</a></p>
+
+
+
+---
+
+---
+title: 系统提示词解剖：skills、computer_use 与包管理
+part: 13
+category: 提示词
+domain: 提示词与工具
+---
+
+<p align="center"><a href="12-本地MCP工具链.md">← 第十二篇</a> · <a href="README.md">📚 本卷索引</a></p>
+
+# 第十三篇：系统提示词解剖：skills、computer_use 与包管理
+
+> **技术领域与英文指代**：系统提示词分段（prompt section）、技能（skill）、技能目录（`{{skillsDir}}`）、可用技能块（`<available_skills>`）、技能调用方式（`<location>` vs `<invoke_with>`）、沙箱外壳（sandboxed Linux shell）、包管理（package management）。
+
+附录 C 是原文，本篇是**结构解剖**：先给出 34 个段落的体量分布，再把 `<skills>`、`<computer_use>`、`<package_management>` 三段拆开，并与包内实际文件对齐。
+
+---
+
+## 13.1 34 个段落的体量分布
+
+| 段落 | 行数 | 段落 | 行数 |
+| :--- | ---: | :--- | ---: |
+| `<artifacts>` | **72** | `<user_wellbeing>` | 16 |
+| `<lists_and_bullets>` | 32 | `<web_content_restrictions>` | 16 |
+| `<ask_user_question_tool>` | 21 | `<good_file_sharing_examples>` | 16 |
+| `<notes_on_user_uploaded_files>` | 20 | `<suggesting_claude_actions>` | 15 |
+| `<skills>` | 18 | `<high_level_computer_use_explanation>` | 15 |
+| `<user_wellbeing>` / `<evenhandedness>` | 16 / 12 | `<file_handling_rules>` | 15 |
+| `<additional_skills_reminder>` | 13 | `<examples>` | 15 |
+| `<refusal_handling>` | 12 | `<producing_outputs>` | 14 |
+| `<file_creation_advice>` | 9 | `<working_with_user_files>` | 14 |
+| `<env>` | 7 | `<package_management>` | 7 |
+
+> **体量即权重**：`<artifacts>` 一段就占了 72 行（16%），是整份提示词里最长的一节——桌面端把"产出物"当第一等公民。`<skills>` + `<additional_skills_reminder>` 合计 31 行，是第二块重投入。
+
+---
+
+## 13.2 `<skills>`：技能是磁盘上的文件夹
+
+原文关键句：
+
+> `a set of "skills" is available — these are essentially folders that contain a set of best practices…`
+> `Claude's first order of business should always be to examine the skills available in Claude's <available_skills> and decide which skills, if any, are relevant…`
+> `Then, Claude can and should use the Read tool to read the appropriate SKILL.md files and follow their instructions.`
+
+三个示例（原文）把"先读后做"写成了固定动作：
+
+| 用户请求 | 模型应立即执行 |
+| :--- | :--- |
+| 做一份每月孕期的 PPT | `Read {{skillsDir}}/skills/pptx/SKILL.md` |
+| 读这份文档并改语法错误 | `Read {{skillsDir}}/skills/docx/SKILL.md` |
+| 基于文档生成图并插进文档 | `Read …/docx/SKILL.md`，再读用户技能 `…/user/imagegen/SKILL.md` |
+
+> **设计要点**：技能不是工具，是**文件**。模型用 `Read` 取，取到的是一段 markdown 指令，然后照做。这样技能可以随时增删、可以被用户/组织覆盖，而不需要改代码。
+
+---
+
+## 13.3 `<available_skills>` 是运行时拼出来的
+
+`<skills>` 段里提到的 `<available_skills>` **不在提示词模板里**，由主进程的 `generateSkillsSystemPrompt()` 现场生成（`app.asar:.vite/build/index.chunk-Cn8V_d1p.js`）。
+
+### 外层模板（原文，含条件分支）
+
+```
+<skills_instructions>
+Skills give you specialized instructions and domain knowledge for particular kinds of tasks.
+Before starting a task, check whether one of the skills in <available_skills> below covers it.
+
+How to use a skill:
+- A skill listed with a <location> is on disk: read <location>/SKILL.md (or <location> itself when it
+  names a .md file) with the Read tool and follow its instructions.
+- A skill listed with <invoke_with>Skill tool</invoke_with>: call the Skill tool with the skill's <name>
+  exactly as listed (skill: "<name>") … skills refer to their own folders with the placeholders
+  ${CLAUDE_PLUGIN_ROOT} and ${CLAUDE_SKILL_DIR}, which only the Skill tool fills in …
+
+Important:
+- Only use skills listed in <available_skills> below
+- Once a skill's instructions are loaded in the current turn, follow them rather than loading the skill again
+- If the user asks which skills they have, call `list_skills` to render the widget instead of writing
+  skill names in text.
+- If the user asks which plugins they have installed, call `list_plugins` to render the widget …
+</skills_instructions>
+
+<available_skills>
+${…}
+</available_skills>
+```
+
+### 两种调用方式并存
+
+| 标记 | 调用方式 | 原因 |
+| :--- | :--- | :--- |
+| `<location>` | 直接用 `Read` 读文件 | 技能在磁盘上，模型可自行读取 |
+| `<invoke_with>Skill tool</invoke_with>` | 必须走 `Skill` 工具（`skill: "<name>"`） | 技能内部用 `${CLAUDE_PLUGIN_ROOT}` / `${CLAUDE_SKILL_DIR}` 占位，**只有 Skill 工具会填充**；自己读文件会得到空值 |
+
+> 这是本卷见到的最容易被复刻者忽略的一条：**"读文件"和"调用技能"不是等价的**，占位符只在 Skill 工具路径下被替换。
+
+### 装配时的六条过滤/告警（原文日志）
+
+| 条件 | 处理 |
+| :--- | :--- |
+| 多个技能映射到同一个 Claude Code 名（非 `[A-Za-z0-9_-]` 都变 `-`） | 改为**各自独立名 + 路径**列出，并 `warn` |
+| `r.enabled === false` 或名称不可解析 | 跳过 |
+| `creatorType === "anthropic"` 且 `skillId === name` 且 `updatedAt === null` 且不在已服务列表 | 视为"内置清单残留"跳过（下次同步清理） |
+| 组织未服务该技能（`E` 集合不含） | 跳过 |
+| `disable-model-invocation: true`（写在 SKILL.md frontmatter） | 标记 `disableModelInvocation`，不给模型自动调用 |
+| 用户不可编辑（`reservedForUser`） | 仅列名，不可覆盖 |
+
+---
+
+## 13.4 随包的 7 个技能
+
+`app.asar:resources/bundled-skills/`：
+
+| 技能 | 大小 | 备注 |
+| :--- | ---: | :--- |
+| `docx.skill` | 172 KB | 文档 |
+| `pptx.skill` | 186 KB | 演示 |
+| `xlsx.skill` | 172 KB | 表格 |
+| `pdf.skill` | 25 KB | PDF 生成/填表 |
+| `pdf-reading.skill` | 8 KB | PDF 读取（与上一个分工） |
+| `frontend-design.skill` | 8 KB | **设计品味**（附录 A 引用的 `#D97757` 出处） |
+| `draft-design-system.skill` | 53 KB | **设计系统草案**（第六篇 6.1） |
+
+`manifest.json` 的字段决定了它们如何进入 `<available_skills>`：
+
+```json
+{ "agentSkillsRef": "1794592614",
+  "skills": [ { "name": "docx", "description": "…", "tier": "always" },
+              …
+              { "name": "draft-design-system", "tier": "always", "needsDesignSystems": true } ] }
+```
+
+> **`needsDesignSystems: true` 是硬开关**：`be()` 在生成清单时执行 `t.skills.filter(t => !t.needsDesignSystems || Tl() !== "off")`——组织关掉设计系统，`draft-design-system` 就**不会出现在 `<available_skills>` 里**。
+
+---
+
+## 13.5 `<computer_use>`：文件工具 + 一个沙箱
+
+`<high_level_computer_use_explanation>` 原文要点：
+
+| 工具 | 说明 |
+| :--- | :--- |
+| `Read` / `Write` / `Edit` | 直接作用于工作目录与 workspace 文件夹；**`Read` 只读文件，不读目录**（列目录要用 Bash 的 `ls`） |
+| `Bash` | 隔离的 **Ubuntu 22** 沙箱，预装 Python / Node / 常用 CLI；通过挂载访问工作目录与已连接的 workspace |
+
+| 路径 | 含义 |
+| :--- | :--- |
+| `{{cwd}}` | 工作目录，**所有临时工作都放这里** |
+| `{{workspaceFolder}}` | 用户的 workspace 文件夹，**会话结束后仍可访问** |
+
+两条边界说明（原文）：
+
+> `Prefer the file tools (Read/Write/Edit) over shell commands for file operations. The shell runs in its own sandbox and the file tools and the shell may use different paths for the same files.`
+>
+> `Files the shell writes outside its mounted folders stay inside the sandbox, where the user cannot open them.`
+
+交付方式：`mcp__cowork__present_files` —— 把 docx/pptx/xlsx 直接呈现在用户选定的文件夹里。
+
+### 反向约束：什么时候**不该**用电脑工具
+
+`<unnecessary_computer_use_avoidance>` 给了三条否定条件：回答训练知识内的事实问题、总结对话里已有的内容、解释概念或提供信息。
+
+`<file_creation_advice>` 给了六条触发规则（写文档→`.md`/`.html`/`.docx`；做组件→代码文件；改上传文件→改原文件；做演示→`.pptx`；任何含"save/file/document"的请求→建文件；**超过 10 行代码→建文件**）。
+
+---
+
+## 13.6 `<package_management>`：三行硬规则
+
+原文全文（7 行）：
+
+```
+Package managers run inside the shell sandbox:
+- npm: Works normally
+- pip: ALWAYS use `--break-system-packages` flag (e.g., `pip install pandas --break-system-packages`)
+- Virtual environments: Create if needed for complex Python projects
+- Always verify tool availability before use
+```
+
+> **`--break-system-packages` 是沙箱专用的写法**：Ubuntu 22 的 PEP 668 会拦住系统级 pip 安装，而这个沙箱本来就是一次性的，所以直接放行。复刻这套运行时的时候，这一条必须跟着沙箱策略一起改，不能照抄到真实机器上。
+
+---
+
+## 13.7 技能推荐与自建技能
+
+除 `<skills>` 之外，包里还有一组**技能生态工具**（名字出现在 `generateSkillsSystemPrompt` 与 `save_skill` 的实现里）：
+
+| 工具 | 用途 |
+| :--- | :--- |
+| `list_skills` | 用户问"我有哪些技能"时，**渲染成 widget**，而不是在文字里罗列 |
+| `list_plugins` | 同上，针对已安装插件 |
+| `suggest_skills` | 按任务关键词推荐独立技能（"最多每次对话建议一次"） |
+| `search_plugins` | 搜未安装插件里的技能，命中后再 `suggest_plugin_install` |
+| `save_skill` | 让模型把新技能写盘/上传（带 `overwrite` 语义与"名称必须与 `<available_skills>` 完全一致"的约束） |
+
+> `list_skills` / `list_plugins` 选择"渲染 widget 而不是打字"，与第十二篇的 widget 体系是同一套设计语言：**结构性信息交给可视化，文字留给解释**。
+
+---
+
+## 13.8 三套"规范"的分工
+
+到这里，包里一共有三套面向模型的规范，职责不重叠：
+
+| 规范 | 载体 | 触发方式 | 管什么 |
+| :--- | :--- | :--- | :--- |
+| **系统提示词**（附录 C） | 主进程 chunk | 每次请求常驻 | 行为准则、工具用法、产物规则 |
+| **技能**（`resources/bundled-skills/*.skill`） | 磁盘文件夹 | 模型 `Read`/`Skill` 按需读 | 某类产物的具体做法（docx/pptx/设计系统…） |
+| **CDS 规范**（附录 A/B） | `read_me` 工具结果 | 画 widget 前拉取 | 视觉令牌与用法 |
+
+> 三者是**分层加载**：常驻的只有系统提示词；技能与 CDS 规范都在需要时才进上下文。这也是为什么附录 A 那 23 KB 可以放心随包分发——不画图就不花 token。
+
+---
+
+## 13.9 证据索引（本篇）
+
+| ID | 类型 | 位置 | 支撑结论 |
+| :--- | :--- | :--- | :--- |
+| E13-1 | 观测 | `appendix/desktop-3p-base-prompt.md` 段落切分 | 34 段、443 行与体量分布 |
+| E13-2 | 观测 | 同上 `<skills>`（276–294 行） | 技能是文件夹、先读 SKILL.md、三个示例 |
+| E13-3 | 观测 | `app.asar:.vite/build/index.chunk-Cn8V_d1p.js` `generateSkillsSystemPrompt` | `<skills_instructions>` 模板、两种调用方式、六条过滤 |
+| E13-4 | 观测 | 同上 `be()` 过滤 | `needsDesignSystems` 硬开关 |
+| E13-5 | 观测 | `app.asar:resources/bundled-skills/{manifest.json,*.skill}` | 7 个随包技能与 tier |
+| E13-6 | 观测 | 附录 C `<high_level_computer_use_explanation>` | Read/Write/Edit + Bash(Ubuntu 22)、`{{cwd}}` / `{{workspaceFolder}}` |
+| E13-7 | 观测 | 附录 C `<package_management>` | npm / pip `--break-system-packages` / venv |
+| E13-8 | 观测 | `app.asar:.vite/build/index.chunk-60gIKsy6.js` `save_skill` | 技能自建与覆盖语义 |
+
+<p align="center"><a href="12-本地MCP工具链.md">← 第十二篇</a> · <a href="README.md">📚 本卷索引</a></p>
 

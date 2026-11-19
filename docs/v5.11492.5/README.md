@@ -5,7 +5,7 @@
 > **构建戳**：`commitHash 1403e2cf44abfb23809c8ae11238d5e9704a41c2` / `commitTimestamp 2026-11-13T20:47:10.000Z` / `buildType prod`（`app.asar:.vite/build/mainWindow.js@88439`）
 > **逆向框架**：REA（Reverse Engineer Anything）静态图谱 + ASAR 逐字节定位；Craft Anything 维护本次迭代的 brief / plan / handoff。
 > **版本沿革**：`1.x` → `2.37337.1` → `3.6556.2` → `4.29.0` → `4.4212.0` → `4.16336.0`（上一卷）→ **`5.11492.5`**（本卷）。
-> **定位**：按**功能点**分 12 篇，记录 5.x 相对 4.x 的**真实变化**：CDS 令牌从"约定"变成"带 `--cds-theme-api: 1` 的四层契约"，新增 `data-density` / `data-size` / `data-step` 三维作用域、48 个 `data-cds` 组件属性、CSS `linear()` 弹簧，全新的 `frame` artifact 运行时（129 个契约版本、26 个 capability、`design` / `slides` 两个 artifact 类型），整包可枚举的窗口 / IPC / 桥接口清单，预览面板与元素选择的 5.x 复检结果，此前未记录的**官方品牌色板 / 字体规范**与画布产物格式，**iOS Simulator / Android emulator** 移动模拟器面，以及随包分发的 **CDS 官方规范文档**（六层模型、角色内部接线、六条使用规则），以及支撑这些规范的**本地 MCP 工具链**（进程内服务器、widget 运行时、隐私与策略闸门）。
+> **定位**：按**功能点**分 13 篇，记录 5.x 相对 4.x 的**真实变化**：CDS 令牌从"约定"变成"带 `--cds-theme-api: 1` 的四层契约"，新增 `data-density` / `data-size` / `data-step` 三维作用域、48 个 `data-cds` 组件属性、CSS `linear()` 弹簧，全新的 `frame` artifact 运行时（129 个契约版本、26 个 capability、`design` / `slides` 两个 artifact 类型），整包可枚举的窗口 / IPC / 桥接口清单，预览面板与元素选择的 5.x 复检结果，此前未记录的**官方品牌色板 / 字体规范**与画布产物格式，**iOS Simulator / Android emulator** 移动模拟器面，以及随包分发的 **CDS 官方规范文档**（六层模型、角色内部接线、六条使用规则），以及支撑这些规范的**本地 MCP 工具链**（进程内服务器、widget 运行时、隐私与策略闸门），以及**系统提示词的分段解剖**（skills / computer_use / 包管理）。
 
 ---
 
@@ -120,6 +120,17 @@
 * [12.8 文档模块（三份）](12-本地MCP工具链.md#128-文档模块三份)
 * [12.9 协作编辑与征询表单](12-本地MCP工具链.md#129-协作编辑与征询表单)
 * [12.10 证据索引（本篇）](12-本地MCP工具链.md#1210-证据索引本篇)
+
+### 🧠 [第十三篇：系统提示词解剖：skills、computer_use 与包管理](13-系统提示词解剖.md)
+* [13.1 34 个段落的体量分布](13-系统提示词解剖.md#131-34-个段落的体量分布)
+* [13.2 `<skills>`：技能是磁盘上的文件夹](13-系统提示词解剖.md#132-skills技能是磁盘上的文件夹)
+* [13.3 `<available_skills>` 是运行时拼出来的](13-系统提示词解剖.md#133-available_skills-是运行时拼出来的)
+* [13.4 随包的 7 个技能](13-系统提示词解剖.md#134-随包的-7-个技能)
+* [13.5 `<computer_use>`：文件工具 + 一个沙箱](13-系统提示词解剖.md#135-computer_use文件工具--一个沙箱)
+* [13.6 `<package_management>`：三行硬规则](13-系统提示词解剖.md#136-package_management三行硬规则)
+* [13.7 技能推荐与自建技能](13-系统提示词解剖.md#137-技能推荐与自建技能)
+* [13.8 三套"规范"的分工](13-系统提示词解剖.md#138-三套规范的分工)
+* [13.9 证据索引（本篇）](13-系统提示词解剖.md#139-证据索引本篇)
 
 ### 📎 附录
 * **[附录 A：随包 CDS 规范原文（逐字提取）](appendix/CDS-tokens-vanilla.md)**：23,443 字符 / 288 行，从 `cde7c3a92-xkWT1TxN.js` 的字符串常量 `u` 解码，未删节；含六条规则、四条原则、六层模型、角色五件套、背景 vs 填充、CDS 文案规范。
