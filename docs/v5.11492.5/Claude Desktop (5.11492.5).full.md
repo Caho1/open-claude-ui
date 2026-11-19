@@ -129,7 +129,13 @@ ion-dist.asar/
 
 > **观测**：capability 是**按需加载的独立 JS 模块**（每个 capability 一个文件），`self` 复用 `artifact` 的产物。这解释了为什么 `design` 的 manifest 可以只声明自己用到的 10 个 capability —— 未声明的模块根本不会被下发。
 >
-> **推断（未验证）**：`kernel-0.1.x` 与 `kernel` 双内核并存，指向"旧 artifact 用 0.1.x 内核、新 artifact 用当前内核"的兼容策略；本卷未取得内核选择逻辑的调用点，故仅记录并存事实。
+> **内核选择规则（已查清）**：`app.asar:.vite/build/frame-local-worker/frameLocalWorker.js` 里 `ka(e,t)` 的写法是 `let n = t && e["kernel-0.1.x"] ? e["kernel-0.1.x"] : e.kernel`，而 `t` 来自 `Tr(contract)`：
+>
+> ```js
+> function Tr(e){ return e===void 0 || !Re(e) || e===Ve ? !1 : ze(e,Sr) < 0 }
+> ```
+>
+> 即：**契约版本存在、合法、不是当前版本、且早于阈值 `Sr` → 用 `kernel-0.1.x`；否则用 `kernel`**。所以双内核不是“两套并存随便选”，而是**按 artifact 的契约版本降级**：老契约跑 0.1.x 内核，新契约跑当前内核。同一逻辑在拼接 HTML 时还会写入 `kernelFile` 字段供后续校验。
 
 ---
 
@@ -170,8 +176,10 @@ ion-dist.asar/
 | E1-8 | 观测 | `app.asar:resources/frame/runtime/contracts/` 目录计数 | 129 个契约版本 |
 | E1-9 | 观测 | `app.asar:.vite/build/*.js` 字符串统计 | IPC 命名空间与通道名 |
 | E1-10 | 观测 | REA `analyze_javascript_application` 错误载荷 | unpacked 完整性摘要不一致 |
+| E1-11 | 观测 | `app.asar:.vite/build/frame-local-worker/frameLocalWorker.js`（`ka()` / `Tr()`） | 双内核按契约版本降级 |
 
 <p align="center"><a href="README.md">📚 本卷索引</a> · <b>第一篇</b> · <a href="02-CDS设计令牌总谱.md">第二篇 →</a></p>
+
 
 
 ---
@@ -404,6 +412,7 @@ domain: 视觉系统
 <p align="center"><a href="01-版本边界与三层架构.md">← 第一篇</a> · <a href="README.md">📚 本卷索引</a> · <a href="03-作用域与组件属性契约.md">第三篇 →</a></p>
 
 
+
 ---
 
 ---
@@ -430,7 +439,7 @@ domain: 视觉系统
 | `data-mode` | `light` / `dark` / `system` | 149 条颜色语义 | 根节点（`<html>`），见 `index.html@548` |
 | `data-density` | `comfortable`（另有默认 base 档） | 40 条几何 + 105 条排版 + 77 条组件尺寸 | 根节点 |
 | `data-size` | `xs` / `sm` / `lg`（无值 = md 默认） | 38 条/档，重定向到 `--*--xs` 等后缀族 | 任意子树 |
-| `data-step` | `1` … `5` | 3 条/档（`--cds-h-control`、`--cds-button-pad-max`、`--cds-button-radius-add`） | 任意子树 |
+| `data-step` | `1` … `5` | **19 条/档**（radius / h-control / icon / 5 档 pad / 字号 / 行高）+ 3 条按钮专项 | 任意子树（骨架行组实测） |
 | `data-font` | `system`（另有品牌字体档） | 字体栈 | 根节点 |
 | `data-window-active` | `false` | 角色层 accent 全部降级为灰 | 根节点 |
 
@@ -455,16 +464,21 @@ domain: 视觉系统
 
 `--cds-radius--xs` 这类**双连字符后缀族**是"尺寸档位表"：每个几何令牌有 `--xs/--sm/--lg` 三个预生成值，`data-size` 只做指针切换。复刻时若用 `data-size` 却不提供 `--*--xs` 族，样式会静默回退到继承值。
 
-### `data-step` 的级联档
+### `data-step` 的五档几何阶（修正）
 
-`[data-step="1"]` … `[data-step="5"]` 每档只改 3 个值：
+`[data-step="1"]` … `[data-step="5"]` **不是**三值微调，而是每档 **19 条**声明组成的完整几何阶梯（另有 3 条属于按钮专项）：
 
-| step | `--cds-h-control` | `--cds-button-pad-max` | `--cds-button-radius-add` |
-| ---: | :--- | :--- | :--- |
-| 1 | `calc(1.25rem * scale)` | `calc(.375rem * scale)` | `0rem` |
-| 2–5 | 递增（同族 `calc` 形式） | 递增 | 递增 |
+| step | `--cds-h-control` | `--cds-icon` | `--cds-font-size-body` | `--cds-font-size-prose` | `--cds-radius` |
+| ---: | :--- | :--- | :--- | :--- | :--- |
+| 1 | `calc(1.25rem * scale)` ≈ 18.8px | `calc(.75rem * scale)` ≈ 11.3px | `calc(.75rem * scale)` ≈ 11.3px | `.8125rem` = 13px | `calc(.3125rem * scale)` ≈ 4.7px |
+| 2 | `1.5rem` ≈ 22.6px | `1rem` ≈ 15.1px | — | — | `.375rem` ≈ 5.6px |
+| 3 | `1.75rem` ≈ 26.4px | `1rem` | — | — | `.4375rem` ≈ 6.6px |
+| 4 | `2rem` ≈ 30.1px | `1.25rem` ≈ 18.8px | — | — | `.5rem` ≈ 7.5px |
+| 5 | `2.5rem` ≈ 37.6px | `1.5rem` ≈ 22.6px | — | — | `.625rem` ≈ 9.4px |
 
-> **推断**：`data-step` 是**列表/时间线的阶梯**（第 1 步最紧凑、第 5 步最宽松），与 `data-size` 的"控件尺寸"是两个正交维度。本卷未在 JS 中找到 `data-step` 的写入点，仅记录样式层事实。
+每档同时改 `--cds-h-control-nested`、`--cds-pad-xs/sm/md/lg/xl`、字号与行高，是**等比缩放的一整阶**，不是单点调整。
+
+> **写入点（已查清）**：`ion-dist.asar:assets/v1/shared-62-zErJ7r0o.js` 在**骨架屏行组**上写 `data-step:"1"`（内层是 `h-control-nested rounded-chip` 的占位块）。所以 `data-step` 的真实用途是：**让骨架行按阶降级**——越靠下的占位行用越小的阶，形成视觉上“逐行变小”的收束感，而不是列表/时间线的步数。
 
 ---
 
@@ -518,6 +532,8 @@ domain: 视觉系统
 | 5 | `Skeleton` | | |
 
 > **与 4.x 的差异**：4.x 卷用 `data-cds` 只出现在少量组件（`Button`、`Prose`、`ShimmerText`）；5.x 已扩展到 48 个，形成一套**可枚举的组件自反层**。对复刻者而言，这意味着可以直接用属性选择器接管任意组件的视觉，无需依赖 class 名。
+>
+> **覆盖边界**：本仓库 `code-examples/` 的 30 个模块中，能直接对应到 `data-cds` 名的约 10 个（`Button` / `Prose` / `ShimmerText` / `UserMessage` / `AssistantMessage` / `ChatComposerEditor` / `ModelSelector` / `ModelSelectorEffort` / `FileDiff` / `Skeleton`）。其余模块在 5.x 里以别的名字存在（例如 `SegmentedControl` 只在 4 个文件里作为普通标识出现，`ThinkingBlock` 只在 1 个文件里出现，`ToolDecision` 在 18 个文件里出现），**不能**用 `data-cds=` 检索当作“组件已不存在”的依据。
 
 ---
 
@@ -606,7 +622,8 @@ AGENTS.md 的"单描边"在 5.x 有了明确的实现路径：**边框令牌化 
 | ID | 类型 | 位置 | 支撑结论 |
 | :--- | :--- | :--- | :--- |
 | E3-1 | 观测 | `MainWindowPage-lhEHjHfd.css`，`[data-size=…]` 三块 | 尺寸档位重定向 |
-| E3-2 | 观测 | 同上 @202735–@206721 | `data-step` 1–5 三值级联 |
+| E3-2 | 观测 | 同上 @202735–@206721（19 条/档）+ @238155（3 条/档） | `data-step` 1–5 几何阶梯 |
+| E3-10 | 观测 | `ion-dist.asar:assets/v1/shared-62-zErJ7r0o.js` | `data-step` 的写入点：骨架行组 |
 | E3-3 | 观测 | 同上 @143693–@144290 | 失焦降饱和映射 |
 | E3-4 | 观测 | 同上 @108078 | MessageActions 透明度过渡 |
 | E3-5 | 观测 | 同上 @106855–@107130 | DataTable 行级令牌重定向 |
@@ -616,6 +633,7 @@ AGENTS.md 的"单描边"在 5.x 有了明确的实现路径：**边框令牌化 
 | E3-9 | 观测 | `app.asar:.vite/renderer/main_window/index.html@548` | 根节点作用域戳 |
 
 <p align="center"><a href="02-CDS设计令牌总谱.md">← 第二篇</a> · <a href="README.md">📚 本卷索引</a> · <a href="04-动效令牌与弹簧线性化.md">第四篇 →</a></p>
+
 
 
 ---
@@ -813,6 +831,7 @@ animation: cds-pill-dip-down calc((var(--cds-dur-snap) + 40ms) / 2) var(--cds-ea
 <p align="center"><a href="03-作用域与组件属性契约.md">← 第三篇</a> · <a href="README.md">📚 本卷索引</a> · <a href="05-Artifact类型系统与契约协商.md">第五篇 →</a></p>
 
 
+
 ---
 
 ---
@@ -1008,6 +1027,7 @@ domain: Artifact 平台
 | E5-8 | 观测 | `resources/frame/runtime/runtime.hash.json` | capability → 模块文件映射 |
 
 <p align="center"><a href="04-动效令牌与弹簧线性化.md">← 第四篇</a> · <a href="README.md">📚 本卷索引</a> · <a href="06-设计系统技能与复刻工程.md">第六篇 →</a></p>
+
 
 
 ---
@@ -1247,6 +1267,7 @@ npm run build         # tsc -p tsconfig.build.json
 <p align="center"><a href="05-Artifact类型系统与契约协商.md">← 第五篇</a> · <a href="README.md">📚 本卷索引</a></p>
 
 
+
 ---
 
 ---
@@ -1338,6 +1359,25 @@ domain: 进程与通信
 > 1. `images:false, javascript:false, webgl:false` 的 `WebContentsView` —— 只用于取内容/排版，不执行脚本，是最强的沙箱档；
 > 2. `devTools:false` + `spellcheck:false` + `webviewTag:false` 的视图 —— 面向不可信内容；
 > 3. `partition:"cu-overlay"` 的 `about:blank` 窗 —— computer-use 覆盖层使用**独立会话分区**，与主会话的 cookie/存储隔离。
+
+---
+
+### 本地 8 个渲染窗口的 CDS 覆盖（补检）
+
+对 `.vite/renderer/` 下 8 个窗口目录逐个检索 `--cds-` 与 `data-cds=`：
+
+| 窗口 | 含 `--cds-` 的文件 | `data-cds=` 出现次数 | 结论 |
+| :--- | ---: | ---: | :--- |
+| `main_window` | 1 | 303 | CDS 基准窗口 |
+| `about_window` | 2 | 303 | 基于 CDS |
+| `buddy_window` | 2 | 303 | 基于 CDS |
+| `quick_window` | 2 | 303 | 基于 CDS |
+| `config_template_window` | 7 | 317 | 基于 CDS（自有组件更多） |
+| `find_in_page` | 7 | 317 | 基于 CDS |
+| `file_viewer` | 0 | 0 | **不用 CDS**（独立样式） |
+| `local_exec_consent` | 0 | 0 | **不用 CDS**（独立样式） |
+
+> **含义**：CDS 不是“只给主窗口用的设计系统”，它是 6 个本地窗口的共用底层；只有文件查看器与本地执行授权窗例外。后两者是纯功能性小窗，复刻时不必强行套令牌。
 
 ---
 
@@ -1491,8 +1531,10 @@ electron-store-get-data
 | E7-6 | 观测 | `ev_ba0b520c…` `js_electron_fuses_show` | 9 条 fuse，6/7 硬化，`--inspect` 关闭 |
 | E7-7 | 推导 | `ev_01432a4f…`（source_maps 表 631 行） | 无 source map 发布 |
 | E7-8 | 推导 | `ev_01432a4f…`（native_modules / storage / effects / endpoints） | 6 原生模块、414 存储、9288 效果、1270 端点 |
+| E7-9 | 观测 | `.vite/renderer/*/` 逐目录检索 | 6 个窗口用 CDS，2 个不用 |
 
 <p align="center"><a href="06-设计系统技能与复刻工程.md">← 第六篇</a> · <a href="README.md">📚 本卷索引</a></p>
+
 
 
 ---
@@ -1683,6 +1725,7 @@ if (!Object.hasOwn(i, a)) return kS(i);
 | E8-7 | 观测 | 全量特征串检索（`Select an element` 1 / `Add to chat` 4 / `annotation` 185 / `Sketch` 9 / `vlq` 3） | 元素选择与标注链路仍在 |
 
 <p align="center"><a href="07-窗口、IPC与上下文桥全量清单.md">← 第七篇</a> · <a href="README.md">📚 本卷索引</a></p>
+
 
 
 ---

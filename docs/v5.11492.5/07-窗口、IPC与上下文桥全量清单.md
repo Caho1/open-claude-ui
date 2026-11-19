@@ -90,6 +90,25 @@ domain: 进程与通信
 
 ---
 
+### 本地 8 个渲染窗口的 CDS 覆盖（补检）
+
+对 `.vite/renderer/` 下 8 个窗口目录逐个检索 `--cds-` 与 `data-cds=`：
+
+| 窗口 | 含 `--cds-` 的文件 | `data-cds=` 出现次数 | 结论 |
+| :--- | ---: | ---: | :--- |
+| `main_window` | 1 | 303 | CDS 基准窗口 |
+| `about_window` | 2 | 303 | 基于 CDS |
+| `buddy_window` | 2 | 303 | 基于 CDS |
+| `quick_window` | 2 | 303 | 基于 CDS |
+| `config_template_window` | 7 | 317 | 基于 CDS（自有组件更多） |
+| `find_in_page` | 7 | 317 | 基于 CDS |
+| `file_viewer` | 0 | 0 | **不用 CDS**（独立样式） |
+| `local_exec_consent` | 0 | 0 | **不用 CDS**（独立样式） |
+
+> **含义**：CDS 不是“只给主窗口用的设计系统”，它是 6 个本地窗口的共用底层；只有文件查看器与本地执行授权窗例外。后两者是纯功能性小窗，复刻时不必强行套令牌。
+
+---
+
 ## 7.3 IPC 传输协议：102 个通道、19 个接口
 
 ### 通道命名
@@ -240,5 +259,6 @@ electron-store-get-data
 | E7-6 | 观测 | `ev_ba0b520c…` `js_electron_fuses_show` | 9 条 fuse，6/7 硬化，`--inspect` 关闭 |
 | E7-7 | 推导 | `ev_01432a4f…`（source_maps 表 631 行） | 无 source map 发布 |
 | E7-8 | 推导 | `ev_01432a4f…`（native_modules / storage / effects / endpoints） | 6 原生模块、414 存储、9288 效果、1270 端点 |
+| E7-9 | 观测 | `.vite/renderer/*/` 逐目录检索 | 6 个窗口用 CDS，2 个不用 |
 
 <p align="center"><a href="06-设计系统技能与复刻工程.md">← 第六篇</a> · <a href="README.md">📚 本卷索引</a></p>
