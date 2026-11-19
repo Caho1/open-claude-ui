@@ -71,7 +71,13 @@ All tokens are defined in [`code-examples/cds-theme.css`](code-examples/cds-them
 3. **反相别名**：正文用 `--cds-neutral-*`（明暗自动翻转），透明度用 `--cds-alpha-*`（`hsl(from var(--cds-neutral-900) …)`），暗色只覆盖颜色层，不重建几何。
 4. **作用域开关**：`data-mode`（light/dark/system）、`data-density`（comfortable…）、`data-size`（xs/sm/lg，需 `--*--xs` 族支撑）、`data-step`（1–5）、`data-font`、`data-window-active`（false 时角色层整体降灰）。组件身份用 `data-cds="Name"` 暴露（5.11492.5 共 48 个）。
 
-> 卷内权威清单：[`docs/v5.11492.5/02-CDS设计令牌总谱.md`](docs/v5.11492.5/02-CDS设计令牌总谱.md) 与 [`03-作用域与组件属性契约.md`](docs/v5.11492.5/03-作用域与组件属性契约.md)。
+> 卷内权威清单：[`docs/v5.11492.5/02-CDS设计令牌总谱.md`](docs/v5.11492.5/02-CDS设计令牌总谱.md)、[`03-作用域与组件属性契约.md`](docs/v5.11492.5/03-作用域与组件属性契约.md)，以及**官方规范原文摘录** [`11-CDS官方规范文档.md`](docs/v5.11492.5/11-CDS官方规范文档.md)。
+>
+> **官方六层模型**（优先于任何反推）：原始阶 `--{hue}-{stop}` → 主题别名 `--neutral-*` / `--alpha-*` → 高度 `--surface-{0..3}` → 用途 `--text-*` / `--fill-*` / `--bg-*` / `--border-*` / `--on-*` → 密度 → 动效。**组件只读第 4 层（尺寸读第 5 层），前 3 层是接线。**
+>
+> **六条官方硬规则**：① 只用用途层令牌，禁止裸 hex；② 暗色只靠 `data-mode`，永不手写暗色覆盖；③ 文字永不使用 `opacity`（用 `--text-secondary` / `--text-muted`）；④ 每视图最多一个 primary 按钮，陶土 `brand` 仅限 Claude 发起的动作；⑤ 同屏最多两个浮层高度（第三层用 `Dialog`）；⑥ 边框官方写法是 `0.5px solid var(--border)`。
+>
+> ⚠️ `--cds-role-*` 是**内部接线**（官方原文 `never reference them`），对外请用 `--fill-*` / `--bg-*` / `--border-*` / `--text-*` / `--on-*`。
 
 ### Brand Clay Palette
 * `--brand`: `#c6613f` (Official desktop brand primary color; = `--cds-clay-emphasized` = 品牌页 `clay-emphasized`)

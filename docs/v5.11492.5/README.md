@@ -5,7 +5,7 @@
 > **构建戳**：`commitHash 1403e2cf44abfb23809c8ae11238d5e9704a41c2` / `commitTimestamp 2026-11-13T20:47:10.000Z` / `buildType prod`（`app.asar:.vite/build/mainWindow.js@88439`）
 > **逆向框架**：REA（Reverse Engineer Anything）静态图谱 + ASAR 逐字节定位；Craft Anything 维护本次迭代的 brief / plan / handoff。
 > **版本沿革**：`1.x` → `2.37337.1` → `3.6556.2` → `4.29.0` → `4.4212.0` → `4.16336.0`（上一卷）→ **`5.11492.5`**（本卷）。
-> **定位**：按**功能点**分 10 篇，记录 5.x 相对 4.x 的**真实变化**：CDS 令牌从"约定"变成"带 `--cds-theme-api: 1` 的四层契约"，新增 `data-density` / `data-size` / `data-step` 三维作用域、48 个 `data-cds` 组件属性、CSS `linear()` 弹簧，全新的 `frame` artifact 运行时（129 个契约版本、26 个 capability、`design` / `slides` 两个 artifact 类型），整包可枚举的窗口 / IPC / 桥接口清单，预览面板与元素选择的 5.x 复检结果，此前未记录的**官方品牌色板 / 字体规范**与画布产物格式，以及 **iOS Simulator / Android emulator** 移动模拟器面。
+> **定位**：按**功能点**分 11 篇，记录 5.x 相对 4.x 的**真实变化**：CDS 令牌从"约定"变成"带 `--cds-theme-api: 1` 的四层契约"，新增 `data-density` / `data-size` / `data-step` 三维作用域、48 个 `data-cds` 组件属性、CSS `linear()` 弹簧，全新的 `frame` artifact 运行时（129 个契约版本、26 个 capability、`design` / `slides` 两个 artifact 类型），整包可枚举的窗口 / IPC / 桥接口清单，预览面板与元素选择的 5.x 复检结果，此前未记录的**官方品牌色板 / 字体规范**与画布产物格式，**iOS Simulator / Android emulator** 移动模拟器面，以及随包分发的 **CDS 官方规范文档**（六层模型、角色内部接线、六条使用规则）。
 
 ---
 
@@ -99,6 +99,14 @@
 * [10.4 截图导出框（Device frame）](10-移动模拟器、元素上下文与托管策略.md#104-截图导出框device-frame)
 * [10.5 托管策略键表（Managed settings）](10-移动模拟器、元素上下文与托管策略.md#105-托管策略键表managed-settings)
 * [10.6 证据索引（本篇）](10-移动模拟器、元素上下文与托管策略.md#106-证据索引本篇)
+
+### 📘 [第十一篇：CDS 官方规范文档（随包 skill 全解）](11-CDS官方规范文档.md)
+* [11.1 文档来源与生成管线](11-CDS官方规范文档.md#111-文档来源与生成管线)
+* [11.2 层模型（官方六层）](11-CDS官方规范文档.md#112-层模型官方六层)
+* [11.3 六条使用规则（原文）](11-CDS官方规范文档.md#113-六条使用规则原文)
+* [11.4 四条设计原则（原文）](11-CDS官方规范文档.md#114-四条设计原则原文)
+* [11.5 本篇对前文的更正汇总](11-CDS官方规范文档.md#115-本篇对前文的更正汇总)
+* [11.6 证据索引（本篇）](11-CDS官方规范文档.md#116-证据索引本篇)
 
 ---
 
