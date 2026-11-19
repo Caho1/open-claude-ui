@@ -1,6 +1,6 @@
 # Claude Desktop 5.11492.5 · CDS 与 Artifact 运行时（合并阅读版）
 
-> 本文件由本卷 19 篇按功能点顺序合并生成，供离线全文档阅读；分篇导航见 [README.md](README.md)。
+> 本文件由本卷 20 篇按功能点顺序合并生成，供离线全文档阅读；分篇导航见 [README.md](README.md)。
 
 > 载体：`app.asar` 88,833,670 B / SHA-256 `2c515441d5d0504a96ac3e49bcc4c1244085c0e76ad23ae58ddd8f736100479e`；`ion-dist.asar` 208,001,845 B / SHA-256 `1d55d633d14aede748af3cb22c244f4ddc2f795d9b1153b175b993ae5d46aa1b`。Electron `45.2.1`。
 
@@ -4294,4 +4294,196 @@ function seatFor(hasMark) { return hasMark ? seatAfterMark : seatDefault }
 | E19-8 | 观测 | `c734f318c-DVbhpVUM.js`（`data-cds-phrases-seat` / `-spare`） | 短语座位与零高占位器 |
 
 <p align="center"><a href="18-TurnStatus与row原语.md">← 第十八篇</a> · <a href="README.md">📚 本卷索引</a></p>
+
+
+
+---
+
+---
+title: 揭示、按压与扫光：三个被参数化的微交互
+part: 20
+category: 交互设计
+domain: UI 与交互
+---
+
+<p align="center"><a href="19-引导暂存与短语.md">← 第十九篇</a> · <a href="README.md">📚 本卷索引</a></p>
+
+# 第二十篇：揭示、按压与扫光：三个被参数化的微交互
+
+> **技术领域与英文指代**：揭示编排（reveal choreography）、意图延迟（intent delay）、非对称时长（asymmetric timing）、按压挤压（press squish）、裁剪路径（clip-path）、钟形扫光（bell-shaped shimmer）、`color-mix()`。
+
+前几篇讲的是"结构怎么搭"。本篇讲**三个微交互**——它们都不写死在组件里，而是**把参数暴露成 CSS 变量**，由使用方按场景覆盖。
+
+---
+
+## 20.1 MessageActions：9 个变量组成的揭示编排
+
+消息操作按钮（复制、重试…）不是简单的 `opacity 0 → 1`，而是 **3 个属性 × 进/出两套时序**：
+
+```css
+.cds-root {
+  --cds-message-actions-reveal-in-duration: var(--cds-dur-snap);   /* 120ms */
+  --cds-message-actions-reveal-in-ease:     var(--cds-ease-snap);  /* cubic-bezier(.32,.72,0,1) */
+  --cds-message-actions-reveal-in-delay:    .1s;                   /* 100ms 意图延迟 */
+  --cds-message-actions-reveal-out-duration: var(--cds-dur-fast);  /* 60ms */
+  --cds-message-actions-reveal-out-ease:     var(--cds-ease-snap);
+  --cds-message-actions-reveal-out-delay:    0s;
+  --cds-message-actions-reveal-scale:        none;
+  --cds-message-actions-reveal-origin:       top;
+}
+```
+
+应用处：
+
+```css
+[data-cds=MessageActions][data-reveal]{
+  --cds-message-actions-opacity: 0;
+  opacity: var(--cds-message-actions-opacity);
+  scale: var(--cds-message-actions-reveal-scale);
+  transform-origin: var(--cds-message-actions-reveal-origin);
+  transition-property: opacity, scale;
+  transition-duration: var(--cds-message-actions-reveal-out-duration);
+  transition-timing-function: var(--cds-message-actions-reveal-out-ease);
+  transition-delay: var(--cds-message-actions-reveal-out-delay);
+}
+```
+
+| 参数 | 进入 | 退出 | 含义 |
+| :--- | ---: | ---: | :--- |
+| 时长 | **120ms** | **60ms** | 出比进快一倍 |
+| 延迟 | **100ms** | 0s | 进入前先等 100ms |
+| 曲线 | `ease-snap` | `ease-snap` | 同一条曲线 |
+| 属性 | `opacity` + `scale` | 同 | 位移用独立 `scale`，不用 `transform` |
+| 原点 | `top` | 同 | 从上方"落下" |
+
+### 为什么是"慢进快出 + 延迟"
+
+| 设计 | 解决的问题 |
+| :--- | :--- |
+| **进入前 100ms 延迟** | 鼠标只是**路过**消息时不会闪出一排按钮（意图延迟） |
+| **退出 60ms 且无延迟** | 一旦决定离开，立刻消失，不留残影 |
+| **`scale` 用独立属性** | 可与 `translate` 分别过渡、分别设原点，不必把变换写成一个字符串 |
+
+> **这是"hover 揭示"类 UI 的通用解法**：延迟是**过滤噪声**的关键，快出是**减少干扰**的关键。两者不对称才对。
+
+---
+
+## 20.2 按压物理：`cds-btn-squish` 与卡片挤压
+
+按钮按下会**轻微压扁**（缩放 97.5%），松开时用弹簧回弹：
+
+```css
+.cds-root .cds-btn-squish {
+  --cds-btn-press-sx: .975;
+  --cds-btn-press-sy: .975;
+  transform-origin: 50%;
+  transition: transform var(--cds-dur-slow) var(--cds-btn-spring);   /* 450ms 弹簧 */
+}
+.cds-root .group\/btn:not([disabled]):active .cds-btn-squish,
+.cds-root .group\/btn:not([disabled]):has(:active) .cds-btn-squish {
+  transform: scale(var(--cds-btn-press-sx), var(--cds-btn-press-sy));
+  transition: transform var(--cds-dur-fast) ease-out;               /* 60ms 线性 */
+}
+```
+
+| 阶段 | 时长 | 曲线 |
+| :--- | ---: | :--- |
+| 按下 | `--cds-dur-fast`（60ms） | `ease-out` |
+| 松开 | `--cds-dur-slow`（450ms） | **`--cds-btn-spring`**（第四篇的 15 点 `linear()` 弹簧） |
+
+> **这解开了第四篇留下的一个悬念**：当时只知道 `--cds-btn-spring` 存在，没找到调用点。**它就是按钮松手回弹用的**——按下用 60ms 干脆压下，松手用 450ms 弹簧回位。压得快、回得弹，是"物理感"的来源。
+
+卡片同理，但多一层**圆角裁剪**：
+
+```css
+.cds-root [data-cds=Card]>.cds-card-fill,
+.cds-root [data-cds=Card]:after {
+  transform-origin: 50%;
+  transition: transform var(--cds-dur-slow) var(--cds-btn-spring);
+}
+.cds-root [data-cds=Card]:has([data-cds=CardLink]:active)>.cds-card-fill,
+.cds-root [data-cds=Card]:has([data-cds=CardLink]:active):after {
+  transform: scale(var(--cds-card-press-sx), var(--cds-card-press-sy));
+  transition: transform var(--cds-dur-fast) ease-out;
+}
+.cds-root [data-cds=Card]:has([data-cds=CardLink])>.cds-card-body {
+  clip-path: inset(0 round calc(var(--cds-radius) + calc(.25rem * var(--cds-rem-scale,1))));
+  transition: clip-path var(--cds-dur-slow) var(--cds-btn-spring);
+}
+```
+
+| 技巧 | 说明 |
+| :--- | :--- |
+| `:has([data-cds=CardLink]:active)` | **卡片本身不是按钮**，但内部链接按下时整卡挤压 |
+| `clip-path: inset(0 round …)` | 挤压时内容按**同心圆角**裁剪，避免圆角处露出直角 |
+| 圆角值 `radius + .25rem × rem-scale` | 与卡片半径同源，缩放后仍保持视觉一致 |
+
+---
+
+## 20.3 ShimmerText：钟形扫光，不是线性渐变
+
+生成中的文字有一道扫光。它不是"一条亮带从头扫到尾"，而是**对称的钟形高光**：
+
+```css
+[data-cds=ShimmerText]{
+  --cds-shimmer-text-bell-stops:
+    var(--cds-shimmer-text-ink) 37.5%,
+    color-mix(in srgb, var(--peak) 16%, var(--ink)) 41%,
+    color-mix(in srgb, var(--peak) 46%, var(--ink)) 44%,
+    color-mix(in srgb, var(--peak) 83%, var(--ink)) 47%,
+    var(--peak) 50%,
+    color-mix(in srgb, var(--peak) 83%, var(--ink)) 53%,
+    color-mix(in srgb, var(--peak) 46%, var(--ink)) 56%,
+    color-mix(in srgb, var(--peak) 16%, var(--ink)) 59%,
+    var(--cds-shimmer-text-ink) 62.5%;
+}
+```
+
+| 观察 | 含义 |
+| :--- | :--- |
+| **9 个色标**（37.5 → 62.5） | 峰值居中 50%，两侧对称衰减 |
+| 混色比例 16 / 46 / 83 / 100 / 83 / 46 / 16 | 近似**高斯钟形**，不是线性斜坡 |
+| 全部用 `color-mix(in srgb, peak N%, ink)` | 换 ink/peak 就换整套配色，不必重写渐变 |
+| 另有 `--cds-shimmer-text-bell-band-stops` | 同一形状与 `transparent` 混，用于"色带"层 |
+| `--cds-shimmer-text-keyframes-rtl` | RTL 语言换一套关键帧（扫光方向相反） |
+| `--cds-shimmer-text-delay` / `-play-state` | 可单独延迟/暂停（配合级联） |
+
+> **为什么用钟形**：线性渐变在两端有**硬边**，扫过文字时会看到"一条直边擦过"。钟形两端衰减到与 ink 相同，视觉上只有"亮了一下"，没有边界。这是把物理直觉（光照衰减）写进渐变色标。
+
+---
+
+## 20.4 两个还没查透的（明确标注）
+
+| 项 | 观测 | 状态 |
+| :--- | :--- | :--- |
+| `fateVariant` | 附件钩子的布尔/枚举 prop，与 `attachTiming` / `takeUnfit` 并列，传进上传管线 | **未定值域**：包里没有字符串比较，只有透传 |
+| `data-cds-dock-promotion` | 在占位校准的分类器里是独立一类 `promotion_slot`；在 dock 的"有内容"判定里被排除 | **布局未拆**：组件在 `cae5cdd4d`，本卷未展开 |
+
+---
+
+## 20.5 复刻要点
+
+| 微交互 | 关键参数 |
+| :--- | :--- |
+| hover 揭示 | 进 120ms + **100ms 延迟**；出 60ms 无延迟 |
+| 揭示属性 | `opacity` + **独立 `scale`** + `transform-origin` |
+| 按钮按压 | 按下 60ms `ease-out` 到 97.5%；松手 450ms **`linear()` 弹簧** |
+| 卡片挤压 | `:has(内部链接:active)` + `clip-path: inset(0 round 同心圆角)` |
+| 文字扫光 | 9 停**钟形**渐变 + `color-mix` 双色派生 + RTL 变体 |
+
+---
+
+## 20.6 证据索引（本篇）
+
+| ID | 类型 | 位置 | 支撑结论 |
+| :--- | :--- | :--- | :--- |
+| E20-1 | 观测 | `ion-dist.asar:assets/v1/c6a992d55-k2XF_vDB.css`，`.cds-root` 的 9 个 `--cds-message-actions-reveal-*` | 进/出非对称时序与 100ms 意图延迟 |
+| E20-2 | 观测 | 同上，`[data-cds=MessageActions][data-reveal]` | `opacity` + `scale` + `transform-origin` 三属性编排 |
+| E20-3 | 观测 | 同上，`.cds-btn-squish` / `--cds-btn-press-sx/-sy` | 按下 60ms、松手 450ms `--cds-btn-spring` |
+| E20-4 | 观测 | 同上，`[data-cds=Card]:has([data-cds=CardLink]:active)` + `clip-path` | 卡片挤压与同心圆角裁剪 |
+| E20-5 | 观测 | 同上，`--cds-shimmer-text-bell-stops`（9 停）/ `-bell-band-stops` | 钟形扫光与 `color-mix` 派生 |
+| E20-6 | 观测 | 同上，`--cds-shimmer-text-keyframes-rtl` / `-delay` / `-play-state` | RTL 与可暂停 |
+| E20-7 | 观测 | `c54bf5722-Dc304oLm.js` / `cc43287c9-BZs4HiYA.js` | `fateVariant` 仅透传（未定值域） |
+
+<p align="center"><a href="19-引导暂存与短语.md">← 第十九篇</a> · <a href="README.md">📚 本卷索引</a></p>
 

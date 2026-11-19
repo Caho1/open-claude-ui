@@ -1625,3 +1625,35 @@
   --cds-outset-x-lg: 1rem;             /* 重出血 */
   --cds-outset-x-xl: calc(var(--spacing, .25rem) * 2);
 }
+
+/* V5.13 钟形扫光（ShimmerText，5.11492.5 实测）
+   9 个色标对称衰减（37.5% → 62.5%），峰值居中 50%；
+   用 color-mix 从 ink/peak 两个输入派生整套配色，换色不必重写渐变。 */
+:root {
+  --cds-shimmer-text-ink: currentColor;
+  --cds-shimmer-text-peak: transparent;
+  --cds-shimmer-text-bell-stops:
+    var(--cds-shimmer-text-ink) 37.5%,
+    color-mix(in srgb, var(--cds-shimmer-text-peak) 16%, var(--cds-shimmer-text-ink)) 41%,
+    color-mix(in srgb, var(--cds-shimmer-text-peak) 46%, var(--cds-shimmer-text-ink)) 44%,
+    color-mix(in srgb, var(--cds-shimmer-text-peak) 83%, var(--cds-shimmer-text-ink)) 47%,
+    var(--cds-shimmer-text-peak) 50%,
+    color-mix(in srgb, var(--cds-shimmer-text-peak) 83%, var(--cds-shimmer-text-ink)) 53%,
+    color-mix(in srgb, var(--cds-shimmer-text-peak) 46%, var(--cds-shimmer-text-ink)) 56%,
+    color-mix(in srgb, var(--cds-shimmer-text-peak) 16%, var(--cds-shimmer-text-ink)) 59%,
+    var(--cds-shimmer-text-ink) 62.5%;
+  --cds-shimmer-text-bell-band-stops:
+    transparent 37.5%,
+    color-mix(in srgb, var(--cds-shimmer-text-peak) 16%, transparent) 41%,
+    color-mix(in srgb, var(--cds-shimmer-text-peak) 46%, transparent) 44%,
+    color-mix(in srgb, var(--cds-shimmer-text-peak) 83%, transparent) 47%,
+    var(--cds-shimmer-text-peak) 50%,
+    color-mix(in srgb, var(--cds-shimmer-text-peak) 83%, transparent) 53%,
+    color-mix(in srgb, var(--cds-shimmer-text-peak) 46%, transparent) 56%,
+    color-mix(in srgb, var(--cds-shimmer-text-peak) 16%, transparent) 59%,
+    transparent 62.5%;
+  --cds-shimmer-text-delay: 0s;
+  --cds-shimmer-text-play-state: running;
+  --cds-shimmer-text-keyframes: cds-shimmer-text-band;
+  --cds-shimmer-text-keyframes-rtl: cds-shimmer-text-band-rtl;
+}
