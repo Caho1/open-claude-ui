@@ -62,6 +62,17 @@ All tokens are defined in [`code-examples/cds-theme.css`](code-examples/cds-them
 | `--cds-skeleton-base` | `var(--cds-alpha-1)` → `hsl(from neutral-900 / 5%)` | `hsl(from neutral-900 / 7.5%)` (白) | Base skeleton placeholder container surface (v3 运行时实证：base 与 sheen 同值) |
 | `--cds-skeleton-sheen` | `var(--cds-alpha-1)`（同 base） | 同 base（白 7.5%） | 105° linear sweep band highlight (2s linear) |
 
+### v5 Token Contract (5.11492.5 实测)
+
+4.x 的令牌是约定，5.x 是**带版本号的契约**。新代码必须遵守以下四条：
+
+1. **声明 API 版本**：根样式表首行写 `--cds-theme-api: 1`。
+2. **四层结构**：原始阶（9 色相 × 35 级）→ 角色层（`--cds-role-accent-*` / `-danger-*` / `-success-*` / `-warning-*` / `-pro-*`）→ 语义层（`--cds-surface-*` / `--cds-text-*` / `--cds-fill-*` / `--cds-border`）→ 组件层。跨层引用只能向下，不得反向。
+3. **反相别名**：正文用 `--cds-neutral-*`（明暗自动翻转），透明度用 `--cds-alpha-*`（`hsl(from var(--cds-neutral-900) …)`），暗色只覆盖颜色层，不重建几何。
+4. **作用域开关**：`data-mode`（light/dark/system）、`data-density`（comfortable…）、`data-size`（xs/sm/lg，需 `--*--xs` 族支撑）、`data-step`（1–5）、`data-font`、`data-window-active`（false 时角色层整体降灰）。组件身份用 `data-cds="Name"` 暴露（5.11492.5 共 48 个）。
+
+> 卷内权威清单：[`docs/v5.11492.5/02-CDS设计令牌总谱.md`](docs/v5.11492.5/02-CDS设计令牌总谱.md) 与 [`03-作用域与组件属性契约.md`](docs/v5.11492.5/03-作用域与组件属性契约.md)。
+
 ### Brand Clay Palette
 * `--brand`: `#c6613f` (Official desktop brand primary color)
 * `--cds-clay`: `#d97757` (Light / pulse indicator) / `#cc6b49` (Dark)
@@ -72,15 +83,17 @@ All tokens are defined in [`code-examples/cds-theme.css`](code-examples/cds-them
 ### Geometric Corner Radii
 * `var(--cds-radius)`: `8px` (Base component radius)
 * `var(--radius-card)` / `--cds-card-radius`: `calc(var(--cds-radius, 8px) + calc(.25rem * var(--cds-rem-scale, 1)))` (12px standard / concentric card radius, alias: `--cds-radius-card`)
-* `--cds-radius-composer`: `20px` (Main chat composer terminal)
-* `--cds-panel-radius`: `10px` (Panels, attachment cards)
+* `--cds-radius-composer`: `calc(.75rem * var(--cds-rem-scale, 1))` ≈ 11.3px (Main chat composer terminal; `data-density=comfortable` raises it to `calc(.875rem * …)` ≈ 13.2px). **v5.11492.5 实测**：4.x 文档中的固定 `20px` 已不存在。
+* `--cds-panel-radius`: `calc(.625rem * var(--cds-rem-scale, 1))` ≈ 9.4px (Panels, attachment cards; comfortable 档 `calc(.75rem * …)` ≈ 11.3px)
 * `--df-radius-pill` / `--cds-radius-pill`: `999px` / `9999px` (Pill buttons, segmented control tracks)
-* `--cds-message-bubble-radius`: `calc(var(--cds-radius, 8px) + calc(.25rem * var(--cds-rem-scale, 1)))` (User message bubble radius, alias: `--cds-radius-message-bubble`)
+* `--cds-message-bubble-radius`: `calc(var(--cds-radius, 8px) + calc(.25rem * var(--cds-rem-scale, 1)))` (User message bubble radius, alias: `--cds-radius-message-bubble`)。**v5.11492.5 未观测到该派生量**：5.x 用户气泡直接消费 `--cds-radius`，复刻时应以实测令牌为准。
 * Precision scale: `--radius-xs` (2px), `--radius-sm` (4px), `--radius-md` (6px, alias: `--cds-radius-btn-xs`), `--radius-lg` (8px, alias: `--cds-radius-btn-md`), `--radius-xl` (12px, alias: `--cds-radius-code`), `--radius-2xl` (16px, alias: `--cds-radius-dialog`), `--radius-3xl` (24px)
 
 ---
 
 ## ⚡ 2. Motion Physics & Spring Presets
+
+> **v5.11492.5 新增 CSS 动效令牌**（不再只依赖 Framer Motion）：`--cds-dur-fast` 60ms / `--cds-dur-snap` .12s / `--cds-dur-base` .2s / `--cds-dur-sheet` .3s / `--cds-dur-slow` .45s；`--cds-ease-out` `cubic-bezier(.165,.84,.44,1)`、`--cds-ease-snap` `cubic-bezier(.32,.72,0,1)`、`--cds-ease-overshoot` `cubic-bezier(.34,1.3,.64,1)`；以及 `--cds-btn-spring` 的 CSS `linear()` 15 点弹簧采样（峰值 1.0915，反解 ζ ≈ 0.594）。纯 CSS 场景优先用这组令牌，React 场景仍用下方四套弹簧预设。
 
 Always import canonical spring presets from [`code-examples/ClaudeMotionPresets.ts`](code-examples/ClaudeMotionPresets.ts) instead of hardcoding random transition parameters.
 
@@ -338,7 +351,8 @@ When adding a volume, update **all four** entry points and mark the previous vol
 
 | Volume | Version | Status |
 | :--- | :--- | :--- |
-| `docs/v4.16336.0/` | `@ant/desktop 4.16336.0` | **current** (verified by `Info.plist`, `app.asar/package.json`, process args and live `app.getVersion()`) |
+| `docs/v5.11492.5/` | `@ant/desktop 5.11492.5` | **current** (verified by `Info.plist`, `app.asar/package.json` and the build stamp `commitHash 1403e2cf…` / `appVersion 5.11492.5`; Electron `45.2.1`) |
+| `docs/v4.16336.0/` | `@ant/desktop 4.16336.0` | historical baseline (side-browser manual) |
 | `docs/v4.29.0-4.4212.0/` | `4.29.0` → `4.4212.0` | historical baseline |
 | `docs/v2/` | `2.37337.1` | historical snapshot |
 | `docs/v1/` | `1.x` | historical snapshot |

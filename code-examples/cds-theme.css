@@ -1460,3 +1460,116 @@
 }
 
 
+
+/* ==========================================================================
+   V5 令牌对齐层 — Claude Desktop 5.11492.5 实测（2026-11-13 prod 构建）
+   来源：app.asar:.vite/renderer/main_window/assets/MainWindowPage-lhEHjHfd.css
+        （934 个 --cds-* 定义）与 ion-dist.asar:assets/v1/c6a992d55-k2XF_vDB.css
+        （1080 个 --cds-* 定义）。本层只补齐 4.x 主题表未收录、但 5.x 已在
+        运行时使用的令牌；已有令牌不重复定义，避免覆盖更高优先级的实测值。
+   证据卷：docs/v5.11492.5/02-CDS设计令牌总谱.md
+   ========================================================================== */
+
+:root {
+  /* V5.0 主题 API 版本号 —— 宣告令牌契约可协商 */
+  --cds-theme-api: 1;
+
+  /* V5.1 语义层补全（明色默认值；暗色覆盖见 .dark 块） */
+  --cds-surface-panel: var(--cds-surface-2);
+  --cds-text-disabled: var(--cds-alpha-4);
+  --cds-fill-control: var(--cds-alpha-2);
+  --cds-on-brand: #fff;
+  --cds-role-danger-on: var(--cds-gray-0);
+  --cds-role-success-on: var(--cds-gray-900);
+  --cds-role-warning-on: var(--cds-gray-900);
+
+  /* V5.2 排版刻度（全部乘 --cds-rem-scale；prose 档例外，不参与光学缩放） */
+  --cds-font-size-caption: calc(.75rem * var(--cds-rem-scale, 1));   /* 12px */
+  --cds-font-size-footnote: calc(.8125rem * var(--cds-rem-scale, 1)); /* 13px */
+  --cds-font-size-code: calc(.8125rem * var(--cds-rem-scale, 1));     /* 13px */
+  --cds-font-size-body: calc(.875rem * var(--cds-rem-scale, 1));      /* 14px */
+  --cds-font-size-prose: 1rem;                                        /* 16px，固定 */
+  --cds-font-size-heading: calc(.9375rem * var(--cds-rem-scale, 1));  /* 15px */
+  --cds-font-size-title: calc(1.375rem * var(--cds-rem-scale, 1));    /* 22px */
+  --cds-leading-caption: calc(1.0625rem * var(--cds-rem-scale, 1));
+  --cds-leading-footnote: calc(1.0625rem * var(--cds-rem-scale, 1));
+  --cds-leading-code: calc(1.1875rem * var(--cds-rem-scale, 1));
+  --cds-leading-body: calc(1.25rem * var(--cds-rem-scale, 1));
+  --cds-leading-prose: 1.5rem;                                        /* 24px，固定 */
+  --cds-leading-heading: calc(1.25rem * var(--cds-rem-scale, 1));
+  --cds-leading-title: calc(1.75rem * var(--cds-rem-scale, 1));
+
+  /* V5.3 组件层：按钮步进与工具栏（data-step 会重写前两项） */
+  --cds-button-pad-max: calc(.5rem * var(--cds-rem-scale, 1));
+  --cds-button-radius-add: calc(.0625rem * var(--cds-rem-scale, 1));
+  --cds-toolbar-strip: var(--cds-surface-1);
+  --cds-toolbar-line: var(--cds-border);
+  --cds-toolbar-icon-box: calc(1.75rem * var(--cds-rem-scale, 1));
+  --cds-toolbar-pad-inline: calc(.5rem * var(--cds-rem-scale, 1));
+  --cds-toolbar-pad-block: calc(.375rem * var(--cds-rem-scale, 1));
+
+  /* V5.4 动效寄存器：需要 transition 的数值属性必须先 @property 注册 */
+  --cds-message-actions-opacity: 1;
+  --cds-message-actions-reveal-scale: .98;
+  --cds-badge-x-wght: 577.8;
+
+  /* V5.5 Z 轴（5.x 语义：coachmark < modal < popover/tooltip < toast） */
+  --cds-z-coachmark: 35;
+  --cds-z-modal: 40;
+  --cds-z-popover: 50;
+  --cds-z-tooltip: 50;
+  --cds-z-toast: 60;
+}
+
+/* V5.6 data-size 尺寸档位表：只做指针切换，不重新计算 */
+.cds-root [data-size="xs"] {
+  --cds-radius: var(--cds-radius--xs);
+  --cds-h-control: var(--cds-h-control--xs);
+  --cds-h-control-nested: var(--cds-h-control-nested--xs);
+  --cds-icon: var(--cds-icon--xs);
+  --cds-pad-xs: var(--cds-pad-xs--xs);
+  --cds-pad-sm: var(--cds-pad-sm--xs);
+  --cds-pad-md: var(--cds-pad-md--xs);
+  --cds-pad-lg: var(--cds-pad-lg--xs);
+  --cds-pad-xl: var(--cds-pad-xl--xs);
+  --cds-font-size-caption: var(--cds-font-size-caption--xs);
+  --cds-font-size-body: var(--cds-font-size-body--xs);
+  --cds-font-size-prose: var(--cds-font-size-prose--xs);
+}
+
+/* V5.7 data-step 级联档：每档只改三个值（step 1 最紧凑） */
+.cds-root [data-step="1"] {
+  --cds-h-control: calc(1.25rem * var(--cds-rem-scale, 1));
+  --cds-button-pad-max: calc(.375rem * var(--cds-rem-scale, 1));
+  --cds-button-radius-add: calc(0rem * var(--cds-rem-scale, 1));
+}
+
+/* V5.8 窗口失焦降饱和：角色层指针整体换灰，组件无需单独写失焦样式 */
+[data-window-active="false"],
+[data-window-active="false"] .cds-root {
+  --cds-role-accent-fill: var(--cds-gray-450);
+  --cds-role-accent-fill-hover: var(--cds-gray-400);
+  --cds-fill-accent: var(--cds-gray-450);
+}
+
+/* V5.9 暗色补全（与 .dark 既有块共存，仅补 4.x 未收录项） */
+.dark,
+[data-mode="dark"] .cds-root,
+.cds-root[data-mode="dark"] {
+  --cds-surface-panel: var(--cds-surface-2);
+  --cds-text-disabled: var(--cds-alpha-4);
+  --cds-fill-control: var(--cds-alpha-2);
+  --cds-toolbar-strip: var(--cds-surface-1);
+}
+
+/* V5.10 @property 注册：未注册的自定义属性不能参与 transition */
+@property --cds-message-actions-opacity {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 1;
+}
+@property --cds-badge-x-wght {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 577.8;
+}

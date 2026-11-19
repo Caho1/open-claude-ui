@@ -39,7 +39,7 @@
 
 `open-claude-ui` 是基于对现代桌面端 AI 客户端进行深度拆解与逆向分析构建的高保真开源 UI 组件库与动效引擎。
 
-> 🧭 **取证基线**：当前版本卷为 [docs/v4.16336.0](docs/v4.16336.0/README.md)（`@ant/desktop 4.16336.0`，经 `Info.plist` / `app.asar/package.json` / 进程参数 / 活体 `app.getVersion()` 四路核实）；[docs/v4.29.0-4.4212.0](docs/v4.29.0-4.4212.0/README.md)（主取证 3.6556.2，4.29.0 与 4.4212.0 两轮增量复验）为历史基线。全部经 **REA** 静态提取 + **Main Process Debugger** / 9229 Node inspector 只读活体实测双通道验证。
+> 🧭 **取证基线**：当前版本卷为 [docs/v5.11492.5](docs/v5.11492.5/README.md)（`@ant/desktop 5.11492.5`，Electron `45.2.1`，经 `Info.plist` / `app.asar/package.json` / 构建戳 `commitHash 1403e2cf…` 三路核实）；[docs/v4.16336.0](docs/v4.16336.0/README.md)（侧边浏览器全量）与 [docs/v4.29.0-4.4212.0](docs/v4.29.0-4.4212.0/README.md)（主取证 3.6556.2）为历史基线。全部经 **REA** 静态提取 + **Main Process Debugger** / 9229 Node inspector 只读活体实测双通道验证。
 >
 > 📁 **文档版本命名规范**：逆向分析手册的目录名从本版起**直接对齐 Claude Desktop 的版本号**（如 `docs/v4.29.0-4.4212.0/`）；后续 Claude 更新后，新取证报告将以对应版本号新建目录。目录名可写单个版本（如 `docs/v5.0.0/`）或覆盖区间（如 `docs/v4.29.0-4.4212.0/`，表示该报告在首个版本取证、后续版本增量复核）。早期的 `docs/v1/`、`docs/v2/` 保持原名不变，作为历史快照保留（v2 取值已被取代，以 `docs/v4.29.0-4.4212.0/` 为准）。
 
@@ -51,7 +51,7 @@
 * **高阶视听与系统架构 (Audiovisual & Architecture)**：基于原生 Web Audio API 的零延迟合成提示音、以光标为锚点的画廊跑道平移缩放、macOS 桌面毛玻璃透明融合与 Cowork 多代理协同拓扑。
 
 > 💡 **架构分层说明 (Architecture & Portability)**：  
-> 本项目的 **令牌层 (Tokens) 与纯 CSS 表现层可脱离 React 与 Tailwind 单独使用**。无论是自研桌面 Harness（如 DSH、各类 Agent 桌面容器）、传统 Web 页面还是 Vue/Svelte 宿主，只需引入 `@import "open-claude-ui/tokens.css";` 或 `@import "open-claude-ui/pure.css";`，即可直接消费全量 261 个设计令牌（初测于 3.6556.2，现以 docs/v4.16336.0 卷活体实测为准）、Zero-JS 原生滚动消隐遮罩（`[data-cds-scroll-fade]`）与核心动效类，详情见下文快速上手。
+> 本项目的 **令牌层 (Tokens) 与纯 CSS 表现层可脱离 React 与 Tailwind 单独使用**。无论是自研桌面 Harness（如 DSH、各类 Agent 桌面容器）、传统 Web 页面还是 Vue/Svelte 宿主，只需引入 `@import "open-claude-ui/tokens.css";` 或 `@import "open-claude-ui/pure.css";`，即可直接消费全量 299 个设计令牌（初测于 3.6556.2，现以 docs/v5.11492.5 卷实测为准；桌面端 5.11492.5 主窗口样式表内共 934 个 `--cds-*` 定义）、Zero-JS 原生滚动消隐遮罩（`[data-cds-scroll-fade]`）与核心动效类，详情见下文快速上手。
 
 > ⚖️ **版权与合规声明 (DMCA & Assets Policy)**：  
 > 本开源项目**不公开分发任何专有二进制资产**（包括商业字体 `.ttf` 与录音 `.mp3`）。本项目提供原生系统级字体回退栈与 Web Audio API 纯代码合成音效，完全自包含、合规安全。详情参见 [assets/README.md](assets/README.md)。
@@ -138,9 +138,14 @@ graph TD
 * **[8.1~8.7 Agent 角色定位、设计令牌契约与弹簧决策树](docs/v1/08-AI-Agent-前端-UI-与动效开发指南.md)**：专为 AI Agent 定制的前端 UI 与动效装配自检指南。
 
 ### 🚀 第二版：Claude Desktop 2.0 (v2.37337.1) 全量版本更新深度逆向分析
-* **[v2/README.md 综述、新增特性、架构重构、底座解密与参考实现](docs/v2/README.md)**：全量划分为 6 大独立章节，深度解析 2.0 桌面端架构大跃迁。**（历史快照：取值以 docs/v4.16336.0 卷为准）**
+* **[v2/README.md 综述、新增特性、架构重构、底座解密与参考实现](docs/v2/README.md)**：全量划分为 6 大独立章节，深度解析 2.0 桌面端架构大跃迁。**（历史快照：取值以 docs/v5.11492.5 卷为准）**
 
-### 🧬 Claude Desktop 4.16336.0 全量分析（当前版本卷）
+### 🧬 Claude Desktop 5.11492.5 全量分析（当前版本卷）
+* **[v5.11492.5/README.md CDS 与 Artifact 运行时技术文档库](docs/v5.11492.5/README.md)**：**按功能点分 8 篇** + 合并阅读版。基于 REA 静态图谱与 ASAR 逐字节定位，记录 5.x 的真实变化：`--cds-theme-api: 1` 四层令牌契约、`data-density`/`data-size`/`data-step` 三维作用域、48 个 `data-cds` 组件属性、CSS `linear()` 弹簧、`frame` artifact 运行时（129 个契约版本 / 26 个 capability / `design` + `slides` 两种类型）与启动占位协议。
+  - 版本实测依据：`Info.plist` `CFBundleShortVersionString` / `app.asar/package.json` / 构建戳 `appVersion` 均为 `5.11492.5`
+  - 八篇：版本边界与三层架构 / CDS 设计令牌总谱 / 作用域与组件属性契约 / 动效令牌与弹簧线性化 / Artifact 类型系统与契约协商 / 设计系统技能与复刻工程 / 窗口、IPC 与上下文桥全量清单 / 预览面板、元素选择与占位校准
+
+### 🧬 Claude Desktop 4.16336.0 全量分析（历史基线）
 * **[v4.16336.0/README.md 侧边浏览器全量技术文档库](docs/v4.16336.0/README.md)**：与 v1 体例一致，**按功能点分 8 篇** + 合并阅读版。基于 REA 静态取证、9229 主进程 inspector 只读活体观测、519 帧逐帧与像素级验证；参考实现 [`code-examples/ElementInspectHighlight.ts`](code-examples/ElementInspectHighlight.ts)。
   - 版本实测依据：`Info.plist` / `app.asar/package.json` / 运行进程参数 / 活体 `app.getVersion()` 均为 `4.16336.0`
   - 八篇：总体架构与设计令牌 / 导航、地址栏与标签页 / 预览面板与开发服务器 / 站点权限、安全与浏览数据 / 元素选择、组件名与上下文注入 / 标注、截图与自动化光标 / 动效物理学与逐帧验证 / 系统级架构、运行时与工程复刻
@@ -161,7 +166,7 @@ graph TD
 
 每次 Claude Desktop 版本更新，新的取证文档**必须**：
 
-1. 新建 `docs/v<版本号>/`（如 `docs/v4.16336.0/`）；若需覆盖多个基线的增量复核，可用区间名 `docs/v4.29.0-4.4212.0/`。**绝不**按日期、主题、取证轮次或流程命名。
+1. 新建 `docs/v<版本号>/`（如 `docs/v5.11492.5/`）；若需覆盖多个基线的增量复核，可用区间名 `docs/v4.29.0-4.4212.0/`。**绝不**按日期、主题、取证轮次或流程命名。
 2. 卷内**按功能点分篇**，沿用 `docs/v1/` 体例（frontmatter `part`、上/下篇导航、英文指代、编号小节、证据索引、合并阅读版 `.full.md`）；不得按取证时间线编章。
 3. 提供卷 `README.md` 分卷导航索引，并在 `README.md` / `README-en.md` / `docs/README.md` / `AGENTS.md` 四处登记当前卷、把上一卷标为历史基线。
 4. 每条结论附 ASAR 路径 + 字节偏移或 REA Evidence ID，区分 observed / inferred / unknown。
@@ -169,7 +174,8 @@ graph TD
 
 | 卷 | 版本 | 状态 |
 | :--- | :--- | :--- |
-| `docs/v4.16336.0/` | `4.16336.0` | **当前** |
+| `docs/v5.11492.5/` | `5.11492.5` | **当前** |
+| `docs/v4.16336.0/` | `4.16336.0` | 历史基线 |
 | `docs/v4.29.0-4.4212.0/` | `4.29.0 → 4.4212.0` | 历史基线 |
 | `docs/v2/` | `2.37337.1` | 历史快照 |
 | `docs/v1/` | `1.x` | 历史快照 |
@@ -261,7 +267,8 @@ open-claude-ui/
 │   ├── v1/                            # 1.x 历史快照：8 篇 / 41 小节 + .full.md
 │   ├── v2/                            # 2.37337.1 历史快照：6 章
 │   ├── v4.29.0-4.4212.0/             # 3.6556.2 → 4.4212.0 历史基线：7 章 + 合并版
-│   ├── v4.16336.0/                   # 当前版本卷：8 篇按功能点 + README 索引 + .full.md
+│   ├── v4.16336.0/                   # 历史基线：侧边浏览器 8 篇 + README 索引 + .full.md
+│   ├── v5.11492.5/                   # 当前版本卷：8 篇按功能点 + README 索引 + .full.md
 │   └── claude-components-storybook.html # 离线可视化故事书（双击即可体验）
 ├── scripts/
 │   └── check-tokens.mjs               # 设计令牌 / keyframe 消费门禁

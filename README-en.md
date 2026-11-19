@@ -39,9 +39,9 @@
 
 `open-claude-ui` is a high-fidelity open-source UI component library and motion physics engine, built through in-depth clean-room reverse engineering of the modern desktop AI client.
 
-> 🧭 **Forensic baseline**: the **current volume** is [`docs/v4.16336.0`](docs/v4.16336.0/README.md) (`@ant/desktop 4.16336.0`, verified by `Info.plist`, `app.asar/package.json`, process args and live `app.getVersion()`). Earlier volumes: [`docs/v4.29.0-4.4212.0`](docs/v4.29.0-4.4212.0/README.md) (primary forensics on 3.6556.2, re-verified on 4.29.0 and 4.4212.0 — **historical baseline**). Every release is verified through dual channels — **REA** static extraction plus live measurement via the app's **Main Process Debugger** / 9229 Node inspector (read-only).
+> 🧭 **Forensic baseline**: the **current volume** is [`docs/v5.11492.5`](docs/v5.11492.5/README.md) (`@ant/desktop 5.11492.5`, Electron `45.2.1`, verified by `Info.plist`, `app.asar/package.json` and the build stamp `commitHash 1403e2cf…`). Historical baselines: [`docs/v4.16336.0`](docs/v4.16336.0/README.md) (side-browser manual) and [`docs/v4.29.0-4.4212.0`](docs/v4.29.0-4.4212.0/README.md) (primary forensics on 3.6556.2). Every release is verified through dual channels — **REA** static extraction plus live measurement via the app's **Main Process Debugger** / 9229 Node inspector (read-only).
 >
-> 📁 **Doc versioning convention**: manual directory names **track the Claude Desktop version** (e.g. `docs/v4.16336.0/`); future Claude updates get a new directory named after their version. A directory may name a single version or a covered range (e.g. `docs/v4.29.0-4.4212.0/`). Chapters are **organised by feature point**, following the `docs/v1/` format — never by date, topic, or investigation workflow. Full rule: [`AGENTS.md` §7](AGENTS.md#-7-documentation-versioning-convention-文档版本卷约定). Earlier `docs/v1/` and `docs/v2/` keep their names as historical snapshots (v2 values are superseded).
+> 📁 **Doc versioning convention**: manual directory names **track the Claude Desktop version** (e.g. `docs/v5.11492.5/`); future Claude updates get a new directory named after their version. A directory may name a single version or a covered range (e.g. `docs/v4.29.0-4.4212.0/`). Chapters are **organised by feature point**, following the `docs/v1/` format — never by date, topic, or investigation workflow. Full rule: [`AGENTS.md` §7](AGENTS.md#-7-documentation-versioning-convention-文档版本卷约定). Earlier `docs/v1/` and `docs/v2/` keep their names as historical snapshots (v2 values are superseded).
 
 All reverse derivation, de-obfuscation static analysis, and ASAR package deconstruction were conducted using the advanced multi-platform reverse engineering framework **[REA (Reverse Engineer Anything)](https://github.com/morluto/rea)**. Leveraging REA's static AST deconstruction, closure de-obfuscation, and runtime tracing capabilities, we penetrated production bundles to faithfully extract the underlying physical constants, interaction constraints, and mathematical models.
 
@@ -51,7 +51,7 @@ Unlike superficial visual approximations or guesswork replicas, every component 
 * **Audiovisual & Desktop Architecture**: Zero-latency procedural audio synthesis via Web Audio API oscillators, cursor-anchored gallery pan/zoom affine transformations, macOS vibrancy glass fusion, and Cowork multi-agent orchestration topologies.
 
 > 💡 **Architecture & Portability Note**:  
-> The **Design Tokens and Pure-CSS presentation layer can be consumed completely independently from React and Tailwind**. Whether you are integrating into custom desktop harnesses (e.g. DSH, agent desktop shells), standard web pages, or Vue/Svelte environments, simply import `@import "open-claude-ui/tokens.css";` or `@import "open-claude-ui/pure.css";` to access all 261 design tokens (first measured on 3.6556.2; see docs/v4.16336.0 for live values), zero-JS native scroll-fade masks (`[data-cds-scroll-fade]`), and core animations.
+> The **Design Tokens and Pure-CSS presentation layer can be consumed completely independently from React and Tailwind**. Whether you are integrating into custom desktop harnesses (e.g. DSH, agent desktop shells), standard web pages, or Vue/Svelte environments, simply import `@import "open-claude-ui/tokens.css";` or `@import "open-claude-ui/pure.css";` to access all 299 design tokens (first measured on 3.6556.2; see docs/v5.11492.5 for measured values — the 5.11492.5 main-window stylesheet alone declares 934 `--cds-*` custom properties), zero-JS native scroll-fade masks (`[data-cds-scroll-fade]`), and core animations.
 
 > ⚖️ **Copyright & Asset Compliance (DMCA & Assets Policy)**:  
 > This open-source repository **does not distribute any proprietary binary assets** (including commercial `.ttf` fonts and recorded `.mp3` audio). We provide native system font fallback stacks and procedural Web Audio synthesis algorithms, ensuring a completely self-contained, legal, and clean-room compliant codebase. For details, see [assets/README.md](assets/README.md).
@@ -140,7 +140,10 @@ It documents exact decompilation evidence locations alongside Anthropic's archit
 ### 🚀 Claude Desktop 2.0 (v2.37337.1) Comprehensive Reverse Engineering Analysis
 * **[1~6 Overview, Additions, Refactorings, Baseline Secrets, Reference Implementations & Summary](docs/v2/README.md)**: Standalone decompilation report for Claude Desktop 2.0. **(Historical snapshot — defer to docs/v4.16336.0 for values)**
 
-### 🧬 Claude Desktop 4.16336.0 Side Browser Manual (current volume)
+### 🧬 Claude Desktop 5.11492.5 Full Analysis (current volume)
+* **[v5.11492.5/README.md — eight feature-oriented chapters + merged edition](docs/v5.11492.5/README.md)**: what actually changed in 5.x — the `--cds-theme-api: 1` four-layer token contract, `data-density`/`data-size`/`data-step` scopes, 48 `data-cds` component attributes, CSS `linear()` spring sampling, and the new `frame` artifact runtime (129 contract versions, 26 capabilities, `design` + `slides` types) plus the boot-placeholder protocol.
+
+### 🧬 Claude Desktop 4.16336.0 Side Browser Manual (historical baseline)
 * **[v4.16336.0/README.md — eight feature-oriented chapters + merged edition](docs/v4.16336.0/README.md)**: full reverse engineering of the current production build's Browser / Preview pane, **every claim backed by code evidence or a REA Evidence ID**. Chapters follow the `docs/v1/` format and are grouped by feature (architecture/tokens, navigation, preview, security, element inspect, annotation, motion physics, host & engineering). Reference implementation: [`code-examples/ElementInspectHighlight.ts`](code-examples/ElementInspectHighlight.ts).
 
 ### 🧬 Claude Desktop 4.4212.0 Full Analysis Report (historical baseline)
@@ -240,7 +243,8 @@ open-claude-ui/
 │   ├── v1/                            # 1.x historical snapshot: 8 parts / 41 sections + .full.md
 │   ├── v2/                            # 2.37337.1 historical snapshot: 6 chapters
 │   ├── v4.29.0-4.4212.0/             # 3.6556.2 → 4.4212.0 historical baseline: 7 chapters + merged edition
-│   ├── v4.16336.0/                   # Current volume: 8 feature-oriented parts + README + .full.md
+│   ├── v4.16336.0/                   # Historical baseline: side-browser, 8 feature-oriented parts + README + .full.md
+│   ├── v5.11492.5/                   # Current volume: 6 feature-oriented parts + README + .full.md
 │   └── claude-components-storybook.html # Interactive offline visual storybook
 ├── scripts/
 │   └── check-tokens.mjs               # Design token / keyframe consumption gate
@@ -262,7 +266,7 @@ open-claude-ui/
 
 ### 1. Import Stylesheet & Tokens (Pure CSS Support)
 
-Regardless of whether you use React, you can directly import the CDS core stylesheet and its 261 design tokens (first measured on 3.6556.2; see docs/v4.16336.0 for live values):
+Regardless of whether you use React, you can directly import the CDS core stylesheet and its 299 design tokens (first measured on 3.6556.2; see docs/v5.11492.5 for measured values):
 ```css
 /* Import global theme variables, scroll-fade masks, and keyframes */
 @import "open-claude-ui/css";
