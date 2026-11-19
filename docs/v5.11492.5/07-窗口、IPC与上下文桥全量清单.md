@@ -150,6 +150,10 @@ $eipc_message$_<transport-uuid>_$_<namespace>_$_<Interface>_$_<method>
 | 1 | `claude.pluginResources` · `PluginResources` | readResource |
 | 1 | `claude.skills` · `Skills` | previewSkillFile |
 
+> **补检（通道名是字面量还是拼的）**：`app.asar:.vite/build` 里只有 **4 条 `claude.*`** 与 **7 条 `electron_window.*`** 通道以完整字面量出现，其余是"前缀 + `_$_` + 命名空间 + `_$_` + 接口 + `_$_` + 方法"的拼接结果；因此图谱把它们记为动态。而 **`ion-dist.asar` 里 `$eipc_message$` 命中为 0**——渲染层从不自己拼通道名，而是先走 `claude-page:host-tools-port` / `artifact-shell:transport-port` 拿 MessagePort，再由 preload 侧完成通道映射。
+>
+> **发送方校验**：`WindowManager` 的每个 handler 先过 `B(e)`——`e.senderFrame?.parent === null && allowed(url)`，即**只接受顶层 frame 且 URL 在白名单内**；事件类型还要命中固定枚举（含 `restored` / `enterFullscreen` / `leaveFullscreen` / `boundsChanged` / `userCloseRequested` / `displayChanged` / `ready` / `shown` / `hidden`）。
+
 ### 7 个遗留（非生成式）通道
 
 ```
@@ -260,5 +264,7 @@ electron-store-get-data
 | E7-7 | 推导 | `ev_01432a4f…`（source_maps 表 631 行） | 无 source map 发布 |
 | E7-8 | 推导 | `ev_01432a4f…`（native_modules / storage / effects / endpoints） | 6 原生模块、414 存储、9288 效果、1270 端点 |
 | E7-9 | 观测 | `.vite/renderer/*/` 逐目录检索 | 6 个窗口用 CDS，2 个不用 |
+| E7-10 | 观测 | `app.asar:.vite/build/index.chunk-DMZztuEy.js`（`B()` / 事件枚举） | 发送方校验与事件白名单 |
+| E7-11 | 观测 | `ion-dist.asar:assets/v1` 检索 `$eipc_message$` = 0 | 渲染层走 MessagePort，不拼通道 |
 
 <p align="center"><a href="06-设计系统技能与复刻工程.md">← 第六篇</a> · <a href="README.md">📚 本卷索引</a></p>

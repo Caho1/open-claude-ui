@@ -85,6 +85,36 @@ domain: Artifact 平台
 | 设备 | `camera` `microphone` `screenshare` `geolocation` `speech` `dictation` `tts` `motion` | 媒体与传感器 |
 | 平台 | `mcp` `network` `paste` `desktop` `self` | MCP 服务器、网络、粘贴、桌面集成、自引用 |
 
+### capability 的实现清单（补检）
+
+契约里声明 26 个 capability，但 `resources/frame/runtime/_runtime/` 只随包 **20 个模块**（`runtime.hash.json` 的 `capabilities` 键）。逐个模块提取 `mount()` / `wrap()` 后得到真实 API：
+
+| capability | 模块大小 | 暴露的方法 |
+| :--- | ---: | :--- |
+| `artifact` / `self` | 122,745 B | edit, metadata, publish, search, sync |
+| `comments` | 28,043 B | anchorFor, canSendToClaude, create, customAnchors, delete, openComposer, reply, resolve, sendToClaude, ui |
+| `sample` | 24,188 B | json, limits, sample |
+| `room` | 20,237 B | emit, followControls, join, leave, presence |
+| `db` | 13,304 B | delete, get, query |
+| `embed` | 10,703 B | list |
+| `reads` | 10,412 B | get, query |
+| `mcp` | 8,570 B | callTool, describeTool, invalidate, listTools, server |
+| `user` | 7,477 B | avatarUrl, can, canEdit, email, id, isOwner, me, name, profiles, search |
+| `files` | 6,823 B | asSampleTools, download, list, read |
+| `endpoints` | 6,688 B | fetch, openapi |
+| `permissions` | 5,859 B | manage, request, state |
+| `tts` | 5,556 B | add, languages, pause, resume, setRate, speak, stop, voices |
+| `assets` | 4,907 B | delete, list, upload |
+| `dictation` | 3,846 B | start, stop |
+| `downloads` | 3,459 B | save |
+| `paste` | 2,677 B | read |
+| `desktop` | 896 B | 仅事件监听（无方法） |
+| `network` | 323 B | origins |
+
+**未随包模块的 6 个**：`camera`、`geolocation`、`microphone`、`motion`、`screenshare`、`speech`（均在 `0.2.59` 引入）。它们在契约里是 capability，但 `_runtime` 里没有对应文件——**推断**由桌面壳（`app.asar` 主进程 / `swift_addon`）实现，artifact 侧只拿到代理对象。
+
+> 所有 capability 都用同一套骨架：`e.pipe("<cap>")` 建管道 → `e.mount("<cap>", { method: pipe.wrap("method", impl) })`。所以"方法表"就是 `wrap()` 的第一个参数，可静态枚举。
+
 `design` 只声明 10 个：`downloads` `artifact` `comments` `room` `db` `assets` `user` `sample` `paste` `flags`；
 `slides` 在此基础上多一个 `mcp`（绑定 `Google Drive` 的 `create_file` / `gdrive_upload`）。
 
@@ -188,6 +218,7 @@ domain: Artifact 平台
 | E5-5 | 观测 | `resources/frame/types/slides.artifact.json` | slides manifest 全字段 |
 | E5-6 | 观测 | `resources/frame/types/design/SKILL.md` | canvas.json v3、写盘纪律、限额 |
 | E5-7 | 观测 | `resources/frame/types/design/artifact-type/dc-runtime.js@1` | React 18 production 许可头 |
-| E5-8 | 观测 | `resources/frame/runtime/runtime.hash.json` | capability → 模块文件映射 |
+| E5-8 | 观测 | `resources/frame/runtime/runtime.hash.json` | capability → 模块文件映射（20 个） |
+| E5-9 | 观测 | `resources/frame/runtime/_runtime/*.js` 的 `mount()`/`wrap()` | 19 个模块的 API 方法表 |
 
 <p align="center"><a href="04-动效令牌与弹簧线性化.md">← 第四篇</a> · <a href="README.md">📚 本卷索引</a> · <a href="06-设计系统技能与复刻工程.md">第六篇 →</a></p>
