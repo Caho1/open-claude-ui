@@ -13,7 +13,7 @@ domain: 设计系统
 
 前几篇是从**产物**（CSS/JS）反推出来的模型。这一篇不一样：`ion-dist.asar` 里随包分发着一份 **CDS 官方规范文档**，是设计系统团队写给自己、也写给模型看的源文档。它直接给出了层模型、令牌词汇、角色映射与使用规则——**优先级高于任何反推**。
 
-本篇把它完整摘录并标注与前面各篇的差异。**逐字原文见 [`appendix/CDS-tokens-vanilla.md`](appendix/CDS-tokens-vanilla.md)**（23,443 字符 / 288 行，未删节）。
+本篇把它完整摘录并标注与前面各篇的差异。**逐字原文见 [`appendix/CDS-tokens-vanilla.md`](appendix/CDS-tokens-vanilla.md)**（23,443 字符 / 288 行，未删节）；同批下发的上层总纲见 [`appendix/Imagine-visual-creation-suite.md`](appendix/Imagine-visual-creation-suite.md)（10,702 字符 / 92 行）。
 
 ---
 

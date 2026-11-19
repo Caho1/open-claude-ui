@@ -110,6 +110,7 @@
 
 ### 📎 附录
 * **[附录 A：随包 CDS 规范原文（逐字提取）](appendix/CDS-tokens-vanilla.md)**：23,443 字符 / 288 行，从 `cde7c3a92-xkWT1TxN.js` 的字符串常量 `u` 解码，未删节；含六条规则、四条原则、六层模型、角色五件套、背景 vs 填充、CDS 文案规范。
+* **[附录 B：随包 Imagine 视觉创作规范原文（逐字提取）](appendix/Imagine-visual-creation-suite.md)**：10,702 字符 / 92 行，同一模块的字符串常量 `f`；含 `read_me` 模块注册表、复杂度预算、流式渲染规则、Tabler 图标约定、`sendPrompt()` 语义。
 
 ---
 
