@@ -20,7 +20,7 @@ When assisting users with building, modifying, or reviewing frontend components,
    - Use the 4 calibrated Framer Motion spring presets from [`code-examples/ClaudeMotionPresets.ts`](code-examples/ClaudeMotionPresets.ts).
 4. **Pure Code & Zero Copyright Violations**:
    - Zero proprietary binary fonts (`.otf`/`.ttf`) or audio files (`.mp3`/`.wav`).
-   - Use the calibrated system fallback font stacks and procedural Web Audio API oscillator synthesis.
+   - Use the calibrated font stacks and procedural Web Audio API oscillator synthesis. **v5.11492.5 实测**：CDS 语义层把 `--cds-font-sans` 覆盖为 `var(--font-anthropic-sans, …)`，即 Anthropic Sans 优先、系统字体兜底；`--cds-font-voice` 为 Anthropic Serif 优先。品牌物料另有一套（`'Anthropic Sans', system-ui, …` + 七档字号），见 `docs/v5.11492.5/09` §9.2–9.3。
 5. **Strict Edge-Case Guards**:
    - Always guard chat/composer inputs against CJK IME composition accidents (`!(e.nativeEvent.isComposing || e.keyCode === 229)`).
    - Latch scroll pinning with a 150ms cooldown timestamp to prevent LLM streaming from hijacking manual user scrolling.
@@ -62,8 +62,26 @@ All tokens are defined in [`code-examples/cds-theme.css`](code-examples/cds-them
 | `--cds-skeleton-base` | `var(--cds-alpha-1)` → `hsl(from neutral-900 / 5%)` | `hsl(from neutral-900 / 7.5%)` (白) | Base skeleton placeholder container surface (v3 运行时实证：base 与 sheen 同值) |
 | `--cds-skeleton-sheen` | `var(--cds-alpha-1)`（同 base） | 同 base（白 7.5%） | 105° linear sweep band highlight (2s linear) |
 
+### v5 Token Contract (5.11492.5 实测)
+
+4.x 的令牌是约定，5.x 是**带版本号的契约**。新代码必须遵守以下四条：
+
+1. **声明 API 版本**：根样式表首行写 `--cds-theme-api: 1`。
+2. **四层结构**：原始阶（9 色相 × 35 级）→ 角色层（`--cds-role-accent-*` / `-danger-*` / `-success-*` / `-warning-*` / `-pro-*`）→ 语义层（`--cds-surface-*` / `--cds-text-*` / `--cds-fill-*` / `--cds-border`）→ 组件层。跨层引用只能向下，不得反向。
+3. **反相别名**：正文用 `--cds-neutral-*`（明暗自动翻转），透明度用 `--cds-alpha-*`（`hsl(from var(--cds-neutral-900) …)`），暗色只覆盖颜色层，不重建几何。
+4. **作用域开关**：`data-mode`（light/dark/system）、`data-density`（comfortable…）、`data-size`（xs/sm/lg，需 `--*--xs` 族支撑）、`data-step`（1–5）、`data-font`、`data-window-active`（false 时角色层整体降灰）。组件身份用 `data-cds="Name"` 暴露（5.11492.5 共 48 个）。
+
+> 卷内权威清单：[`docs/v5.11492.5/02-CDS设计令牌总谱.md`](docs/v5.11492.5/02-CDS设计令牌总谱.md)、[`03-作用域与组件属性契约.md`](docs/v5.11492.5/03-作用域与组件属性契约.md)，以及**官方规范原文摘录** [`11-CDS官方规范文档.md`](docs/v5.11492.5/11-CDS官方规范文档.md)。
+>
+> **官方六层模型**（优先于任何反推）：原始阶 `--{hue}-{stop}` → 主题别名 `--neutral-*` / `--alpha-*` → 高度 `--surface-{0..3}` → 用途 `--text-*` / `--fill-*` / `--bg-*` / `--border-*` / `--on-*` → 密度 → 动效。**组件只读第 4 层（尺寸读第 5 层），前 3 层是接线。**
+>
+> **六条官方硬规则**：① 只用用途层令牌，禁止裸 hex；② 暗色只靠 `data-mode`，永不手写暗色覆盖；③ 文字永不使用 `opacity`（用 `--text-secondary` / `--text-muted`）；④ 每视图最多一个 primary 按钮，陶土 `brand` 仅限 Claude 发起的动作；⑤ 同屏最多两个浮层高度（第三层用 `Dialog`）；⑥ 边框官方写法是 `0.5px solid var(--border)`。
+>
+> ⚠️ `--cds-role-*` 是**内部接线**（官方原文 `never reference them`），对外请用 `--fill-*` / `--bg-*` / `--border-*` / `--text-*` / `--on-*`。
+
 ### Brand Clay Palette
-* `--brand`: `#c6613f` (Official desktop brand primary color)
+* `--brand`: `#c6613f` (Official desktop brand primary color; = `--cds-clay-emphasized` = 品牌页 `clay-emphasized`)
+* **品牌物料色板（v5.11492.5 随包 `brand-colors.md` 实证）**：Ivory `#FAF9F5`、Slate `#141413`、Clay `#D97757`、Oat `#E3DACC`、Blue `#2A78D6`；棱镜色 Fig `#C46686` / Sky `#6A9BCC` / Olive `#788C5D` / Coral `#EBCECE` / Heather `#CBCADB` / Cactus `#BCD1CA`；21 阶暖灰 `#000000 → #FAF9F5 → #FFFFFF`。产品 UI 用 CDS 35 阶灰，品牌物料用这 21 阶，**两套不可互换**（见 `docs/v5.11492.5/09` §9.1、§9.4）。
 * `--cds-clay`: `#d97757` (Light / pulse indicator) / `#cc6b49` (Dark)
 * **官方佐证 (v3 取证)**：Claude 桌面端 3.6556.2 内置的官方 `frontend-design` skill 原文确认 #D97757 为 "Anthropic's own Claude-interaction accent"（见 `docs/v4.29.0-4.4212.0/06` §6.10.4），与 REA 运行时实测一致
 * 角色区分 (运行时实证 3.6556.2)：`brand`=陶土（Claude 发起的动作，如发送/生成）；`accent`=**蓝色**（`--cds-text-accent: #184f95`、`--cds-border-accent: #86b6ef`）——二者是不同角色，不可互换
@@ -72,15 +90,17 @@ All tokens are defined in [`code-examples/cds-theme.css`](code-examples/cds-them
 ### Geometric Corner Radii
 * `var(--cds-radius)`: `8px` (Base component radius)
 * `var(--radius-card)` / `--cds-card-radius`: `calc(var(--cds-radius, 8px) + calc(.25rem * var(--cds-rem-scale, 1)))` (12px standard / concentric card radius, alias: `--cds-radius-card`)
-* `--cds-radius-composer`: `20px` (Main chat composer terminal)
-* `--cds-panel-radius`: `10px` (Panels, attachment cards)
+* `--cds-radius-composer`: `calc(.75rem * var(--cds-rem-scale, 1))` ≈ 11.3px (Main chat composer terminal; `data-density=comfortable` raises it to `calc(.875rem * …)` ≈ 13.2px). **v5.11492.5 实测**：4.x 文档中的固定 `20px` 已不存在。
+* `--cds-panel-radius`: `calc(.625rem * var(--cds-rem-scale, 1))` ≈ 9.4px (Panels, attachment cards; comfortable 档 `calc(.75rem * …)` ≈ 11.3px)
 * `--df-radius-pill` / `--cds-radius-pill`: `999px` / `9999px` (Pill buttons, segmented control tracks)
-* `--cds-message-bubble-radius`: `calc(var(--cds-radius, 8px) + calc(.25rem * var(--cds-rem-scale, 1)))` (User message bubble radius, alias: `--cds-radius-message-bubble`)
+* `--cds-message-bubble-radius`: `calc(var(--cds-radius, 8px) + calc(.25rem * var(--cds-rem-scale, 1)))` (User message bubble radius, alias: `--cds-radius-message-bubble`)。**v5.11492.5 未观测到该派生量**：5.x 用户气泡直接消费 `--cds-radius`，复刻时应以实测令牌为准。
 * Precision scale: `--radius-xs` (2px), `--radius-sm` (4px), `--radius-md` (6px, alias: `--cds-radius-btn-xs`), `--radius-lg` (8px, alias: `--cds-radius-btn-md`), `--radius-xl` (12px, alias: `--cds-radius-code`), `--radius-2xl` (16px, alias: `--cds-radius-dialog`), `--radius-3xl` (24px)
 
 ---
 
 ## ⚡ 2. Motion Physics & Spring Presets
+
+> **v5.11492.5 新增 CSS 动效令牌**（不再只依赖 Framer Motion）：`--cds-dur-fast` 60ms / `--cds-dur-snap` .12s / `--cds-dur-base` .2s / `--cds-dur-sheet` .3s / `--cds-dur-slow` .45s；`--cds-ease-out` `cubic-bezier(.165,.84,.44,1)`、`--cds-ease-snap` `cubic-bezier(.32,.72,0,1)`、`--cds-ease-overshoot` `cubic-bezier(.34,1.3,.64,1)`；以及 `--cds-btn-spring` 的 CSS `linear()` 15 点弹簧采样（峰值 1.0915，反解 ζ ≈ 0.594）。纯 CSS 场景优先用这组令牌，React 场景仍用下方四套弹簧预设。
 
 Always import canonical spring presets from [`code-examples/ClaudeMotionPresets.ts`](code-examples/ClaudeMotionPresets.ts) instead of hardcoding random transition parameters.
 
@@ -148,6 +168,10 @@ from the preset file and are worth knowing about:
 
 Two more appear as timing variants rather than reusable presets: `320 / 30`
 (`delay: 1`, credits controls row) and `500 / 30 / mass .7`.
+
+### v5.11492.5 复核（2026-11）
+
+在 5.11492.5 上重新提取：客户端共 **22 组**独立弹簧（2.42304.2 为 14 组），但**四套预设的调用点未变** —— `600/30` 仍是麦克风与语音条、`320/28` 仍是拖拽释放回弹、`420/28` 仍是捕获浮层（`scale .25→1`、`dragElastic .05`）、`1200/80/mass .1` 仍是 `file_viewer` 面板宽度（同文件常量 `320/480/384`）。新增的 16 组属于业务侧自建（表单滑入、进度、庆祝粒子、轮播、chips），**不应当作 CDS 规范**。完整清单见 `docs/v5.11492.5/04` §4.7。
 
 ### Version caveat
 
@@ -338,7 +362,8 @@ When adding a volume, update **all four** entry points and mark the previous vol
 
 | Volume | Version | Status |
 | :--- | :--- | :--- |
-| `docs/v4.16336.0/` | `@ant/desktop 4.16336.0` | **current** (verified by `Info.plist`, `app.asar/package.json`, process args and live `app.getVersion()`) |
+| `docs/v5.11492.5/` | `@ant/desktop 5.11492.5` | **current** (verified by `Info.plist`, `app.asar/package.json` and the build stamp `commitHash 1403e2cf…` / `appVersion 5.11492.5`; Electron `45.2.1`) |
+| `docs/v4.16336.0/` | `@ant/desktop 4.16336.0` | historical baseline (side-browser manual) |
 | `docs/v4.29.0-4.4212.0/` | `4.29.0` → `4.4212.0` | historical baseline |
 | `docs/v2/` | `2.37337.1` | historical snapshot |
 | `docs/v1/` | `1.x` | historical snapshot |
