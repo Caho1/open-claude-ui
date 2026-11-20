@@ -1,6 +1,6 @@
 # Claude Desktop 5.11492.5 · CDS 与 Artifact 运行时（合并阅读版）
 
-> 本文件由本卷 20 篇按功能点顺序合并生成，供离线全文档阅读；分篇导航见 [README.md](README.md)。
+> 本文件由本卷 21 篇按功能点顺序合并生成，供离线全文档阅读；分篇导航见 [README.md](README.md)。
 
 > 载体：`app.asar` 88,833,670 B / SHA-256 `2c515441d5d0504a96ac3e49bcc4c1244085c0e76ad23ae58ddd8f736100479e`；`ion-dist.asar` 208,001,845 B / SHA-256 `1d55d633d14aede748af3cb22c244f4ddc2f795d9b1153b175b993ae5d46aa1b`。Electron `45.2.1`。
 
@@ -4486,4 +4486,236 @@ domain: UI 与交互
 | E20-7 | 观测 | `c54bf5722-Dc304oLm.js` / `cc43287c9-BZs4HiYA.js` | `fateVariant` 仅透传（未定值域） |
 
 <p align="center"><a href="19-引导暂存与短语.md">← 第十九篇</a> · <a href="README.md">📚 本卷索引</a></p>
+
+
+
+---
+
+---
+title: 扫光的两种实现与促销的三重门控
+part: 21
+category: 交互设计
+domain: UI 与交互
+---
+
+<p align="center"><a href="20-揭示按压与扫光.md">← 第二十篇</a> · <a href="README.md">📚 本卷索引</a></p>
+
+# 第二十一篇：扫光的两种实现与促销的三重门控
+
+> **技术领域与英文指代**：位移动画（translate）vs 背景位移动画（background-position）、双端驻留（hold at both ends）、促销位（promotion slot）、空间门控（occupancy gate）、视口门控（viewport gate）、日戳标记（day-stamped marker）。
+
+第二十篇讲扫光的**形状**（钟形）。本篇补两件事：同一个扫光为什么有**两套实现**；以及输入条上方那个"促销位"到底靠什么决定出不出现。
+
+---
+
+## 21.1 同一个扫光，两套实现
+
+样式表里有两组关键帧，视觉一致、机制不同：
+
+```css
+@keyframes cds-shimmer-text-band {
+  0%, 15% { animation-timing-function: cubic-bezier(.714,.121,.211,.888); translate: -62.5% }
+  85%, to { translate: -12.5% }
+}
+
+@keyframes cds-shimmer-text-shine {
+  0%, 15% { background-position: 83.333% 0; animation-timing-function: cubic-bezier(.714,.121,.211,.888) }
+  85%, to { background-position: 16.667% 0 }
+}
+```
+
+| | `-band` | `-shine` |
+| :--- | :--- | :--- |
+| 动的东西 | **一个元素**的 `translate`（-62.5% → -12.5%） | **背景图**的 `background-position`（83.333% → 16.667%） |
+| 适合 | 需要独立控制高光层（可叠加、可裁剪） | 高光就是背景的一部分（`background-clip: text` 之类） |
+| 渐变来源 | 单独一层元素 + `--cds-shimmer-text-bell-stops` | 同一个元素的 background-image |
+
+### 两处细节值得抄
+
+**① 双端驻留 15%**
+
+```
+0%,15%   → 静止在起点
+15%→85%  → 扫过
+85%,to   → 静止在终点
+```
+
+一个周期里 **30% 的时间是不动的**。所以观感不是"永不停歇地扫"，而是"亮一下、停一下、再亮一下"。连续扫动会显得廉价，驻留才有节奏。
+
+**② 曲线挂在关键帧上，不在动画上**
+
+```css
+0%, 15% { animation-timing-function: cubic-bezier(.714,.121,.211,.888) }
+```
+
+`animation-timing-function` 写在**关键帧内部**，只对"从这一帧到下一帧"生效。所以静止段用的是默认曲线、移动段用的是这条减速曲线——**一条动画里两种节奏**，不需要拆成两个元素。
+
+> 强变体 `-strong` 只换了曲线（`cubic-bezier(.45,0,.55,1)`，对称），位移与驻留完全一样。**形状是共享的，强弱只是曲线差异**。
+
+---
+
+## 21.2 促销位的三重门控
+
+输入条上方偶尔出现一条促销（`[data-cds-dock-promotion]`）。它不是"有就显示"，而是过三道闸。
+
+### 闸一：时间（14 天冷却 + 日戳）
+
+```js
+var DAY_MS = 864e5, COOLDOWN_DAYS = 14, MARKER = "mpp-d0seen";
+function markers(accountId) { return [MARKER, `${MARKER}-d${hash(accountId)}`] }
+
+function day0State({ isDismissed, offerShownMarker, legacySheetShownMarker,
+                     offerHeldMarker, markedAtMs, nowMs }) {
+  let hit = [offerShownMarker, legacySheetShownMarker, offerHeldMarker].find(isDismissed);
+  if (hit === undefined) return "no_day0_marker";
+  let at = markedAtMs(hit);
+  if (at !== undefined) return nowMs - at >= COOLDOWN_DAYS * DAY_MS ? "cleared" : "too_recent";
+  if (!isDismissed(MARKER)) return "unsighted";
+  let today = Math.floor(nowMs / DAY_MS) * DAY_MS;
+  for (let i = 0; i <= COOLDOWN_DAYS; i += 1)
+    if (isDismissed(`${MARKER}-d${hash(today - i * DAY_MS)}`)) return "too_recent";
+  return "cleared";
+}
+```
+
+四种判定：`no_day0_marker` / `unsighted` / `too_recent` / `cleared`。
+
+| 机制 | 作用 |
+| :--- | :--- |
+| 带**日戳**的标记 `${MARKER}-d<dayHash>` | 不用存"上次是哪天"，而是**逐日检查最近 14 天有没有标记**——天然抵抗时钟回拨 |
+| 三种历史标记并列 | 兼容旧版（`legacySheetShownMarker`）与"已展示但未关"（`offerHeldMarker`） |
+| 无时间戳时退化为 `unsighted` | 老数据没有 `markedAtMs`，走"是否见过"的保守判断 |
+
+### 闸二：空间（促销位是否已被占用）
+
+```js
+function promotionSlotBusy(dockEl) {
+  let dock = dockEl?.closest('[data-cds="ChatComposerDock"]') ?? null;
+  if (dock === null) return false;
+  if (hasDockContent(dock)) return true;                     // dock 已有内容（见第十七篇）
+  for (let el of dock.querySelectorAll(PROMO_ITEMS))
+    if (!el.closest("[data-account-notice-region]") && isVisible(dock, el)) return true;
+  return false;
+}
+function isVisible(root, el) {
+  let hidden = el.closest('[hidden], [aria-hidden="true"]');
+  return (hidden === null || !root.contains(hidden)) && el.getClientRects().length > 0;
+}
+```
+
+| 细节 | 为什么 |
+| :--- | :--- |
+| 用 `getClientRects().length > 0` 判可见 | 比 `offsetParent !== null` 可靠（`position: fixed` 元素 `offsetParent` 为 null） |
+| 排除 `[data-account-notice-region]` | 账号级通知不算"促销占用"，两者可共存 |
+| 先看 dock 是否有内容 | 有内容时整块已进入遮罩态（第十七篇），促销再出现会挤在一起 |
+
+### 闸三：视口（用户是否在对话底部）
+
+```js
+var TOLERANCE = 8;
+function atConversationBottom(el) {
+  let win = ownerWindow(el);
+  if (el === null || win === null) return true;
+  let items = el.ownerDocument.querySelectorAll("[data-turn-key], [data-cds='AssistantMessage'], [data-is-streaming]");
+  let last = items.item(items.length - 1);
+  if (last === null) return true;
+  let { bottom } = last.getBoundingClientRect();
+  return bottom >= 0 && bottom <= win.innerHeight + TOLERANCE;   // 8px 容差
+}
+```
+
+**只有最后一条消息的底部落在视口内（含 8px 容差）时**才显示促销。
+
+> **为什么这条最重要**：用户正在往上翻历史消息时弹出促销，是最招人烦的时机。用"最后一条消息是否可见"作为"用户是否在底部"的廉价代理，比监听滚动位置稳。
+
+---
+
+## 21.3 三层门控的合成
+
+```
+day0State() === "cleared"        // 时间闸
+  && !promotionSlotBusy(dock)    // 空间闸
+  && atConversationBottom(win)   // 视口闸
+  → 显示促销
+```
+
+任一条不满足就静默不显示——**没有"稍后再说"的弹窗，就是不出现**。
+
+---
+
+## 21.4 MessageActions 的属性契约（补全第二十篇）
+
+第二十篇讲了 CSS 侧的 9 个变量。JS 侧的契约是这样的：
+
+```js
+div({
+  "data-cds": "MessageActions",
+  "data-reveal": m,                 // 是否参与"揭示"（隐藏→显示）
+  "data-always-visible": O,         // 常显（不参与揭示）
+  "data-placement": k,              // 例如 "beside"
+  role: "toolbar",
+  "aria-label": A,
+  tabIndex: -1,                     // 容器本身不可 Tab 到
+  onKeyDown: T, onFocus: E,
+  …,
+})
+```
+
+| 属性 | 语义 |
+| :--- | :--- |
+| `data-reveal` | 有值时进入揭示态（CSS 里 `opacity: var(--cds-message-actions-opacity)`） |
+| `data-always-visible` | 覆盖揭示：`.cds-root [data-cds=MessageActions][data-reveal][data-always-visible] { opacity:1; scale:none }` |
+| `data-placement` | 布局位（`beside` 等） |
+| `role="toolbar"` + `tabIndex=-1` | 容器是工具条但不是 Tab 落点；**由内部按钮逐个进入** |
+
+另外还有一个**触摸态尺寸补偿**：
+
+```js
+var TOUCH_XS  = "touch:[--cds-h-control--xs:calc(2rem*var(--cds-rem-scale,1))]";
+var TOUCH_H   = "touch:h-[calc(1.5rem*var(--cds-rem-scale,1))]";
+var TOUCH_WRAP= "touch:h-auto touch:min-h-[calc(1.5rem*…)] touch:gap-y-[calc(0.5rem*…)] touch:*:-my-[calc(0.25rem*…)]";
+```
+
+触屏上把 xs 控件高度从默认抬到 2rem（约 30px），并允许换行——**同一组件在 `pointer: coarse` 下自动变大**。
+
+---
+
+## 21.5 两个明确未解项
+
+| 项 | 观测 | 缺什么 |
+| :--- | :--- | :--- |
+| `fateVariant` | 附件钩子的 prop，与 `attachTiming` / `takeUnfit` 并列，透传进上传管线；全量检索**没有任何 `fate` 字符串值** | 值域与分支行为（值可能来自共享常量表或服务端下发） |
+| snippet 编辑 | 只观测到 `onEditSnippetText` 回调与 `snippets` 实体 | 编辑器形态（内联/弹层）与保存时机 |
+
+> 这两项**不要**在后续分析里当作已解决——本卷只确认了它们存在且被透传。
+
+---
+
+## 21.6 复刻要点
+
+| 做法 | 关键点 |
+| :--- | :--- |
+| 扫光两套实现 | 位移（band）用于独立高光层；背景位移（shine）用于 `background-clip: text` |
+| 节奏 | 双端各驻留 15%，一个周期 30% 静止 |
+| 一条动画两种速度 | `animation-timing-function` 写进关键帧内部 |
+| 促销时间闸 | 日戳标记 + 逐日回看 14 天，抗时钟回拨 |
+| 促销空间闸 | `getClientRects().length > 0` 判可见，排除账号通知区 |
+| 促销视口闸 | 最后一条消息 `bottom` 在视口内（+8px） |
+| 触屏放大 | `pointer: coarse` 下抬 xs 控件高度并允许换行 |
+
+---
+
+## 21.7 证据索引（本篇）
+
+| ID | 类型 | 位置 | 支撑结论 |
+| :--- | :--- | :--- | :--- |
+| E21-1 | 观测 | `ion-dist.asar:assets/v1/c6a992d55-k2XF_vDB.css`，`@keyframes cds-shimmer-text-band` / `-shine` / `-strong` | 位移 vs 背景位移、双端 15% 驻留、关键帧内曲线 |
+| E21-2 | 观测 | `cae5cdd4d-BNjTOLMN.js`（`day0State` / `MARKER` / `COOLDOWN_DAYS`） | 14 天冷却与日戳标记、四种判定 |
+| E21-3 | 观测 | 同上（`promotionSlotBusy` / `isVisible`） | 空间闸与可见性判定 |
+| E21-4 | 观测 | 同上（`atConversationBottom` / `TOLERANCE = 8`） | 视口闸与 8px 容差 |
+| E21-5 | 观测 | `shared-26-DT-n37lD.js`（MessageActions 属性） | `data-reveal` / `always-visible` / `placement` / toolbar 语义 |
+| E21-6 | 观测 | 同上（`TOUCH_*` 常量） | 触屏尺寸补偿 |
+| E21-7 | 观测 | `c54bf5722-Dc304oLm.js` / `cc43287c9-BZs4HiYA.js` | `fateVariant` 仅透传（未解） |
+
+<p align="center"><a href="20-揭示按压与扫光.md">← 第二十篇</a> · <a href="README.md">📚 本卷索引</a></p>
 
